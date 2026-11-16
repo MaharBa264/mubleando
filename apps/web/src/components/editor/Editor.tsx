@@ -7,6 +7,7 @@ import { useStore } from 'zustand';
 import { compute, type Material, type Method } from '@mw/engine';
 import { buttonClass, Button } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
+import { StlExportDialog } from '@/components/StlExportDialog';
 import { ConflictError, data, type Cabinet } from '@/data';
 import { fmtDims } from '@/lib/format';
 import { EditorContext, type EditorEnv } from './context';
@@ -57,6 +58,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
   // ── guardado automático con control de versión ──
   const rev = useRef(cabinet.rev);
   const [save, setSave] = useState<SaveState>({ kind: 'saved' });
+  const [stlOpen, setStlOpen] = useState(false);
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
@@ -130,11 +132,15 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
             <Button size="sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
               ↷
             </Button>
+            <Button size="sm" onClick={() => setStlOpen(true)} title="Exportar a STL para impresión 3D">
+              STL
+            </Button>
             <Link href={`/muebles/${cabinet.id}/despiece`} className={buttonClass('primary', 'sm')}>
               Despiece
             </Link>
           </div>
         </div>
+        <StlExportDialog open={stlOpen} onClose={() => setStlOpen(false)} parts={result.parts} name={name} />
         {save.kind === 'conflict' && (
           <div className="px-3 pt-2">
             <Alert tone="danger" title="Otro dispositivo o pestaña guardó este mueble mientras lo editabas">

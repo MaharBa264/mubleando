@@ -4,3 +4,5 @@ out/
 *.tsbuildinfo
 .env*.local
 coverage/
+replica/screens/
+replica/referencia/

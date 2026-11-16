@@ -5,6 +5,7 @@ import { groupedRows, individualRows, totals, type CutItem, type Material } from
 import { cutListCsv } from '@mw/exporters';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
+import { downloadBlob } from '@/lib/download';
 import { fmtMm, fmtMoney, fmtNum } from '@/lib/format';
 
 /** S24 · Lista de corte (agrupada o pieza a pieza), totales y descarga CSV. */
@@ -33,12 +34,7 @@ export function CutListView({
 
   const download = () => {
     const csv = cutListCsv(rows, materials, { decimal });
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileName}-${mode === 'grouped' ? 'agrupada' : 'piezas'}.csv`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBlob(csv, `${fileName}-${mode === 'grouped' ? 'agrupada' : 'piezas'}.csv`, 'text/csv;charset=utf-8');
   };
 
   return (

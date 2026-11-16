@@ -26,3 +26,17 @@ Desviaciones de `architecture.md`:
 - npm workspaces en lugar de pnpm. pnpm no está instalado y activarlo con corepack pide permisos de administrador.
 - La capa de datos es local (localStorage) con la misma interfaz que tendrá la de Supabase (`apps/web/src/data/types.ts`). La de Supabase llega con `/replica-backend`.
 - Los tokens de diseño son provisionales (`globals.css`) hasta ejecutar `/replica-design`.
+
+## Exportación STL y paso a GitHub (2026-11-15)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| STL | Editor → botón STL (`StlExportDialog`) | hecho | tolerancias de encaje para cajones impresos aparte; exportar un proyecto entero | las piezas finas (traseras) no se pueden imprimir a escala: se añadió un espesor mínimo que las engorda y avisa |
+| — | `@mw/exporters`: `stl.ts`, `zip.ts` | hecho | — | ZIP propio sin dependencias; validado también con el `zipfile` de Python |
+| docs | `README.md` y `docs/` | hecho | mantenerla al día con cada función | — |
+
+Decisiones del usuario: no tiene CNC (el corte se encarga a una maderera), quiere STL del mueble completo y pieza a pieza con opciones para cajones, el repositorio va a GitHub (`MaharBa264/mubleando`, público) y toda la documentación detallada y en español.
+
+Los commits se reescribieron con la dirección privada de GitHub (`…@users.noreply.github.com`) antes de la primera subida, para no publicar el correo personal.
+
+Comprobado: 21 pruebas del motor y 15 de exportaciones en verde; `tsc` sin errores; el diálogo STL en el navegador a 1440 y 375 px, generando el ZIP (5 archivos) sin errores en consola.

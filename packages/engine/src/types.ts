@@ -129,6 +129,19 @@ export interface Part {
   box: Box;
   /** Hueco que crea o que divide esta pieza. */
   zoneId?: string;
+  /**
+   * Conjunto al que pertenece la pieza, si no es parte de la estructura fija.
+   * Lo usarán los cajones (fase 2): todas las piezas de un mismo cajón comparten `id`.
+   * Las exportaciones (por ejemplo STL) lo usan para separar o integrar ese conjunto.
+   */
+  assembly?: PartAssembly;
+}
+
+export interface PartAssembly {
+  id: string;
+  kind: 'drawer';
+  /** Nombre visible, por ejemplo "Cajón 2". */
+  name: string;
 }
 
 export interface ZoneOut {

@@ -33,8 +33,8 @@ Biblioteca de herrajes con taladros,herrajes,should,yes,no,S14; datos públicos 
 Reglas de posicionado de herrajes por longitud,herrajes,should,yes,no,S15
 Relaciones de herrajes entre tipos de panel,herrajes,should,yes,no,S16
 Lista de herrajes con precio,salidas,should,yes,no,S26
-Exportar DXF 2D por pieza con capas,cnc,should,yes,no,S29; formato abierto
-Post-procesador para la CNC del usuario (uno),cnc,should,yes,no,S28; preguntar qué máquina tiene
+Exportar DXF 2D por pieza con capas,cnc,could,yes,no,S29; formato abierto; útil solo si se usa un servicio de corte CNC
+Post-procesador para la CNC del usuario (uno),cnc,could,yes,no,S28; el usuario no tiene CNC: el corte se encarga a una maderera
 Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
 Imprimir planos con cotas,salidas,should,yes,no,S32
 Vista explosionada y puertas abiertas/cerradas,3d,should,yes,no,S03
@@ -43,6 +43,10 @@ Deshacer / rehacer,ui,should,yes,yes,global; botones y Ctrl+Z / Ctrl+Y
 Parámetros y variables del mueble,motor,should,yes,no,S23
 Presupuesto PDF para el cliente,salidas,should,partial,no,v6 solo tiene precios; la plantilla es de v7
 Optimizador de corte de tableros propio,salidas,should,no,no,sustituye a OptiCut
+Hoja de pedido para la maderera (PDF),salidas,should,no,no,mejora: sin CNC el corte se encarga fuera; hoy sirve el CSV o imprimir el despiece
+Exportar STL del mueble completo a escala,salidas,should,no,yes,mejora: maquetas en impresora 3D; escala y espesor mínimo impreso
+Exportar STL pieza a pieza (ZIP con LEEME),salidas,should,no,yes,mejora: piezas iguales una vez con la cantidad en el nombre
+STL con cajones integrados / aparte / pieza a pieza,salidas,should,no,partial,mejora: el exportador ya lo hace; falta que existan cajones (fase 2)
 Mueble en L y en ángulo,mueble,could,yes,no,S02
 Forma libre y editor de contorno 2D,piezas,could,yes,no,S18
 Cajeados y mecanizado de esquinas,piezas,could,yes,no,S20
@@ -53,7 +57,7 @@ Mover / girar / agrupar muebles,proyecto,could,yes,no,S21
 Catálogo de modelos de mueble,catálogo,could,yes,no,S22
 Render con luces y texturas,3d,could,yes,no,S03
 Exportar DXF 3D / 3DS / GLB,salidas,could,yes,no,S30
-Más post-procesadores (MPR / CIX / PGMX / HOP / TCN),cnc,could,yes,no,validar cada uno en máquina real
+Más post-procesadores (MPR / CIX / PGMX / HOP / TCN),cnc,could,yes,no,validar cada uno en máquina real; sin CNC en el taller
 Modo sin conexión en móvil,datos,could,no,no,mejora
 Compartir proyecto con el cliente (enlace de vista),datos,could,no,no,mejora
 Importar archivos .pb-cab / .pb-proj,datos,could,yes,no,formato binario no documentado; necesita archivos de ejemplo
