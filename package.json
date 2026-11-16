@@ -1,11 +1,18 @@
 {
   "name": "mueblesweb",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @mw/web",
     "build": "npm run build -w @mw/web",
     "test": "npm test -w @mw/engine -w @mw/exporters",
     "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.7"
   }
 }
