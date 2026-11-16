@@ -1,0 +1,63 @@
+feature,area,priority,original,clone,notes
+Crear mueble rectangular con ancho alto y profundidad,mueble,must,yes,no,S02 S03 S04
+Árbol de zonas interiores y exteriores seleccionables,mueble,must,yes,no,base del motor paramétrico
+Recalcular todos los paneles al cambiar una medida,motor,must,yes,no,el corazón del producto; validar contra listas de corte reales
+Añadir estantes (equidistantes / proporcionales / fijos),divisiones,must,yes,no,S05
+Añadir montantes verticales,divisiones,must,yes,no,S05
+Trasera con ranura o sobrepuesta,divisiones,must,yes,no,S09
+Zócalo y zonas exteriores,mueble,must,yes,no,S08
+Puertas única y doble (encastrada / superpuesta),puertas,must,yes,no,S06
+Holguras y retrasos de puertas,puertas,must,yes,no,S06 S04
+Cajones por número con holguras,cajones,must,yes,no,S07
+Estructura del cajón (laterales fondo trasera frente),cajones,must,yes,no,S07
+Biblioteca de materiales de panel (espesor fibra precio),materiales,must,yes,no,S11
+Cantos por lado con material y espesor,materiales,must,yes,no,S12; descuentan medida
+Regla de canteado por tipo de panel,métodos,must,yes,no,S10
+Panel prioritario (quién pisa a quién en uniones),motor,must,yes,no,S16; decide medidas de laterales vs techo/suelo
+Método de fabricación guardado y reutilizable,métodos,must,yes,no,S10
+Visor 3D en navegador con perspectiva y ortogonal,3d,must,yes,no,Three.js; S03
+Selección táctil de zonas y paneles en móvil,3d,must,no,no,mejora: PolyBoard no tiene móvil
+Panel de propiedades editable,ui,must,yes,no,S04
+Unidades mm / cm / pulgadas,ui,must,yes,no,S33
+Lista de corte individual y agrupada,salidas,must,yes,no,S24
+Exportar lista de corte a CSV,salidas,must,yes,no,S30 (ASCII)
+Lista de materiales y coste,salidas,must,yes,no,S26
+Guardar y abrir proyectos en la nube,datos,must,no,no,mejora: PolyBoard guarda archivos locales
+Puerta corredera,puertas,should,yes,no,S06
+Cajón múltiple / encastrado / superpuesto,cajones,should,yes,no,S07
+Igualar tamaño de puertas y cajones,cajones,should,yes,no,S07
+Divisiones libres y paneles nulos,divisiones,should,yes,no,S05
+Dobles fondos,divisiones,should,yes,no,S05
+Estilos de material (combinaciones nombradas),materiales,should,yes,no,S13
+Biblioteca de herrajes con taladros,herrajes,should,yes,no,S14; datos públicos de fabricantes
+Reglas de posicionado de herrajes por longitud,herrajes,should,yes,no,S15
+Relaciones de herrajes entre tipos de panel,herrajes,should,yes,no,S16
+Lista de herrajes con precio,salidas,should,yes,no,S26
+Exportar DXF 2D por pieza con capas,cnc,should,yes,no,S29; formato abierto
+Post-procesador para la CNC del usuario (uno),cnc,should,yes,no,S28; preguntar qué máquina tiene
+Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
+Imprimir planos con cotas,salidas,should,yes,no,S32
+Vista explosionada y puertas abiertas/cerradas,3d,should,yes,no,S03
+Dimensiones permanentes en 3D,3d,should,yes,no,S03
+Deshacer / rehacer,ui,should,yes,no,global
+Parámetros y variables del mueble,motor,should,yes,no,S23
+Presupuesto PDF para el cliente,salidas,should,partial,no,v6 solo tiene precios; la plantilla es de v7
+Optimizador de corte de tableros propio,salidas,should,no,no,sustituye a OptiCut
+Mueble en L y en ángulo,mueble,could,yes,no,S02
+Forma libre y editor de contorno 2D,piezas,could,yes,no,S18
+Cajeados y mecanizado de esquinas,piezas,could,yes,no,S20
+Importar DXF,piezas,could,yes,no,S31
+Estructuras de panel compuestas,piezas,could,yes,no,S19
+Proyecto de estancia con muros y suelo,proyecto,could,yes,no,S21
+Mover / girar / agrupar muebles,proyecto,could,yes,no,S21
+Catálogo de modelos de mueble,catálogo,could,yes,no,S22
+Render con luces y texturas,3d,could,yes,no,S03
+Exportar DXF 3D / 3DS / GLB,salidas,could,yes,no,S30
+Más post-procesadores (MPR / CIX / PGMX / HOP / TCN),cnc,could,yes,no,validar cada uno en máquina real
+Modo sin conexión en móvil,datos,could,no,no,mejora
+Compartir proyecto con el cliente (enlace de vista),datos,could,no,no,mejora
+Importar archivos .pb-cab / .pb-proj,datos,could,yes,no,formato binario no documentado; necesita archivos de ejemplo
+Bibliotecas de herrajes de Boole,herrajes,skip,yes,skip,contenido de Boole & Partners; rehacer con datos de fabricantes
+OptiCut / OptiNest integrados,salidas,skip,yes,skip,producto aparte de Boole
+Activación de licencia,sistema,skip,yes,skip,no aplica
+Texturas e iconos de PolyBoard,marca,skip,yes,skip,activos ajenos
