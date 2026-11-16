@@ -6,7 +6,7 @@
 - **Git**, para descargar el repositorio y guardar cambios.
 - Un navegador actual: Chrome, Edge, Firefox o Safari. El visor 3D usa WebGL, que tienen todos desde hace años.
 
-No hace falta base de datos ni ninguna cuenta: hoy los datos se guardan en el propio navegador.
+No hace falta base de datos ni ninguna cuenta: sin configurar nada, los datos se guardan en el propio navegador. Para usar cuentas y la nube, ver [Guardado en la nube](nube.md).
 
 ## Descargar y arrancar
 
@@ -35,7 +35,7 @@ Todos se lanzan desde la carpeta raíz del repositorio.
 | Comando | Qué hace |
 | --- | --- |
 | `npm run dev` | Arranca la aplicación en modo desarrollo en el puerto 3100. |
-| `npm test` | Pasa las pruebas del motor (`packages/engine`) y de las exportaciones (`packages/exporters`) con Vitest. |
+| `npm test` | Pasa las pruebas del motor (`packages/engine`), de las exportaciones (`packages/exporters`) y de la base de datos (`supabase`) con Vitest. |
 | `npm run typecheck` | Comprueba los tipos de TypeScript de los tres paquetes. No genera archivos. |
 | `npm run build` | Compila la aplicación para producción (carpeta `apps/web/.next`). |
 | `npm start -w @mw/web` | Sirve la versión compilada en el puerto 3100. Necesita `npm run build` antes. |
@@ -68,6 +68,7 @@ Es un *monorepo* con *workspaces* de npm: tres paquetes que se instalan juntos y
 | --- | --- | --- |
 | `packages/engine` | `@mw/engine` | El motor: tipos del diseño, cálculo de piezas, funciones de edición, lista de corte, materiales y métodos de partida. No depende de React ni del navegador. |
 | `packages/exporters` | `@mw/exporters` | CSV de lista de corte, STL para impresión 3D y un escritor de ZIP. Solo depende del motor. |
+| `supabase` | `@mw/db` | Migraciones SQL de la base de datos en la nube y sus pruebas (con PGlite, un Postgres en memoria). |
 | `apps/web` | `@mw/web` | La aplicación Next.js. Importa los otros dos paquetes directamente desde su código TypeScript (`transpilePackages` en `next.config.ts`), sin compilarlos aparte. |
 
 Archivos de configuración de la raíz:
@@ -88,6 +89,18 @@ Archivos de configuración de la raíz:
 | Estado del editor | Zustand, con historial propio para deshacer y rehacer |
 | Validación de datos | zod 4 |
 | Pruebas | Vitest 3 |
+
+## Variables de entorno
+
+Van en `apps/web/.env.local` (no se sube a GitHub). La plantilla es `apps/web/.env.example`.
+
+| Variable | Para qué |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Dirección del proyecto de Supabase. Con esta y la siguiente, la app usa la nube y pide entrar. |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública del proyecto. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta, solo en el servidor, para borrar cuentas. |
+
+Al cambiar `.env.local`, el servidor de desarrollo lo recarga solo; si no, reinícialo.
 
 ## Problemas frecuentes
 

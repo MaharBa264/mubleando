@@ -33,11 +33,12 @@ Pendiente de la fase 2, para más adelante:
 - Cajones interiores (detrás de una puerta) y cajones con frente doble.
 - Tolerancias de encaje propias para los cajones impresos en 3D.
 
-## Guardado en la nube
+## Guardado en la nube (hecho, falta conectar un proyecto real)
 
-- Cuentas de usuario y proyectos sincronizados entre el ordenador y el móvil (Supabase: base de datos Postgres con permisos por fila).
-- Las pantallas no cambian: se sustituye la capa de datos.
-- Necesita una cuenta gratuita de Supabase.
+- Cuentas con correo y contraseña, confirmación por correo, recuperar contraseña, cerrar sesión en todos los dispositivos y borrar la cuenta.
+- Proyectos, muebles y bibliotecas en Supabase, con reglas de acceso por fila probadas con dos usuarios.
+- Subir a la cuenta los datos guardados en el navegador.
+- Pendiente: crear el proyecto de Supabase y comprobarlo de verdad ([pasos](nube.md), [lista](../replica/backend.md)); correo propio (SMTP con tu dominio); copias de seguridad; trabajar sin conexión y sincronizar después; talleres con varios usuarios; entrar con Google.
 
 ## Comprobación contra listas reales
 

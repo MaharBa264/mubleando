@@ -12,6 +12,10 @@ Next.js 16 con App Router. Todas las páginas son de cliente (`'use client'`): e
 | `/muebles/[id]` | Editor del mueble | `src/app/muebles/[id]/page.tsx` → `components/editor/Editor.tsx` |
 | `/muebles/[id]/despiece` | Despiece de un mueble | `src/app/muebles/[id]/despiece/page.tsx` |
 | `/bibliotecas` | Tableros, cantos y métodos de fabricación, editables | `src/app/bibliotecas/page.tsx` |
+| `/entrar` | Entrar, crear cuenta, recuperar la contraseña (solo con nube) | `src/app/entrar/page.tsx` |
+| `/restablecer` | Contraseña nueva desde el enlace del correo | `src/app/restablecer/page.tsx` |
+| `/cuenta` | Sesión, subir los datos del navegador, borrar la cuenta. Sin nube, explica dónde están los datos | `src/app/cuenta/page.tsx` |
+| `POST /api/cuenta/borrar` | Borra la cuenta de quien la pide (servidor) | `src/app/api/cuenta/borrar/route.ts` |
 
 Diálogos:
 
@@ -73,7 +77,12 @@ La interfaz no habla directamente con el almacenamiento: usa una **capa de datos
 | `listMaterials`, `saveMaterial`, `deleteMaterial` | Tableros y cantos. Borrar lanza `InUseError` si algún método usa el material. |
 | `listMethods`, `saveMethod`, `deleteMethod` | Métodos. Borrar lanza `InUseError` si algún mueble usa el método o si es el último. |
 
-Hoy la implementación es `src/data/local.ts`:
+Hay dos implementaciones, y `src/data/index.ts` elige una al arrancar:
+
+- **Nube** (`src/data/cloud.ts`) si existen `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Detalles en [Guardado en la nube](nube.md).
+- **Navegador** (`src/data/local.ts`) si no.
+
+La del navegador:
 
 - Guarda todo en `localStorage` bajo la clave `mueblesweb:v1`.
 - La primera vez crea los datos de ejemplo.
@@ -84,7 +93,7 @@ Hoy la implementación es `src/data/local.ts`:
 - Escucha el evento `storage` para enterarse de cambios hechos en otra pestaña.
 - `saveCabinet` vuelve a leer la versión guardada antes de escribir: es el **control optimista** que detecta conflictos entre pestañas.
 
-Cuando llegue el guardado en la nube, se escribirá otra implementación de `DataLayer` (Supabase) y se cambiará una línea en `src/data/index.ts`. Las pantallas no cambian. El esquema SQL previsto está en [`replica/schema.sql`](../replica/schema.sql).
+Las pantallas no saben cuál se está usando. La sesión la lleva `components/auth/AuthProvider.tsx`; su `AuthGate`, dentro de `AppShell`, manda a `/entrar` a quien no ha entrado cuando hay nube. En la cabecera, el enlace de la derecha lleva a `/cuenta`.
 
 ## Estilos y tema
 

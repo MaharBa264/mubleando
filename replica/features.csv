@@ -22,7 +22,7 @@ Unidades mm / cm / pulgadas,ui,must,yes,partial,S33; solo mm
 Lista de corte individual y agrupada,salidas,must,yes,yes,S24; mueble y proyecto
 Exportar lista de corte a CSV,salidas,must,yes,yes,S30 (ASCII); coma o punto decimal
 Lista de materiales y coste,salidas,must,yes,yes,"S26; m², metros de canto y coste de material"
-Guardar y abrir proyectos en la nube,datos,must,no,partial,mejora: PolyBoard guarda archivos locales; guardado local en el navegador con control de versión; Supabase pendiente
+Guardar y abrir proyectos en la nube,datos,must,no,partial,mejora: Supabase con cuentas y reglas de acceso por fila probadas con PGlite; falta probar con un proyecto real
 Puerta corredera,puertas,should,yes,no,S06
 Cajón múltiple / encastrado / superpuesto,cajones,should,yes,yes,S07
 Igualar tamaño de puertas y cajones,cajones,should,yes,yes,S07; igualar alturas
@@ -66,3 +66,5 @@ OptiCut / OptiNest integrados,salidas,skip,yes,skip,producto aparte de Boole
 Activación de licencia,sistema,skip,yes,skip,no aplica
 Texturas e iconos de PolyBoard,marca,skip,yes,skip,activos ajenos
 Material y cantos por pieza,materiales,must,yes,yes,S04; solo tableros del mismo espesor; volver al método
+"Cuentas con correo, recuperar contraseña y borrar cuenta",datos,must,no,partial,mejora; Supabase Auth; falta probar con un proyecto real
+Subir a la nube los datos guardados en el navegador,datos,should,no,partial,mejora; sin duplicar al repetir; falta probar con un proyecto real

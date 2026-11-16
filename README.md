@@ -27,13 +27,15 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Ver puertas y cajones abiertos en 3D | Hecho |
 | Tus tableros, cantos, precios y métodos de fabricación | Hecho |
 | Cambiar el material o los cantos de una pieza concreta | Hecho |
-| Guardado en la nube y uso desde varios dispositivos | Siguiente |
+| Cuentas y guardado en la nube (Supabase), el mismo trabajo en el ordenador y en el móvil | Hecho; falta conectarlo a un proyecto real |
 
 El detalle de todas las funciones, previstas y hechas, está en [`replica/features.csv`](replica/features.csv). El plan está en [`docs/hoja-de-ruta.md`](docs/hoja-de-ruta.md).
 
 ## Arrancar en tu ordenador
 
 Necesitas [Node.js](https://nodejs.org/) 22 o superior (se ha probado con Node 24 y npm 11).
+
+Sin configurar nada, la app guarda los datos en el navegador. Para tener cuentas y sincronizar dispositivos, sigue [`docs/nube.md`](docs/nube.md) (crear un proyecto gratuito de Supabase y rellenar `apps/web/.env.local`).
 
 ```bash
 npm install
@@ -70,6 +72,7 @@ Toda la documentación está en español, en la carpeta [`docs/`](docs/README.md
 - [El motor de cálculo](docs/motor.md): cómo se calculan las piezas, las convenciones de construcción y un ejemplo con todas las cifras.
 - [Exportaciones](docs/exportaciones.md): CSV para la maderera y STL para impresión 3D (escalas, espesor mínimo, cajones).
 - [La aplicación web](docs/app-web.md): pantallas, editor, guardado de datos, modo sin conexión.
+- [Guardado en la nube](docs/nube.md): configurar Supabase paso a paso, cuentas, tablas y reglas de acceso.
 - [Hoja de ruta](docs/hoja-de-ruta.md): qué viene después y en qué orden.
 - [Cómo contribuir](docs/contribuir.md): ramas, commits, pruebas y estilo.
 
@@ -83,7 +86,8 @@ mueblesweb/
 │  ├─ engine/      motor de cálculo: diseño + método → piezas (TypeScript puro, sin interfaz)
 │  └─ exporters/   exportaciones: CSV de lista de corte, STL, ZIP
 ├─ apps/
-│  └─ web/         aplicación Next.js: proyectos, editor 3D, despiece, bibliotecas
+│  └─ web/         aplicación Next.js: proyectos, editor 3D, despiece, bibliotecas, cuentas
+├─ supabase/       base de datos en la nube: migraciones SQL y pruebas de las reglas de acceso
 ├─ docs/           documentación
 ├─ replica/        planificación: funciones, arquitectura, esquema SQL, registro
 └─ scripts/        utilidades (generar los iconos de la app)

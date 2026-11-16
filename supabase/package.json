@@ -1,0 +1,13 @@
+{
+  "name": "@mw/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Esquema de la base de datos (migraciones de Supabase) y pruebas de las reglas de acceso.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.13"
+  }
+}

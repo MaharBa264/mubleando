@@ -7,6 +7,7 @@
 | [El motor de cálculo](motor.md) | quien quiera entender o cambiar cómo salen las medidas | unidades, el documento del diseño, el método de fabricación, cada pieza y su fórmula, avisos, funciones de edición |
 | [Exportaciones](exportaciones.md) | quien use los archivos que salen de la app | CSV (columnas, decimales, cómo pedir el corte a una maderera) y STL (modos, escalas, espesor mínimo, cajones, ejes) |
 | [La aplicación web](app-web.md) | quien toque la interfaz | pantallas y rutas, editor, visor 3D, capa de datos, guardado y conflictos, PWA |
+| [Guardado en la nube](nube.md) | quien vaya a activar las cuentas | crear el proyecto de Supabase, variables, tablas, reglas de acceso, pruebas y limitaciones |
 | [Hoja de ruta](hoja-de-ruta.md) | todos | fases, qué está hecho y qué falta |
 | [Cómo contribuir](contribuir.md) | quien vaya a cambiar código | ramas, mensajes de commit, pruebas, estilo, normas de origen |
 

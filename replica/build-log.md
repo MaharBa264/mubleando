@@ -56,3 +56,16 @@ Comprobado: 21 pruebas del motor y 15 de exportaciones en verde; `tsc` sin error
 Datos: formato guardado versión 2, con migración automática de los datos de la fase 1 (métodos sin frentes ni cajones, tablero de 16 que faltaba). El motor completa también un método antiguo si le llega.
 
 Comprobado: 47 pruebas del motor (25 nuevas con cifras calculadas a mano) y 15 de exportaciones; `tsc` sin errores; en el navegador, puerta en un bajo, cajones en una columna, frentes abiertos, cambio de canto en una pieza y vuelta al método, edición de un método, borrado protegido de un material en uso, STL con cajones aparte (4 archivos), despiece con cajones, migración de datos de la fase 1, y anchos de 1024 y 375 px sin desbordes.
+
+## Nube: cuentas y Supabase (2026-11-16)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| BD | `supabase/migrations` | hecho | probar en un proyecto real; organizaciones | sin Docker ni Postgres en el equipo: las reglas de acceso se prueban con PGlite imitando lo mínimo de Supabase (`auth.uid()`, roles) |
+| — | `data/cloud.ts` | parcial | probar contra Supabase real | — |
+| S35 | Entrar / crear cuenta / recuperar | parcial | probar los correos reales | — |
+| S36 | Cuenta | parcial | probar subida y borrado reales | el borrado de cuentas necesita la clave secreta: va en una ruta del servidor, no en el navegador |
+
+Comprobado: 14 pruebas de la base de datos (dos usuarios, conflictos de versión, borrados en cascada y restringidos), 47 del motor y 15 de exportaciones; `tsc` y `next build` sin errores; en el navegador, el modo local sigue igual y con una dirección de Supabase falsa la app manda a `/entrar` recordando la página, muestra «No hay conexión con el servidor» al entrar, y la ruta de borrar cuenta responde 501 sin clave de servicio.
+
+No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo crea el usuario). Lista de comprobación en `replica/backend.md`.

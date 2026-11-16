@@ -1,6 +1,6 @@
 // Service worker mínimo: la app abre sin conexión.
 // Navegación: red primero y caché si no hay red. Estáticos de Next (con hash): caché primero.
-const CACHE = 'mw-v1';
+const CACHE = 'mw-v2';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/'])).then(() => self.skipWaiting()));

@@ -115,6 +115,22 @@ function migrate(s: State): State {
   return s;
 }
 
+/**
+ * Lee lo guardado en este navegador sin crear los datos de ejemplo.
+ * Lo usa la subida a la nube. Devuelve null si no hay nada guardado.
+ */
+export function readLocalState(): Pick<State, 'projects' | 'cabinets' | 'materials' | 'methods'> | null {
+  try {
+    const raw = window.localStorage.getItem(KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as State;
+    parsed.cabinets = parsed.cabinets.filter((c) => designSchema.safeParse(c.design).success);
+    return structuredClone(migrate(parsed));
+  } catch {
+    return null;
+  }
+}
+
 function load(): State {
   if (memory) return memory;
   let raw: string | null = null;

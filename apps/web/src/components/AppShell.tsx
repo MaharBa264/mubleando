@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { AuthGate, AuthProvider, useAuth } from '@/components/auth/AuthProvider';
 
 const NAV = [
   { href: '/', label: 'Proyectos', match: (p: string) => p === '/' || p.startsWith('/proyectos') || p.startsWith('/muebles') },
@@ -10,7 +11,17 @@ const NAV = [
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {
+  return (
+    <AuthProvider>
+      <Shell>{children}</Shell>
+    </AuthProvider>
+  );
+}
+
+function Shell({ children }: { children: ReactNode }) {
   const path = usePathname() ?? '/';
+  const { mode, session } = useAuth();
+  const email = session?.user.email ?? '';
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-s focus:bg-surface focus:px-3 focus:py-2">
@@ -40,10 +51,23 @@ export function AppShell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          {(mode === 'local' || session) && (
+            <Link
+              href="/cuenta"
+              aria-current={path.startsWith('/cuenta') ? 'page' : undefined}
+              title={mode === 'cloud' ? email : 'Datos guardados en este navegador'}
+              className="ml-auto flex items-center gap-2 rounded-s px-2 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-text"
+            >
+              <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent">
+                {mode === 'cloud' ? email.slice(0, 1) || '?' : '⌂'}
+              </span>
+              <span className="hidden sm:inline">{mode === 'cloud' ? 'Cuenta' : 'En este navegador'}</span>
+            </Link>
+          )}
         </div>
       </header>
       <main id="main" className="flex flex-1 flex-col">
-        {children}
+        <AuthGate>{children}</AuthGate>
       </main>
     </div>
   );
