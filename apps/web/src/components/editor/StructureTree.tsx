@@ -31,7 +31,14 @@ export function StructureTree() {
           onMouseEnter={() => setHover(`zone:${z.id}`)}
           onMouseLeave={() => setHover(null)}
         >
-          <span className="truncate">{labels.get(z.id)?.short}</span>
+          <span className="truncate">
+            {labels.get(z.id)?.short}
+            {z.front && (
+              <span className="ml-1 text-xs font-normal text-muted">
+                · {z.front.kind === 'door' ? (z.front.leaves === 2 ? '2 puertas' : 'puerta') : `${z.front.sizes.length} ${z.front.sizes.length === 1 ? 'cajón' : 'cajones'}`}
+              </span>
+            )}
+          </span>
           {box && <span className="tabular shrink-0 text-xs text-muted">{fmtDims(box.dx, box.dy)}</span>}
         </button>
         {z.split && <ul className="ml-3 border-l border-border pl-2">{z.split.children.map(renderZone)}</ul>}
@@ -40,9 +47,17 @@ export function StructureTree() {
   };
 
   const groups: { title: string; parts: Part[] }[] = [
-    { title: 'Caja', parts: result.parts.filter((p) => ['side', 'top', 'bottom', 'back'].includes(p.role)) },
+    { title: 'Caja', parts: result.parts.filter((p) => ['side', 'top', 'bottom', 'back', 'plinth'].includes(p.role)) },
     { title: 'Estantes y divisores', parts: result.parts.filter((p) => p.role === 'shelf' || p.role === 'divider') },
+    { title: 'Puertas', parts: result.parts.filter((p) => p.role === 'door') },
   ];
+  // Un grupo por cajón, con su frente y su caja.
+  const drawerGroups = new Map<string, Part[]>();
+  for (const p of result.parts) {
+    if (p.assembly?.kind !== 'drawer') continue;
+    drawerGroups.set(p.assembly.name, [...(drawerGroups.get(p.assembly.name) ?? []), p]);
+  }
+  for (const [title, list] of drawerGroups) groups.push({ title, parts: list });
 
   return (
     <nav aria-label="Estructura del mueble" className="space-y-4 p-3">

@@ -4,7 +4,7 @@ Aplicación web y móvil para diseñar muebles de tablero (cocinas, armarios, es
 
 Funciona en el navegador del ordenador y del móvil, y se puede instalar como aplicación (PWA). El nombre interno del código sigue siendo `mueblesweb` hasta que se elija la marca definitiva.
 
-> **Estado:** en desarrollo, fase 1 terminada. Los datos se guardan en el navegador de cada dispositivo; la sincronización entre el PC y el móvil llega con el guardado en la nube.
+> **Estado:** en desarrollo, fases 1 y 2 terminadas. Los datos se guardan en el navegador de cada dispositivo; la sincronización entre el PC y el móvil llega con el guardado en la nube.
 
 ## Qué hace hoy
 
@@ -20,10 +20,14 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Lista de corte agrupada o pieza a pieza, por mueble y por proyecto | Hecho |
 | Exportar la lista de corte a CSV (para la maderera, Excel o un optimizador) | Hecho |
 | Metros cuadrados de tablero, metros de canto y coste estimado | Hecho |
-| Exportar a STL para impresión 3D: mueble completo o pieza a pieza, a escala | Hecho |
-| Puertas, cajones y zócalo | Fase 2 |
-| Editar materiales, cantos y métodos de fabricación | Fase 2 |
-| Guardado en la nube y uso desde varios dispositivos | Fase 2-3 |
+| Exportar a STL para impresión 3D: mueble completo o pieza a pieza, a escala, con los cajones integrados o aparte | Hecho |
+| Puertas de una o dos hojas, superpuestas o encastradas | Hecho |
+| Cajones con su caja completa (laterales, trasera, contrafrente, fondo) | Hecho |
+| Zócalo | Hecho |
+| Ver puertas y cajones abiertos en 3D | Hecho |
+| Tus tableros, cantos, precios y métodos de fabricación | Hecho |
+| Cambiar el material o los cantos de una pieza concreta | Hecho |
+| Guardado en la nube y uso desde varios dispositivos | Siguiente |
 
 El detalle de todas las funciones, previstas y hechas, está en [`replica/features.csv`](replica/features.csv). El plan está en [`docs/hoja-de-ruta.md`](docs/hoja-de-ruta.md).
 

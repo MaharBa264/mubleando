@@ -40,3 +40,19 @@ Decisiones del usuario: no tiene CNC (el corte se encarga a una maderera), quier
 Los commits se reescribieron con la dirección privada de GitHub (`…@users.noreply.github.com`) antes de la primera subida, para no publicar el correo personal.
 
 Comprobado: 21 pruebas del motor y 15 de exportaciones en verde; `tsc` sin errores; el diálogo STL en el navegador a 1440 y 375 px, generando el ZIP (5 archivos) sin errores en consola.
+
+## Fase 2: muebles completos (2026-11-16)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `@mw/engine` | hecho | cornisa y remates; puertas correderas; cajones interiores | decidir hasta dónde tapa un frente superpuesto: depende de si al lado hay estructura exterior (todo el tablero menos media holgura) o un estante o divisor (la mitad) |
+| S06 | Puertas (en propiedades del hueco) | hecho | correderas y abatibles | — |
+| S07 | Cajones (en propiedades del hueco) | hecho | cajón interior, frente doble | el alto de la caja depende de qué parte del frente cae dentro del hueco: el cajón de arriba y el de abajo salen más bajos |
+| S08 | Zócalo (en propiedades del mueble) | parcial | cornisa y remates | — |
+| S04 | Material y cantos por pieza | hecho | — | un material de otro espesor cambiaría la geometría: solo se permiten tableros del mismo espesor |
+| S10/S11/S12 | Bibliotecas | hecho | importar catálogos de fabricantes | proteger el borrado de materiales y métodos en uso |
+| S03 | Visor: frentes cerrados, abiertos, ocultos | hecho | vista explosionada | el panel de propiedades, más largo, estiraba la fila del editor: se fijó la fila a la altura disponible |
+
+Datos: formato guardado versión 2, con migración automática de los datos de la fase 1 (métodos sin frentes ni cajones, tablero de 16 que faltaba). El motor completa también un método antiguo si le llega.
+
+Comprobado: 47 pruebas del motor (25 nuevas con cifras calculadas a mano) y 15 de exportaciones; `tsc` sin errores; en el navegador, puerta en un bajo, cajones en una columna, frentes abiertos, cambio de canto en una pieza y vuelta al método, edición de un método, borrado protegido de un material en uso, STL con cajones aparte (4 archivos), despiece con cajones, migración de datos de la fase 1, y anchos de 1024 y 375 px sin desbordes.

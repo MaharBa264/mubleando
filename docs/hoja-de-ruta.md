@@ -17,14 +17,21 @@ Actualizada el 15 de noviembre de 2026.
 - PWA (instalable, sin conexión en producción).
 - Exportación STL para impresión 3D (añadida tras la fase 1).
 
-## Fase 2: muebles completos (siguiente)
+## Fase 2: muebles completos (hecha)
 
-- **Puertas**: una o dos hojas, encastradas o superpuestas, con holguras y retranqueos.
-- **Cajones**: por número, con holguras; estructura completa (frente, laterales, trasera, fondo). Sus piezas llevarán `assembly` para que el STL los pueda integrar o separar.
-- **Zócalo** y zonas exteriores.
-- **Bibliotecas editables**: tus tableros, cantos y precios; métodos de fabricación propios.
-- **Material y cantos por pieza**: cambiar una pieza concreta sin tocar el método.
-- STL: tolerancias de encaje para los cajones impresos aparte.
+- **Puertas**: una o dos hojas, superpuestas o encastradas, con holgura y bisagras a un lado u otro.
+- **Cajones**: por número, con alturas fijas o repartidas; caja completa (laterales, trasera, contrafrente, fondo en ranura o clavado), holguras para guías y fondo redondeado a largos de guía.
+- **Zócalo** con altura y retranqueo.
+- **Bibliotecas editables**: tableros, cantos y precios; métodos de fabricación propios, con frentes y cajones.
+- **Material y cantos por pieza**.
+- Visor con frentes cerrados, abiertos u ocultos. STL con los cajones integrados, aparte o por piezas.
+
+Pendiente de la fase 2, para más adelante:
+
+- Zonas exteriores aparte del zócalo (cornisa, remates laterales).
+- Puertas correderas y abatibles.
+- Cajones interiores (detrás de una puerta) y cajones con frente doble.
+- Tolerancias de encaje propias para los cajones impresos en 3D.
 
 ## Guardado en la nube
 

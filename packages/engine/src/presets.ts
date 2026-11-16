@@ -6,11 +6,29 @@ export const PRESET_MATERIALS: Material[] = [
   { id: 'mel-blanco-19', name: 'Melamina blanca 19', kind: 'panel', thickness: mm(19), grain: 'none', priceCents: 1150, color: 'var(--mat-white)' },
   { id: 'mel-roble-19', name: 'Melamina roble 19', kind: 'panel', thickness: mm(19), grain: 'length', priceCents: 1480, color: 'var(--mat-oak)' },
   { id: 'mel-grafito-16', name: 'Melamina grafito 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 1320, color: 'var(--mat-graphite)' },
+  { id: 'mel-blanco-16', name: 'Melamina blanca 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 1050, color: 'var(--mat-white)' },
   { id: 'dm-8', name: 'DM 8', kind: 'panel', thickness: mm(8), grain: 'none', priceCents: 640, color: 'var(--mat-mdf)' },
   { id: 'hdf-3', name: 'HDF 3 blanco', kind: 'panel', thickness: mm(3), grain: 'none', priceCents: 380, color: 'var(--mat-white)' },
   { id: 'pvc-blanco-1', name: 'Canto PVC blanco 1', kind: 'edge', thickness: mm(1), grain: 'none', priceCents: 45, color: 'var(--mat-white)' },
   { id: 'abs-roble-2', name: 'Canto ABS roble 2', kind: 'edge', thickness: mm(2), grain: 'none', priceCents: 90, color: 'var(--mat-oak)' },
 ];
+
+/** Frentes por defecto: melamina blanca 19 con canto de PVC de 1 mm en los cuatro lados y 3 mm de holgura. */
+export const DEFAULT_FRONTS: Method['fronts'] = { materialId: 'mel-blanco-19', edgeMaterialId: 'pvc-blanco-1', gap: mm(3) };
+
+/** Cajón por defecto: laterales de 16, fondo de HDF 3 en ranura, guías de bolas (13 mm por lado). */
+export const DEFAULT_DRAWER: Method['drawer'] = {
+  materialId: 'mel-blanco-16',
+  bottomMaterialId: 'hdf-3',
+  bottomMode: 'groove',
+  grooveDepth: mm(8),
+  grooveHeight: mm(10),
+  sideClearance: mm(13),
+  topClearance: mm(20),
+  bottomClearance: mm(15),
+  rearClearance: mm(10),
+  depthStep: mm(50),
+};
 
 export const PRESET_METHODS: Method[] = [
   {
@@ -22,6 +40,8 @@ export const PRESET_METHODS: Method[] = [
     dividerFrontSetback: 0,
     frontEdgeMaterialId: 'pvc-blanco-1',
     edgeReducesCut: true,
+    fronts: { ...DEFAULT_FRONTS },
+    drawer: { ...DEFAULT_DRAWER },
   },
   {
     id: 'std-clavada',
@@ -32,5 +52,19 @@ export const PRESET_METHODS: Method[] = [
     dividerFrontSetback: 0,
     frontEdgeMaterialId: 'pvc-blanco-1',
     edgeReducesCut: true,
+    fronts: { ...DEFAULT_FRONTS },
+    drawer: { ...DEFAULT_DRAWER, bottomMode: 'under', grooveDepth: 0, grooveHeight: 0 },
   },
 ];
+
+/**
+ * Completa un método guardado con una versión anterior del formato (sin frentes ni cajones)
+ * con los valores por defecto. Los métodos nuevos pasan sin cambios.
+ */
+export function normalizeMethod(m: Omit<Method, 'fronts' | 'drawer'> & Partial<Pick<Method, 'fronts' | 'drawer'>>): Method {
+  return {
+    ...m,
+    fronts: { ...DEFAULT_FRONTS, ...m.fronts },
+    drawer: { ...DEFAULT_DRAWER, ...m.drawer },
+  };
+}

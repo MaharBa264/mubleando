@@ -80,7 +80,7 @@ En **pieza a pieza**, las piezas con las mismas tres medidas se imprimen una vez
 
 **Cajones** (solo con *Mueble completo*)
 
-Los cajones llegan en la fase 2, pero la exportación ya está preparada para ellos. Mientras el mueble no tenga cajones, esta opción aparece desactivada.
+Esta opción solo se activa si el mueble tiene cajones. Cada cajón (su frente y su caja) se trata como un conjunto.
 
 | Opción | Qué sale |
 | --- | --- |
@@ -124,7 +124,7 @@ Al reducir, los tableros finos se vuelven demasiado finos para imprimirse: una t
 
 - **Mueble completo**: imprímelo de pie, con la base sobre la cama. Los estantes quedan en voladizo dentro del hueco; actívale soportes en el laminador o, si el mueble tiene muchos estantes, usa *pieza a pieza*.
 - **Pieza a pieza**: todas salen tumbadas, sin soportes. Se pegan con cianoacrilato (pegamento instantáneo). Monta igual que el mueble real: costados, base y tapa, trasera, estantes.
-- Para que encajen los cajones impresos aparte, conviene que el cajón tenga holgura en el diseño (llegará con los cajones en la fase 2).
+- Los cajones impresos aparte entran en su hueco porque el diseño ya les deja holgura: el hueco de las guías a cada lado (13 mm reales por defecto, 1,3 mm a escala 1:10) y los espacios libres de arriba y abajo. A escalas muy pequeñas esas holguras se vuelven milimétricas; si no entran, lija un poco o imprime el cajón con una expansión horizontal negativa.
 
 ### Uso desde el código
 

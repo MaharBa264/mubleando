@@ -4,7 +4,7 @@ import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Edges, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
 import { useMemo } from 'react';
 import type { Box, Material, Part, ZoneOut } from '@mw/engine';
-import type { Selection } from '@/components/editor/store';
+import type { FrontsView, Selection } from '@/components/editor/store';
 
 /** Len (1/100 mm) → metros de la escena. */
 const S = 1 / 100_000;
@@ -26,6 +26,33 @@ const size = (b: Box, inset = 0): [number, number, number] => [
 ];
 
 type Hit = { kind: 'part'; key: string } | { kind: 'zone'; id: string };
+
+/** Ángulo de apertura de las puertas en la vista "abiertos". */
+const DOOR_OPEN = (95 * Math.PI) / 180;
+/** Fracción del fondo que salen los cajones en la vista "abiertos". */
+const DRAWER_OUT = 0.6;
+
+const isFront = (p: Part) => p.role === 'door' || p.role === 'drawer-front';
+
+/**
+ * Dónde se dibuja cada pieza según la vista de frentes:
+ * - puertas abiertas: giran sobre el canto de las bisagras;
+ * - cajones abiertos: todas sus piezas salen hacia delante el 60 % de su fondo.
+ */
+function placement(p: Part, mode: FrontsView, drawerDepth: Map<string, number>) {
+  const c = center(p.box);
+  if (mode !== 'open') return { group: [0, 0, 0] as [number, number, number], rot: 0, mesh: c };
+  if (p.role === 'door') {
+    const left = p.hinge !== 'right';
+    const pivot: [number, number, number] = [(left ? p.box.x : p.box.x + p.box.dx) * S, c[1], p.box.z * S];
+    return { group: pivot, rot: left ? -DOOR_OPEN : DOOR_OPEN, mesh: [c[0] - pivot[0], 0, c[2] - pivot[2]] as [number, number, number] };
+  }
+  if (p.assembly?.kind === 'drawer') {
+    const out = (drawerDepth.get(p.assembly.id) ?? 0) * DRAWER_OUT * S;
+    return { group: [0, 0, out] as [number, number, number], rot: 0, mesh: c };
+  }
+  return { group: [0, 0, 0] as [number, number, number], rot: 0, mesh: c };
+}
 
 /**
  * Decide qué se ha tocado. Los huecos cubren la cara de los estantes, así que si una pieza
@@ -51,7 +78,7 @@ export interface ViewerProps {
   materials: Material[];
   selection: Selection;
   hover: string | null;
-  view: { ortho: boolean; wire: boolean; cameraKey: number };
+  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView };
   onSelect: (s: Selection) => void;
   onHover: (id: string | null) => void;
 }
@@ -86,6 +113,12 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
   const selectedZone = selection.kind === 'zone' ? selection.id : null;
   const selectedPart = selection.kind === 'part' ? selection.key : null;
   const visibleZones = zones.filter((z) => z.isLeaf || z.id === selectedZone);
+  const shown = view.fronts === 'hidden' ? parts.filter((p) => !isFront(p)) : parts;
+  const drawerDepth = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of parts) if (p.role === 'drawer-side' && p.assembly) m.set(p.assembly.id, Math.max(m.get(p.assembly.id) ?? 0, p.length));
+    return m;
+  }, [parts]);
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -118,11 +151,13 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
           document.body.style.cursor = '';
         }}
       >
-        {parts.map((p) => {
+        {shown.map((p) => {
           const isSel = p.key === selectedPart;
           const isHover = hover === `part:${p.key}`;
+          const pl = placement(p, view.fronts, drawerDepth);
           return (
-            <mesh key={p.key} position={center(p.box)} userData={{ kind: 'part', key: p.key }}>
+            <group key={p.key} position={pl.group} rotation={[0, pl.rot, 0]}>
+            <mesh position={pl.mesh} userData={{ kind: 'part', key: p.key }}>
               <boxGeometry args={size(p.box)} />
               <meshStandardMaterial
                 color={isSel ? colors.sel : colors.mat(p.materialId)}
@@ -135,6 +170,7 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
               />
               {!view.wire && <Edges color={isSel ? colors.sel : colors.line} threshold={15} />}
             </mesh>
+            </group>
           );
         })}
 

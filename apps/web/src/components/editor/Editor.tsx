@@ -21,6 +21,9 @@ const CabinetViewer = dynamic(() => import('@/components/viewer/CabinetViewer'),
   loading: () => <Skeleton className="h-full w-full rounded-none" />,
 });
 
+const NEXT_FRONTS = { closed: 'open', open: 'hidden', hidden: 'closed' } as const;
+const FRONTS_LABEL = { closed: 'Frentes cerrados', open: 'Frentes abiertos', hidden: 'Sin frentes' } as const;
+
 type SaveState = { kind: 'saved' } | { kind: 'saving' } | { kind: 'error'; message: string } | { kind: 'conflict' };
 
 /** S03 · Editor de mueble: estructura + visor 3D + propiedades. */
@@ -47,6 +50,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
   const method = methods.find((m) => m.id === methodId) ?? methods[0]!;
   const result = useMemo(() => compute(design, method, materials), [design, method, materials]);
   const labels = useMemo(() => zoneLabels(design), [design]);
+  const hasFronts = result.parts.some((p) => p.role === 'door' || p.role === 'drawer-front');
 
   // Si lo seleccionado desaparece (p. ej. al quitar divisiones), volver al mueble.
   useEffect(() => {
@@ -122,7 +126,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
             value={name}
             maxLength={120}
             onChange={(e) => store.getState().setName(e.target.value)}
-            className="h-8 min-w-0 flex-1 rounded-s border border-transparent bg-transparent px-2 font-semibold hover:border-border focus:border-border sm:max-w-sm"
+            className="h-8 min-w-[9rem] flex-1 rounded-s border border-transparent bg-transparent px-2 font-semibold hover:border-border focus:border-border sm:max-w-sm"
           />
           <SaveBadge state={save} />
           <div className="ml-auto flex items-center gap-1">
@@ -160,7 +164,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
         )}
 
         {/* cuerpo: estructura | visor | propiedades (apilado en móvil) */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_340px]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
           <aside className="hidden overflow-y-auto border-r border-border bg-surface lg:block" aria-label="Estructura">
             <StructureTree />
           </aside>
@@ -187,6 +191,15 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
               <ToggleBtn pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })}>
                 Alámbrico
               </ToggleBtn>
+              {hasFronts && (
+                <ToggleBtn
+                  pressed={view.fronts !== 'closed'}
+                  onClick={() => store.getState().setView({ fronts: NEXT_FRONTS[view.fronts] })}
+                  title="Cambiar cómo se ven puertas y cajones"
+                >
+                  {FRONTS_LABEL[view.fronts]}
+                </ToggleBtn>
+              )}
               <ToggleBtn onClick={() => store.getState().resetCamera()}>Centrar</ToggleBtn>
             </div>
             <p className="sr-only" aria-live="polite">
@@ -227,10 +240,11 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
   );
 }
 
-function ToggleBtn({ pressed, onClick, children }: { pressed?: boolean; onClick: () => void; children: React.ReactNode }) {
+function ToggleBtn({ pressed, onClick, children, title }: { pressed?: boolean; onClick: () => void; children: React.ReactNode; title?: string }) {
   return (
     <button
       type="button"
+      title={title}
       aria-pressed={pressed}
       onClick={onClick}
       className={`rounded-s px-3 py-1.5 text-xs font-medium ${pressed ? 'bg-accent-soft text-accent' : 'hover:bg-surface-2'}`}

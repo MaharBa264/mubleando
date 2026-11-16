@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import {
   equalize,
   findParent,
@@ -9,8 +9,17 @@ import {
   mm,
   setChildSize,
   setDivisions,
+  setDrawerCount,
+  setDrawerSize,
+  setFront,
+  setOverride,
+  setPlinth,
   setSize,
+  type Design,
   type Edges,
+  type Front,
+  type FrontMount,
+  type PartRole,
 } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/feedback';
@@ -25,17 +34,62 @@ export function PropertiesPanel() {
     <div className="space-y-5 p-4">
       {selection.kind === 'cabinet' && <CabinetProps />}
       {selection.kind === 'zone' && <ZoneProps key={selection.id} id={selection.id} />}
-      {selection.kind === 'part' && <PartProps partKey={selection.key} />}
+      {selection.kind === 'part' && <PartProps key={selection.key} partKey={selection.key} />}
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+export const ROLE_LABEL: Record<PartRole, string> = {
+  side: 'Costado',
+  top: 'Tapa',
+  bottom: 'Base',
+  back: 'Trasera',
+  shelf: 'Estante',
+  divider: 'Divisor',
+  plinth: 'Zócalo',
+  door: 'Puerta',
+  'drawer-front': 'Frente de cajón',
+  'drawer-side': 'Lateral de cajón',
+  'drawer-back': 'Trasera o contrafrente de cajón',
+  'drawer-bottom': 'Fondo de cajón',
+};
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3">
       <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/** Botones excluyentes (radiogroup) con aspecto de interruptor segmentado. */
+function Segmented<T extends string | number>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: [T, string][];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid gap-1 rounded-s bg-surface-2 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+      {options.map(([v, text]) => (
+        <button
+          key={String(v)}
+          type="button"
+          role="radio"
+          aria-checked={value === v}
+          onClick={() => value !== v && onChange(v)}
+          className={`rounded-s px-2 py-1.5 text-sm ${value === v ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
+        >
+          {text}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -54,6 +108,8 @@ function Warnings({ zoneId }: { zoneId?: string }) {
   );
 }
 
+// ───────────────────────── mueble ─────────────────────────
+
 function CabinetProps() {
   const { methods, result } = useEnv();
   const design = useEditor((s) => s.design);
@@ -63,6 +119,10 @@ function CabinetProps() {
   const setMeta = useEditor((s) => s.setMeta);
   const select = useEditor((s) => s.select);
   const { w, h, d } = design.size;
+  const plinth = design.plinth;
+  const count = (roles: PartRole[]) => result.parts.filter((p) => roles.includes(p.role)).length;
+  const doors = count(['door']);
+  const drawers = count(['drawer-front']);
 
   return (
     <>
@@ -73,6 +133,25 @@ function CabinetProps() {
           <MmField compact label="Fondo" value={d} min={LIMITS.d.min} max={LIMITS.d.max} onCommit={(v) => v !== null && apply((x) => setSize(x, { d: v }))} />
         </div>
       </Section>
+
+      <Section title="Zócalo">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-[var(--accent)]"
+            checked={!!plinth}
+            onChange={(e) => apply((x) => setPlinth(x, e.target.checked ? { height: mm(100), setback: mm(50) } : undefined))}
+          />
+          Con zócalo (la base sube y se pone un tablero delante, retranqueado)
+        </label>
+        {plinth && (
+          <div className="grid grid-cols-2 gap-2">
+            <MmField compact label="Altura" value={plinth.height} min={mm(20)} max={h - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, height: v }))} />
+            <MmField compact label="Retranqueo" value={plinth.setback} min={0} max={d - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, setback: v }))} />
+          </div>
+        )}
+      </Section>
+
       <Section title="Fabricación">
         <SelectField label="Método" value={methodId} onChange={(e) => setMeta({ methodId: e.target.value })}>
           {methods.map((m) => (
@@ -83,17 +162,32 @@ function CabinetProps() {
         </SelectField>
         <Stepper label="Unidades de este mueble" value={quantity} min={1} max={99} onChange={(n) => setMeta({ quantity: n })} />
       </Section>
+
       <Section title="Resumen">
         <p className="text-sm text-muted">
-          {result.parts.length} piezas.{' '}
+          {result.parts.length} piezas
+          {doors > 0 && ` · ${doors} ${doors === 1 ? 'puerta' : 'puertas'}`}
+          {drawers > 0 && ` · ${drawers} ${drawers === 1 ? 'cajón' : 'cajones'}`}.{' '}
           <button type="button" className="font-medium text-accent underline" onClick={() => select({ kind: 'zone', id: design.root.id })}>
-            Dividir el interior
+            Dividir el interior o ponerle frentes
           </button>
         </p>
       </Section>
       <Warnings />
     </>
   );
+}
+
+// ───────────────────────── hueco ─────────────────────────
+
+/** Hueco que contiene a `id` y tiene frente, si lo hay. */
+function coveringZone(design: Design, id: string): string | null {
+  let cur = findParent(design.root, id);
+  while (cur) {
+    if (cur.parent.front) return cur.parent.id;
+    cur = findParent(design.root, cur.parent.id);
+  }
+  return null;
 }
 
 function ZoneProps({ id }: { id: string }) {
@@ -125,22 +219,19 @@ function ZoneProps({ id }: { id: string }) {
         </p>
       </div>
 
+      <FrontSection zoneId={id} />
+
       {/* S05 · Añadir divisiones */}
       <Section title="Dividir">
-        <div role="radiogroup" aria-label="Tipo de división" className="grid grid-cols-2 gap-1 rounded-s bg-surface-2 p-1">
-          {(['y', 'x'] as const).map((a) => (
-            <button
-              key={a}
-              type="button"
-              role="radio"
-              aria-checked={axis === a}
-              onClick={() => setAxis(a)}
-              className={`rounded-s px-2 py-1.5 text-sm ${axis === a ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
-            >
-              {a === 'y' ? 'Estantes' : 'Divisores verticales'}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label="Tipo de división"
+          value={axis}
+          onChange={setAxis}
+          options={[
+            ['y', 'Estantes'],
+            ['x', 'Divisores verticales'],
+          ]}
+        />
         <Stepper
           label={axis === 'y' ? 'Número de estantes' : 'Número de divisores'}
           value={split?.axis === axis ? panels : 0}
@@ -153,6 +244,7 @@ function ZoneProps({ id }: { id: string }) {
             Ahora tiene {panels} {noun(split.axis, panels)}. Si pones {axis === 'y' ? 'estantes' : 'divisores'}, se sustituyen junto con lo que haya dentro.
           </p>
         )}
+        {zone.front?.kind === 'drawers' && <p className="text-xs text-warning">Si lo divides, se quitan los cajones de este hueco.</p>}
       </Section>
 
       {split && (
@@ -203,28 +295,162 @@ function ZoneProps({ id }: { id: string }) {
   );
 }
 
+/** S06 / S07 · Puerta o cajones del hueco. */
+function FrontSection({ zoneId }: { zoneId: string }) {
+  const { result, labels } = useEnv();
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
+  const select = useEditor((s) => s.select);
+  const zone = findZone(design.root, zoneId)!;
+  const box = result.zones.find((z) => z.id === zoneId)!.box;
+  const front = zone.front;
+  const kind = front?.kind ?? 'none';
+  const mount: FrontMount = front?.mount ?? 'overlay';
+  const covering = coveringZone(design, zoneId);
+  const hasInnerFronts = (z: typeof zone): boolean => !!z.split?.children.some((c) => c.front || hasInnerFronts(c));
+
+  const put = (f: Front | undefined) => apply((d) => setFront(d, zoneId, f));
+  const choose = (k: 'none' | 'door' | 'drawers') => {
+    if (k === 'none') put(undefined);
+    else if (k === 'door') put({ kind: 'door', leaves: box.dx > mm(600) ? 2 : 1, hinge: 'left', mount });
+    else put({ kind: 'drawers', mount, sizes: [null, null, null] });
+  };
+
+  const frontParts = result.parts.filter((p) => p.zoneId === zoneId && p.role === 'drawer-front');
+
+  return (
+    <Section title="Frente">
+      <Segmented
+        label="Qué cierra el hueco"
+        value={kind}
+        onChange={choose}
+        options={[
+          ['none', 'Abierto'],
+          ['door', 'Puerta'],
+          ['drawers', 'Cajones'],
+        ]}
+      />
+      {covering && (
+        <p className="text-xs text-warning">
+          Este hueco ya queda detrás del frente de «{labels.get(covering)?.full}». Si le pones uno aquí, se quita aquel.
+        </p>
+      )}
+      {kind === 'none' && hasInnerFronts(zone) && <p className="text-xs text-muted">Los huecos de dentro tienen sus propios frentes.</p>}
+      {kind === 'drawers' && zone.split && <p className="text-xs text-warning">Los cajones necesitan un hueco sin divisiones.</p>}
+
+      {front && (
+        <Segmented
+          label="Montaje"
+          value={mount}
+          onChange={(m) => put({ ...front, mount: m })}
+          options={[
+            ['overlay', 'Superpuesto'],
+            ['inset', 'Encastrado'],
+          ]}
+        />
+      )}
+
+      {front?.kind === 'door' && (
+        <>
+          <Segmented
+            label="Hojas"
+            value={front.leaves}
+            onChange={(n) => put({ ...front, leaves: n })}
+            options={[
+              [1, 'Una hoja'],
+              [2, 'Dos hojas'],
+            ]}
+          />
+          {front.leaves === 1 && (
+            <Segmented
+              label="Bisagras"
+              value={front.hinge}
+              onChange={(hinge) => put({ ...front, hinge })}
+              options={[
+                ['left', 'Bisagras a la izquierda'],
+                ['right', 'A la derecha'],
+              ]}
+            />
+          )}
+        </>
+      )}
+
+      {front?.kind === 'drawers' && (
+        <>
+          <Stepper label="Número de cajones" value={front.sizes.length} min={1} max={12} onChange={(n) => apply((d) => setDrawerCount(d, zoneId, n))} />
+          <p className="text-xs text-muted">Altura de cada frente, de arriba abajo. Déjalo vacío para repartir.</p>
+          <div className="space-y-2">
+            {front.sizes.map((s, i) => {
+              const p = frontParts.find((x) => x.key === `zone:${zoneId}/drawer${i}/front`);
+              return (
+                <MmField
+                  key={i}
+                  compact
+                  label={`Cajón ${i + 1}${i === 0 ? ' (arriba)' : i === front.sizes.length - 1 ? ' (abajo)' : ''}`}
+                  value={s}
+                  allowEmpty
+                  min={mm(40)}
+                  placeholder={p ? `auto · ${fmtMm(p.width)}` : 'auto'}
+                  onCommit={(v) => apply((d) => setDrawerSize(d, zoneId, i, v))}
+                />
+              );
+            })}
+          </div>
+          <Button
+            size="sm"
+            disabled={front.sizes.every((s) => s === null)}
+            onClick={() => put({ ...front, sizes: front.sizes.map(() => null) })}
+          >
+            Igualar alturas
+          </Button>
+        </>
+      )}
+
+      {front && (
+        <div className="flex flex-wrap gap-2">
+          {result.parts
+            .filter((p) => p.zoneId === zoneId && (p.role === 'door' || p.role === 'drawer-front'))
+            .slice(0, 4)
+            .map((p) => (
+              <Button key={p.key} size="sm" variant="ghost" onClick={() => select({ kind: 'part', key: p.key })}>
+                {p.name}
+              </Button>
+            ))}
+        </div>
+      )}
+    </Section>
+  );
+}
+
+// ───────────────────────── pieza ─────────────────────────
+
 function PartProps({ partKey }: { partKey: string }) {
   const { result, materials, labels } = useEnv();
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
   const select = useEditor((s) => s.select);
   const part = result.parts.find((p) => p.key === partKey);
   if (!part) return <Alert tone="info">Esta pieza ya no existe.</Alert>;
-  const matName = (id: string | null) => (id ? (materials.find((m) => m.id === id)?.name ?? id) : '—');
+
+  const override = design.overrides?.[part.key];
+  const panels = materials.filter((m) => m.kind === 'panel' && m.thickness === part.thickness);
+  const edgeMats = materials.filter((m) => m.kind === 'edge');
   const edgeNames: [keyof Edges, string][] = [
-    ['L1', 'Largo 1 (frente)'],
-    ['L2', 'Largo 2'],
-    ['W1', 'Ancho 1'],
-    ['W2', 'Ancho 2'],
+    ['L1', 'L1 · largo (frente)'],
+    ['L2', 'L2 · largo'],
+    ['W1', 'A1 · extremo'],
+    ['W2', 'A2 · extremo'],
   ];
+  const isFront = part.role === 'door' || part.role === 'drawer-front';
+  const isDrawerBox = part.assembly?.kind === 'drawer' && !isFront;
 
   return (
     <>
       <div>
-        <p className="text-xs text-muted">Pieza</p>
+        <p className="text-xs text-muted">Pieza · {ROLE_LABEL[part.role]}</p>
         <h2 className="text-lg font-semibold">{part.name}</h2>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
-        <dt className="text-muted">Material</dt>
-        <dd>{matName(part.materialId)}</dd>
         <dt className="text-muted">Espesor</dt>
         <dd className="tabular">{fmtMm(part.thickness)} mm</dd>
         <dt className="text-muted">Medida acabada</dt>
@@ -234,22 +460,56 @@ function PartProps({ partKey }: { partKey: string }) {
         <dt className="text-muted">Veta</dt>
         <dd>{part.grain === 'length' ? 'A lo largo' : 'Sin veta'}</dd>
       </dl>
-      <Section title="Cantos">
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-          {edgeNames.map(([k, label]) => (
-            <div key={k} className="contents">
-              <dt className="text-muted">{label}</dt>
-              <dd>{matName(part.edges[k])}</dd>
-            </div>
+
+      <Section title="Material">
+        <SelectField
+          label={`Tablero (solo los de ${fmtMm(part.thickness)} mm)`}
+          value={part.materialId}
+          onChange={(e) => apply((d) => setOverride(d, part.key, { ...override, materialId: e.target.value }))}
+        >
+          {panels.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
           ))}
-        </dl>
+        </SelectField>
       </Section>
+
+      <Section title="Cantos">
+        <div className="grid grid-cols-2 gap-2">
+          {edgeNames.map(([k, label]) => (
+            <SelectField
+              key={k}
+              label={label}
+              value={part.edges[k] ?? ''}
+              onChange={(e) => apply((d) => setOverride(d, part.key, { ...override, edges: { ...override?.edges, [k]: e.target.value || null } }))}
+            >
+              <option value="">Sin canto</option>
+              {edgeMats.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </SelectField>
+          ))}
+        </div>
+        <p className="text-xs text-muted">Al cambiar un canto se recalcula la medida de corte.</p>
+      </Section>
+
+      {part.overridden && (
+        <Alert tone="info" title="Esta pieza tiene cambios a mano">
+          No sigue del todo el método de fabricación.{' '}
+          <button type="button" className="font-medium underline" onClick={() => apply((d) => setOverride(d, part.key, undefined))}>
+            Volver a lo del método
+          </button>
+        </Alert>
+      )}
+
       {part.zoneId && (
         <Button size="sm" onClick={() => select({ kind: 'zone', id: part.zoneId! })}>
-          Ver el hueco que divide ({labels.get(part.zoneId)?.short})
+          {isFront ? 'Editar el frente' : isDrawerBox ? 'Editar los cajones' : 'Ver el hueco que divide'} ({labels.get(part.zoneId)?.short})
         </Button>
       )}
-      <p className="text-xs text-muted">Materiales y cantos por pieza se podrán cambiar en la fase 2. Ahora salen del método.</p>
     </>
   );
 }

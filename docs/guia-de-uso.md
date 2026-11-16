@@ -43,7 +43,11 @@ En la barra de arriba: volver al proyecto, el nombre del mueble (se edita ahí m
 
 ### Cambiar las medidas y el método
 
-Selecciona **Mueble completo**. En propiedades cambias ancho, alto y fondo, el método de fabricación y cuántas unidades de este mueble lleva el proyecto (por ejemplo, 3 bajos iguales). Todas las piezas se recalculan al momento.
+Selecciona **Mueble completo**. En propiedades cambias ancho, alto y fondo, el zócalo, el método de fabricación y cuántas unidades de este mueble lleva el proyecto (por ejemplo, 3 bajos iguales). Todas las piezas se recalculan al momento.
+
+### Zócalo
+
+En **Mueble completo**, marca **Con zócalo**. La base del mueble sube a la altura del zócalo (100 mm por defecto) y se añade un tablero delante, retranqueado (50 mm por defecto) para dejar sitio a los pies. Los costados siguen llegando al suelo. Cambia la altura y el retranqueo en los dos campos que aparecen.
 
 Para escribir una medida: escribe y pulsa **Intro** o sal del campo. **Esc** deshace lo escrito. Si la medida no es válida, el campo se marca en rojo y explica por qué.
 
@@ -57,9 +61,42 @@ Para escribir una medida: escribe y pulsa **Intro** o sal del campo. **Esc** des
 
 Cada hueco hijo se puede volver a dividir: por ejemplo, un divisor y luego estantes distintos en cada columna.
 
-### Ver una pieza
+### Puertas
 
-Selecciona una pieza para ver su material, espesor, medida acabada, medida de corte y si tiene veta. En la fase 2 se podrá cambiar el material y los cantos de una pieza concreta.
+1. Selecciona el hueco que quieres cerrar. Puede ser el interior entero (una puerta que tapa todos los estantes) o un hueco concreto (por ejemplo, cada columna con su puerta).
+2. En **Frente**, elige **Puerta**. Si el hueco mide más de 600 mm de ancho, empieza con dos hojas.
+3. Elige el montaje:
+   - **Superpuesto**: la puerta tapa los cantos del mueble. Es lo habitual en cocinas.
+   - **Encastrado**: la puerta queda dentro del hueco, enrasada con el frente.
+4. Elige **Una hoja** o **Dos hojas** y, si es de una, el lado de las **bisagras**.
+
+Las medidas salen solas a partir de la holgura del método (3 mm por defecto): las puertas superpuestas dejan 1,5 mm al borde del mueble y 3 mm entre puertas vecinas.
+
+### Cajones
+
+1. Selecciona un hueco **sin divisiones** (si tiene, se quitan al poner cajones; puedes deshacerlo con Ctrl+Z).
+2. En **Frente**, elige **Cajones**. Empieza con tres iguales.
+3. Cambia el número con − y +.
+4. Las alturas de los frentes van **de arriba abajo**. Escribe una para fijarla (por ejemplo, un cajón de cubiertos de 140 mm arriba); los demás se reparten lo que queda. **Igualar alturas** quita las medidas fijas.
+
+Cada cajón lleva su caja completa: dos laterales, trasera, contrafrente y fondo. Las holguras para las guías, el fondo del cajón (redondeado a largos de guía de 50 en 50 mm) y los materiales salen del método de fabricación. Si un cajón queda demasiado bajo para su caja, aparece un aviso.
+
+### Ver puertas y cajones abiertos
+
+Debajo de la vista 3D, el botón **Frentes cerrados / Frentes abiertos / Sin frentes** cambia cómo se ven:
+
+- **Cerrados**: como quedará el mueble.
+- **Abiertos**: las puertas giran sobre sus bisagras y los cajones salen hacia delante.
+- **Sin frentes**: se ocultan puertas y frentes para ver y seleccionar el interior.
+
+### Ver y cambiar una pieza
+
+Selecciona una pieza (en el 3D o en el árbol) para ver su espesor, medida acabada, medida de corte y veta. Además puedes cambiarla a mano:
+
+- **Material**: otro tablero **del mismo espesor** (por ejemplo, un costado visto en roble en un mueble blanco).
+- **Cantos**: el canto de cada lado. L1 es el delantero; L2 el otro largo; A1 y A2 los extremos. La medida de corte se recalcula al momento.
+
+Las piezas cambiadas muestran el aviso «Esta pieza tiene cambios a mano», con un enlace para volver a lo que dice el método. Desde una puerta o una pieza de cajón, **Editar el frente** lleva al hueco para cambiar puertas o cajones.
 
 ### Deshacer, rehacer y guardado
 
@@ -94,7 +131,26 @@ Todas las opciones explicadas, incluidas las de cajones: [Exportaciones → STL]
 
 ## 6. Bibliotecas
 
-**Bibliotecas** muestra los tableros, los cantos y los métodos de fabricación disponibles, con su espesor, veta y precio. Por ahora son de solo lectura; en la fase 2 se podrán crear y editar con tus propios materiales y precios.
+**Bibliotecas** guarda tus tableros, cantos y métodos de fabricación.
+
+**Tableros y cantos.** **Nuevo tablero** / **Nuevo canto**, o **Editar** en uno existente:
+
+- Nombre, espesor y precio (por m² los tableros, por metro los cantos). El precio admite coma: `11,50`.
+- **Tiene veta** (solo tableros): las piezas no se podrán girar al colocarlas en el tablero.
+- Color con el que se ve en el 3D.
+
+No se puede borrar un material que use algún método: la app dice cuál, para que lo cambies antes.
+
+**Métodos de fabricación.** Reúnen todas las reglas de construcción. **Editar** cambia todos los muebles que lo usan; **Duplicar** crea una copia para hacer una variante sin tocar el original. Cada método tiene cuatro bloques:
+
+| Bloque | Qué se decide |
+| --- | --- |
+| Estructura | Tablero de la caja, canto del frente, si el canto descuenta de la medida de corte, retranqueo de estantes y divisores. |
+| Trasera | En ranura, clavada o sin trasera; tablero; profundidad y posición de la ranura y holgura. |
+| Puertas y frentes de cajón | Tablero, canto de los cuatro lados y holgura entre frentes. |
+| Cajones | Tableros de la caja y del fondo, fondo en ranura o clavado, hueco para guías, espacios libres arriba, abajo y detrás, y en qué múltiplos se redondea el fondo. |
+
+Si algo no cuadra (una ranura más profunda que el tablero, por ejemplo), el diálogo lo avisa antes de guardar. No se puede borrar un método que use algún mueble, ni el último que quede.
 
 ## 7. Dónde se guardan tus datos
 

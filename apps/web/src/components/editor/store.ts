@@ -3,6 +3,9 @@
 import { createStore } from 'zustand/vanilla';
 import type { Design } from '@mw/engine';
 
+/** Cómo se ven puertas y cajones en el visor. */
+export type FrontsView = 'closed' | 'open' | 'hidden';
+
 export type Selection = { kind: 'cabinet' } | { kind: 'zone'; id: string } | { kind: 'part'; key: string };
 
 interface Snapshot {
@@ -17,7 +20,7 @@ export interface EditorState extends Snapshot {
   future: Snapshot[];
   selection: Selection;
   hover: string | null;
-  view: { ortho: boolean; wire: boolean; cameraKey: number };
+  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView };
   /** Cambia el diseño y lo apunta en el historial. */
   apply: (fn: (d: Design) => Design) => void;
   setMeta: (patch: Partial<Pick<Snapshot, 'methodId' | 'quantity'>>) => void;
@@ -44,7 +47,7 @@ export function createEditorStore(init: { name: string; design: Design; methodId
       future: [],
       selection: { kind: 'cabinet' },
       hover: null,
-      view: { ortho: false, wire: false, cameraKey: 0 },
+      view: { ortho: false, wire: false, cameraKey: 0, fronts: 'closed' },
 
       apply: (fn) => {
         const next = fn(get().design);

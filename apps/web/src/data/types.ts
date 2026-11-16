@@ -40,6 +40,14 @@ export class NotFoundError extends Error {
   }
 }
 
+/** No se puede borrar algo porque otra cosa lo usa. El mensaje dice qué. */
+export class InUseError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InUseError';
+  }
+}
+
 /**
  * Contrato de datos. Hoy lo cumple `localData` (navegador); mañana una versión con Supabase
  * con las mismas firmas, sin tocar las pantallas.
@@ -59,5 +67,13 @@ export interface DataLayer {
   deleteCabinet(id: string): Promise<void>;
 
   listMaterials(): Promise<Material[]>;
+  /** Crea o actualiza (por id) un tablero o canto. */
+  saveMaterial(material: Material): Promise<Material>;
+  /** Lanza InUseError si algún método lo usa. */
+  deleteMaterial(id: string): Promise<void>;
   listMethods(): Promise<Method[]>;
+  /** Crea o actualiza (por id) un método de fabricación. */
+  saveMethod(method: Method): Promise<Method>;
+  /** Lanza InUseError si algún mueble lo usa o si es el último. */
+  deleteMethod(id: string): Promise<void>;
 }

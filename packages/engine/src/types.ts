@@ -14,9 +14,54 @@ export interface Split {
   children: Zone[];
 }
 
+/**
+ * Cómo va montado un frente (puerta o frente de cajón):
+ * - 'overlay' (superpuesto): tapa el canto de los tableros que rodean el hueco.
+ * - 'inset' (encastrado): queda dentro del hueco, enrasado con el frente del mueble.
+ */
+export type FrontMount = 'overlay' | 'inset';
+
+export interface DoorFront {
+  kind: 'door';
+  /** Una hoja o dos. */
+  leaves: 1 | 2;
+  /** Lado de las bisagras si es de una hoja. */
+  hinge: 'left' | 'right';
+  mount: FrontMount;
+}
+
+export interface DrawerFront {
+  kind: 'drawers';
+  mount: FrontMount;
+  /**
+   * Altura visible de cada frente de cajón, **de arriba abajo** (el índice 0 es el cajón de arriba).
+   * `null` = automático (reparte lo que sobra). Su longitud es el número de cajones.
+   */
+  sizes: (Len | null)[];
+}
+
+export type Front = DoorFront | DrawerFront;
+
 export interface Zone {
   id: string;
   split?: Split;
+  /** Puerta(s) o cajones que cierran este hueco. */
+  front?: Front;
+}
+
+export interface Plinth {
+  /** Altura del zócalo (la base del mueble sube esta medida). */
+  height: Len;
+  /** Retranqueo del tablero de zócalo respecto al frente de los costados. */
+  setback: Len;
+}
+
+/** Cambios hechos a mano a una pieza concreta, por su clave estable. */
+export interface PartOverride {
+  /** Otro tablero del mismo espesor. */
+  materialId?: string;
+  /** Cantos por lado. `null` = sin canto en ese lado; ausente = el del método. */
+  edges?: Partial<Edges>;
 }
 
 export interface Design {
@@ -24,13 +69,34 @@ export interface Design {
   shape: 'rect';
   size: { w: Len; h: Len; d: Len };
   root: Zone;
+  /** Zócalo. Ausente = el mueble apoya directamente en la base. */
+  plinth?: Plinth;
+  /** Cambios por pieza: clave de la pieza → cambio. */
+  overrides?: Record<string, PartOverride>;
 }
 
 const lenSchema = z.number().int();
 
+const frontSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('door'),
+    leaves: z.union([z.literal(1), z.literal(2)]),
+    hinge: z.enum(['left', 'right']),
+    mount: z.enum(['overlay', 'inset']),
+  }),
+  z.object({
+    kind: z.literal('drawers'),
+    mount: z.enum(['overlay', 'inset']),
+    sizes: z.array(lenSchema.positive().nullable()).min(1).max(12),
+  }),
+]);
+
+const edgeRefSchema = z.string().nullable();
+
 const zoneSchema: z.ZodType<Zone> = z.lazy(() =>
   z.object({
     id: z.string().min(1),
+    front: frontSchema.optional(),
     split: z
       .object({
         axis: z.enum(['x', 'y']),
@@ -47,6 +113,16 @@ export const designSchema: z.ZodType<Design> = z.object({
   shape: z.literal('rect'),
   size: z.object({ w: lenSchema.positive(), h: lenSchema.positive(), d: lenSchema.positive() }),
   root: zoneSchema,
+  plinth: z.object({ height: lenSchema.nonnegative(), setback: lenSchema.nonnegative() }).optional(),
+  overrides: z
+    .record(
+      z.string(),
+      z.object({
+        materialId: z.string().optional(),
+        edges: z.object({ L1: edgeRefSchema, L2: edgeRefSchema, W1: edgeRefSchema, W2: edgeRefSchema }).partial().optional(),
+      }),
+    )
+    .optional(),
 });
 
 // ───────────────────────── bibliotecas ─────────────────────────
@@ -87,11 +163,56 @@ export interface Method {
   frontEdgeMaterialId: string | null;
   /** Si el espesor del canto se descuenta de la medida de corte. */
   edgeReducesCut: boolean;
+  /** Puertas y frentes de cajón. */
+  fronts: {
+    materialId: string;
+    /** Canto de los cuatro lados de cada frente. `null` = sin canto. */
+    edgeMaterialId: string | null;
+    /**
+     * Holgura entre frentes vecinos. En los frentes superpuestos, la mitad queda también
+     * en el borde exterior del mueble; en los encastrados, la holgura entera rodea el frente.
+     */
+    gap: Len;
+  };
+  /** Estructura de los cajones. */
+  drawer: {
+    /** Tablero de laterales, trasera y contrafrente. */
+    materialId: string;
+    bottomMaterialId: string;
+    /** 'groove' = fondo en ranura · 'under' = fondo clavado por debajo. */
+    bottomMode: 'groove' | 'under';
+    /** Profundidad de la ranura del fondo (lo que entra el fondo en cada lado). */
+    grooveDepth: Len;
+    /** Altura de la ranura del fondo sobre el canto inferior de los laterales. */
+    grooveHeight: Len;
+    /** Hueco a cada lado entre el cajón y el mueble, para la guía (12,5–13 mm en guías de bolas). */
+    sideClearance: Len;
+    /** Espacio libre por encima de la caja del cajón. */
+    topClearance: Len;
+    /** Espacio libre por debajo de la caja del cajón. */
+    bottomClearance: Len;
+    /** Espacio mínimo libre detrás del cajón. */
+    rearClearance: Len;
+    /** El fondo del cajón se redondea hacia abajo a múltiplos de esta medida (largos de guía). 0 = sin redondeo. */
+    depthStep: Len;
+  };
 }
 
 // ───────────────────────── salida del motor ─────────────────────────
 
-export type PartRole = 'side' | 'top' | 'bottom' | 'back' | 'shelf' | 'divider';
+export type PartRole =
+  | 'side'
+  | 'top'
+  | 'bottom'
+  | 'back'
+  | 'shelf'
+  | 'divider'
+  | 'plinth'
+  | 'door'
+  | 'drawer-front'
+  | 'drawer-side'
+  | 'drawer-back'
+  | 'drawer-bottom';
 
 /** Caja en coordenadas del mueble: x a la derecha, y hacia arriba, z hacia el frente. Origen en la esquina trasera inferior izquierda. */
 export interface Box {
@@ -127,14 +248,18 @@ export interface Part {
   edges: Edges;
   grain: 'none' | 'length';
   box: Box;
-  /** Hueco que crea o que divide esta pieza. */
+  /** Hueco que crea, divide o cierra esta pieza. */
   zoneId?: string;
   /**
    * Conjunto al que pertenece la pieza, si no es parte de la estructura fija.
-   * Lo usarán los cajones (fase 2): todas las piezas de un mismo cajón comparten `id`.
+   * Todas las piezas de un mismo cajón (frente incluido) comparten `id`.
    * Las exportaciones (por ejemplo STL) lo usan para separar o integrar ese conjunto.
    */
   assembly?: PartAssembly;
+  /** La pieza tiene cambios hechos a mano (material o cantos). */
+  overridden?: boolean;
+  /** Solo puertas: lado de las bisagras (para abrirla en el visor y, más adelante, taladrar). */
+  hinge?: 'left' | 'right';
 }
 
 export interface PartAssembly {
@@ -155,7 +280,16 @@ export interface ZoneOut {
 }
 
 export interface Warning {
-  code: 'zone_too_small' | 'fixed_sizes_exceed' | 'groove_too_deep' | 'material_missing' | 'size_out_of_range';
+  code:
+    | 'zone_too_small'
+    | 'fixed_sizes_exceed'
+    | 'groove_too_deep'
+    | 'material_missing'
+    | 'size_out_of_range'
+    | 'front_collision'
+    | 'drawer_too_small'
+    | 'drawer_on_split'
+    | 'override_ignored';
   message: string;
   zoneId?: string;
 }
@@ -165,3 +299,49 @@ export interface ComputeResult {
   zones: ZoneOut[];
   warnings: Warning[];
 }
+
+// ───────────────────────── validación de bibliotecas guardadas ─────────────────────────
+
+export const materialSchema: z.ZodType<Material> = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(120),
+  kind: z.enum(['panel', 'edge']),
+  thickness: lenSchema.positive(),
+  grain: z.enum(['none', 'length']),
+  priceCents: z.number().int().nonnegative(),
+  color: z.string().min(1),
+});
+
+export const methodSchema: z.ZodType<Method> = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(120),
+  carcassMaterialId: z.string().min(1),
+  back: z.object({
+    mode: z.enum(['groove', 'overlay', 'none']),
+    materialId: z.string(),
+    grooveDepth: lenSchema.nonnegative(),
+    inset: lenSchema.nonnegative(),
+    clearance: lenSchema.nonnegative(),
+  }),
+  shelfFrontSetback: lenSchema.nonnegative(),
+  dividerFrontSetback: lenSchema.nonnegative(),
+  frontEdgeMaterialId: z.string().nullable(),
+  edgeReducesCut: z.boolean(),
+  fronts: z.object({
+    materialId: z.string().min(1),
+    edgeMaterialId: z.string().nullable(),
+    gap: lenSchema.nonnegative(),
+  }),
+  drawer: z.object({
+    materialId: z.string().min(1),
+    bottomMaterialId: z.string().min(1),
+    bottomMode: z.enum(['groove', 'under']),
+    grooveDepth: lenSchema.nonnegative(),
+    grooveHeight: lenSchema.nonnegative(),
+    sideClearance: lenSchema.nonnegative(),
+    topClearance: lenSchema.nonnegative(),
+    bottomClearance: lenSchema.nonnegative(),
+    rearClearance: lenSchema.nonnegative(),
+    depthStep: lenSchema.nonnegative(),
+  }),
+});

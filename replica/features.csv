@@ -1,20 +1,20 @@
 feature,area,priority,original,clone,notes
 Crear mueble rectangular con ancho alto y profundidad,mueble,must,yes,yes,S02 S03 S04
-Árbol de zonas interiores y exteriores seleccionables,mueble,must,yes,partial,base del motor paramétrico; interiores sí (3D + árbol); exteriores con el zócalo en fase 2
+Árbol de zonas interiores y exteriores seleccionables,mueble,must,yes,partial,"interiores sí (3D + árbol); exteriores: zócalo hecho, cornisa y remates pendientes"
 Recalcular todos los paneles al cambiar una medida,motor,must,yes,yes,el corazón del producto; validar contra listas de corte reales; motor puro con 21 pruebas; faltan casos reales de PolyBoard
 Añadir estantes (equidistantes / proporcionales / fijos),divisiones,must,yes,yes,S05; iguales y fijos; proporcionales pendiente
 Añadir montantes verticales,divisiones,must,yes,yes,S05
 Trasera con ranura o sobrepuesta,divisiones,must,yes,yes,S09; ranura y clavada
-Zócalo y zonas exteriores,mueble,must,yes,no,S08
-Puertas única y doble (encastrada / superpuesta),puertas,must,yes,no,S06
-Holguras y retrasos de puertas,puertas,must,yes,no,S06 S04
-Cajones por número con holguras,cajones,must,yes,no,S07
-Estructura del cajón (laterales fondo trasera frente),cajones,must,yes,no,S07
-Biblioteca de materiales de panel (espesor fibra precio),materiales,must,yes,partial,S11; solo lectura con materiales de partida
-Cantos por lado con material y espesor,materiales,must,yes,partial,S12; descuentan medida; solo canto frontal desde el método; por pieza en fase 2
-Regla de canteado por tipo de panel,métodos,must,yes,partial,"S10; fija: canto frontal en estructura, estantes y divisores"
+Zócalo y zonas exteriores,mueble,must,yes,partial,S08; zócalo con altura y retranqueo; cornisa y remates pendientes
+Puertas única y doble (encastrada / superpuesta),puertas,must,yes,yes,"S06; una o dos hojas, superpuesta o encastrada, bisagras izq./der."
+Holguras y retrasos de puertas,puertas,must,yes,yes,S06 S04; holgura del método; aviso si choca con estantes
+Cajones por número con holguras,cajones,must,yes,yes,"S07; alturas fijas o repartidas, holguras de guías arriba abajo detrás"
+Estructura del cajón (laterales fondo trasera frente),cajones,must,yes,yes,"S07; laterales, trasera, contrafrente, fondo en ranura o clavado; fondo en múltiplos de guía"
+Biblioteca de materiales de panel (espesor fibra precio),materiales,must,yes,yes,"S11; crear, editar, borrar (protegido si se usa)"
+Cantos por lado con material y espesor,materiales,must,yes,yes,S12; por método y por pieza; descuentan medida
+Regla de canteado por tipo de panel,métodos,must,yes,partial,"S10; canto frontal en estructura y cajones, cuatro lados en frentes; por pieza a mano"
 Panel prioritario (quién pisa a quién en uniones),motor,must,yes,partial,"S16; decide medidas de laterales vs techo/suelo; fijo: costados enteros, tapa y base entre costados"
-Método de fabricación guardado y reutilizable,métodos,must,yes,partial,"S10; 2 métodos de partida, seleccionables; editor en fase 2"
+Método de fabricación guardado y reutilizable,métodos,must,yes,yes,"S10; crear, editar, duplicar y borrar"
 Visor 3D en navegador con perspectiva y ortogonal,3d,must,yes,yes,"Three.js; S03; perspectiva, ortogonal, alámbrico"
 Selección táctil de zonas y paneles en móvil,3d,must,no,yes,mejora: PolyBoard no tiene móvil
 Panel de propiedades editable,ui,must,yes,yes,S04
@@ -24,8 +24,8 @@ Exportar lista de corte a CSV,salidas,must,yes,yes,S30 (ASCII); coma o punto dec
 Lista de materiales y coste,salidas,must,yes,yes,"S26; m², metros de canto y coste de material"
 Guardar y abrir proyectos en la nube,datos,must,no,partial,mejora: PolyBoard guarda archivos locales; guardado local en el navegador con control de versión; Supabase pendiente
 Puerta corredera,puertas,should,yes,no,S06
-Cajón múltiple / encastrado / superpuesto,cajones,should,yes,no,S07
-Igualar tamaño de puertas y cajones,cajones,should,yes,no,S07
+Cajón múltiple / encastrado / superpuesto,cajones,should,yes,yes,S07
+Igualar tamaño de puertas y cajones,cajones,should,yes,yes,S07; igualar alturas
 Divisiones libres y paneles nulos,divisiones,should,yes,no,S05
 Dobles fondos,divisiones,should,yes,no,S05
 Estilos de material (combinaciones nombradas),materiales,should,yes,no,S13
@@ -37,7 +37,7 @@ Exportar DXF 2D por pieza con capas,cnc,could,yes,no,S29; formato abierto; útil
 Post-procesador para la CNC del usuario (uno),cnc,could,yes,no,S28; el usuario no tiene CNC: el corte se encarga a una maderera
 Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
 Imprimir planos con cotas,salidas,should,yes,no,S32
-Vista explosionada y puertas abiertas/cerradas,3d,should,yes,no,S03
+Vista explosionada y puertas abiertas/cerradas,3d,should,yes,partial,"S03; frentes cerrados, abiertos u ocultos; explosionada pendiente"
 Dimensiones permanentes en 3D,3d,should,yes,no,S03
 Deshacer / rehacer,ui,should,yes,yes,global; botones y Ctrl+Z / Ctrl+Y
 Parámetros y variables del mueble,motor,should,yes,no,S23
@@ -46,7 +46,7 @@ Optimizador de corte de tableros propio,salidas,should,no,no,sustituye a OptiCut
 Hoja de pedido para la maderera (PDF),salidas,should,no,no,mejora: sin CNC el corte se encarga fuera; hoy sirve el CSV o imprimir el despiece
 Exportar STL del mueble completo a escala,salidas,should,no,yes,mejora: maquetas en impresora 3D; escala y espesor mínimo impreso
 Exportar STL pieza a pieza (ZIP con LEEME),salidas,should,no,yes,mejora: piezas iguales una vez con la cantidad en el nombre
-STL con cajones integrados / aparte / pieza a pieza,salidas,should,no,partial,mejora: el exportador ya lo hace; falta que existan cajones (fase 2)
+STL con cajones integrados / aparte / pieza a pieza,salidas,should,no,yes,mejora: impresión 3D
 Mueble en L y en ángulo,mueble,could,yes,no,S02
 Forma libre y editor de contorno 2D,piezas,could,yes,no,S18
 Cajeados y mecanizado de esquinas,piezas,could,yes,no,S20
@@ -65,3 +65,4 @@ Bibliotecas de herrajes de Boole,herrajes,skip,yes,skip,contenido de Boole & Par
 OptiCut / OptiNest integrados,salidas,skip,yes,skip,producto aparte de Boole
 Activación de licencia,sistema,skip,yes,skip,no aplica
 Texturas e iconos de PolyBoard,marca,skip,yes,skip,activos ajenos
+Material y cantos por pieza,materiales,must,yes,yes,S04; solo tableros del mismo espesor; volver al método

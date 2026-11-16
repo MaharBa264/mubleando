@@ -1,5 +1,20 @@
-import { designSchema, mm, newDesign, PRESET_MATERIALS, PRESET_METHODS, setDivisions, type Material, type Method } from '@mw/engine';
-import { ConflictError, NotFoundError, type Cabinet, type DataLayer, type Project } from './types';
+import {
+  designSchema,
+  materialSchema,
+  methodSchema,
+  mm,
+  newDesign,
+  normalizeMethod,
+  PRESET_MATERIALS,
+  PRESET_METHODS,
+  setDivisions,
+  setDrawerSize,
+  setFront,
+  setPlinth,
+  type Material,
+  type Method,
+} from '@mw/engine';
+import { ConflictError, InUseError, NotFoundError, type Cabinet, type DataLayer, type Project } from './types';
 
 /**
  * Capa de datos local (localStorage). Misma interfaz que tendrá la de Supabase.
@@ -8,7 +23,14 @@ import { ConflictError, NotFoundError, type Cabinet, type DataLayer, type Projec
 
 const KEY = 'mueblesweb:v1';
 
+/**
+ * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
+ * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones.
+ */
+const SCHEMA = 2;
+
 interface State {
+  schema?: number;
   projects: Project[];
   cabinets: Cabinet[];
   materials: Material[];
@@ -52,7 +74,45 @@ function seed(): State {
     createdAt: t,
     updatedAt: t,
   };
-  return { projects: [project], cabinets: [base, despensa], materials: PRESET_MATERIALS, methods: PRESET_METHODS };
+  const c0 = newDesign({ w: mm(600), h: mm(720), d: mm(560) });
+  let cajonera = setPlinth(c0, { height: mm(100), setback: mm(50) });
+  cajonera = setFront(cajonera, c0.root.id, { kind: 'drawers', mount: 'overlay', sizes: [null, null, null] });
+  cajonera = setDrawerSize(cajonera, c0.root.id, 0, mm(140));
+  const drawers: Cabinet = {
+    id: uid(),
+    projectId: project.id,
+    name: 'Cajonera 600',
+    methodId: PRESET_METHODS[0]!.id,
+    design: cajonera,
+    rev: 1,
+    quantity: 1,
+    createdAt: t,
+    updatedAt: t,
+  };
+  base.design = setFront(base.design, base.design.root.id, { kind: 'door', leaves: 2, hinge: 'left', mount: 'overlay' });
+  base.design = setPlinth(base.design, { height: mm(100), setback: mm(50) });
+  return {
+    schema: SCHEMA,
+    projects: [project],
+    cabinets: [base, drawers, despensa],
+    materials: structuredClone(PRESET_MATERIALS),
+    methods: structuredClone(PRESET_METHODS),
+  };
+}
+
+/** Pone al día datos guardados con una versión anterior. No borra nada del usuario. */
+function migrate(s: State): State {
+  if ((s.schema ?? 1) < 2) {
+    // Materiales nuevos de partida que usan los cajones por defecto.
+    for (const m of PRESET_MATERIALS) if (!s.materials.some((x) => x.id === m.id)) s.materials.push(structuredClone(m));
+    s.methods = s.methods.map((m) => normalizeMethod(m));
+  }
+  s.schema = SCHEMA;
+  // Bibliotecas dañadas: se descartan solo las entradas inválidas.
+  s.materials = s.materials.filter((m) => materialSchema.safeParse(m).success);
+  s.methods = s.methods.filter((m) => methodSchema.safeParse(m).success);
+  if (s.methods.length === 0) s.methods = structuredClone(PRESET_METHODS);
+  return s;
 }
 
 function load(): State {
@@ -69,7 +129,12 @@ function load(): State {
       const parsed = JSON.parse(raw) as State;
       // Un diseño corrupto no debe tumbar la app: se descarta ese mueble.
       parsed.cabinets = parsed.cabinets.filter((c) => designSchema.safeParse(c.design).success);
-      state = parsed;
+      const before = parsed.schema;
+      state = migrate(parsed);
+      if (before !== SCHEMA) {
+        memory = state;
+        persist();
+      }
     } catch {
       state = null;
     }
@@ -189,8 +254,49 @@ export const localData: DataLayer = {
     await tick();
     return clone(load().materials);
   },
+  async saveMaterial(material) {
+    await tick();
+    const s = load();
+    const m = materialSchema.parse({ ...material, name: material.name.trim() });
+    const i = s.materials.findIndex((x) => x.id === m.id);
+    if (i >= 0) s.materials[i] = m;
+    else s.materials.push(m);
+    persist();
+    return clone(m);
+  },
+  async deleteMaterial(id) {
+    await tick();
+    const s = load();
+    const users = s.methods.filter((m) =>
+      [m.carcassMaterialId, m.back.mode !== 'none' ? m.back.materialId : null, m.frontEdgeMaterialId, m.fronts.materialId, m.fronts.edgeMaterialId, m.drawer.materialId, m.drawer.bottomMaterialId].includes(id),
+    );
+    if (users.length > 0) {
+      throw new InUseError(`Lo usa${users.length > 1 ? 'n' : ''} ${users.map((m) => `«${m.name}»`).join(', ')}. Cambia ${users.length > 1 ? 'esos métodos' : 'ese método'} antes de borrarlo.`);
+    }
+    s.materials = s.materials.filter((m) => m.id !== id);
+    persist();
+  },
   async listMethods() {
     await tick();
     return clone(load().methods);
+  },
+  async saveMethod(method) {
+    await tick();
+    const s = load();
+    const m = methodSchema.parse({ ...method, name: method.name.trim() });
+    const i = s.methods.findIndex((x) => x.id === m.id);
+    if (i >= 0) s.methods[i] = m;
+    else s.methods.push(m);
+    persist();
+    return clone(m);
+  },
+  async deleteMethod(id) {
+    await tick();
+    const s = load();
+    if (s.methods.length <= 1) throw new InUseError('Tiene que quedar al menos un método.');
+    const used = s.cabinets.filter((c) => c.methodId === id).length;
+    if (used > 0) throw new InUseError(`Lo usa${used > 1 ? 'n' : ''} ${used} mueble${used > 1 ? 's' : ''}. Cámbiales el método antes de borrarlo.`);
+    s.methods = s.methods.filter((m) => m.id !== id);
+    persist();
   },
 };
