@@ -7,8 +7,8 @@ import {
   mm,
   newDesign,
   normalizeMethod,
-  PRESET_MATERIALS,
-  PRESET_METHODS,
+  REFERENCE_MATERIALS,
+  REFERENCE_METHODS,
   setDivisions,
   setDrawerCount,
   setDrawerSize,
@@ -23,9 +23,9 @@ import {
 // Todas las cifras de este archivo están calculadas a mano en docs/motor.md (bajo de 600 × 720 × 560, método estándar).
 let counter = 0;
 const gen = () => `f${++counter}`;
-const M = PRESET_MATERIALS;
-const groove = PRESET_METHODS[0]!;
-const clavada = PRESET_METHODS[1]!;
+const M = REFERENCE_MATERIALS;
+const groove = REFERENCE_METHODS[0]!;
+const clavada = REFERENCE_METHODS[1]!;
 const base = (): Design => newDesign({ w: mm(600), h: mm(720), d: mm(560) }, gen);
 const mmOf = (v: number) => v / 100;
 const dims = (p: Part) => [p.length, p.width, p.cutLength, p.cutWidth].map(mmOf);

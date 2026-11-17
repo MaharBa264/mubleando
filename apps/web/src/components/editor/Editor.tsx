@@ -13,6 +13,7 @@ import { fmtDims } from '@/lib/format';
 import { EditorContext, type EditorEnv } from './context';
 import { zoneLabels } from './labels';
 import { PropertiesPanel } from './PropertiesPanel';
+import { QuickTools } from './QuickTools';
 import { createEditorStore } from './store';
 import { StructureTree } from './StructureTree';
 
@@ -181,8 +182,9 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
               onSelect={(s) => store.getState().select(s)}
               onHover={(h) => store.getState().setHover(h)}
             />
-            <div className="pointer-events-none absolute left-3 top-3 rounded-s bg-surface/90 px-2 py-1 text-xs shadow-1">
-              <span className="tabular">{fmtDims(design.size.w, design.size.h, design.size.d)} mm</span>
+            <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start gap-2">
+              <span className="tabular rounded-s bg-surface/90 px-2 py-1 text-xs shadow-1">{fmtDims(design.size.w, design.size.h, design.size.d)} mm</span>
+              <QuickTools />
             </div>
             <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-m bg-surface/95 p-1 shadow-1" role="toolbar" aria-label="Vista">
               <ToggleBtn pressed={!view.ortho} onClick={() => store.getState().setView({ ortho: !view.ortho })}>
@@ -190,6 +192,9 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
               </ToggleBtn>
               <ToggleBtn pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })}>
                 Alámbrico
+              </ToggleBtn>
+              <ToggleBtn pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })}>
+                Cotas
               </ToggleBtn>
               {hasFronts && (
                 <ToggleBtn

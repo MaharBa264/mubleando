@@ -115,8 +115,16 @@ export function MethodDialog({
             {edgeSelect('Canto del frente', m.frontEdgeMaterialId, (id) => setM({ ...m, frontEdgeMaterialId: id }))}
             <label className="flex items-start gap-2 self-end pb-2 text-sm">
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--accent)]" checked={m.edgeReducesCut} onChange={(e) => setM({ ...m, edgeReducesCut: e.target.checked })} />
-              El canto se descuenta de la medida de corte
+              El tapacanto se descuenta de la medida de corte
             </label>
+            {m.edgeReducesCut &&
+              len(
+                'Descontar solo tapacantos desde',
+                m.edgeReduceMin,
+                (v) => setM({ ...m, edgeReduceMin: v }),
+                'Con 1 mm, el de 0,45 no cambia la medida y el de 2 sí. 0 = descontar todos.',
+                mm(5),
+              )}
             {len('Retranqueo de los estantes', m.shelfFrontSetback, (v) => setM({ ...m, shelfFrontSetback: v }), 'Cuánto quedan por detrás del frente.')}
             {len('Retranqueo de los divisores', m.dividerFrontSetback, (v) => setM({ ...m, dividerFrontSetback: v }))}
           </div>

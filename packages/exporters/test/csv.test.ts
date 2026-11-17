@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compute, groupedRows, mm, newDesign, PRESET_MATERIALS, PRESET_METHODS, setDivisions } from '@mw/engine';
+import { compute, groupedRows, mm, newDesign, REFERENCE_MATERIALS, REFERENCE_METHODS, setDivisions } from '@mw/engine';
 import { cutListCsv } from '../src';
 
 describe('CSV de lista de corte', () => {
@@ -7,11 +7,11 @@ describe('CSV de lista de corte', () => {
   const gen = () => `z${++i}`;
   const d0 = newDesign({ w: mm(600), h: mm(720), d: mm(560) }, gen);
   const d = setDivisions(d0, d0.root.id, 'y', 1, gen);
-  const r = compute(d, PRESET_METHODS[0]!, PRESET_MATERIALS);
+  const r = compute(d, REFERENCE_METHODS[0]!, REFERENCE_MATERIALS);
   const rows = groupedRows(r.parts.map((part) => ({ part, source: 'Bajo; 600 "A"' })));
 
   it('cabecera, separador ; y decimales con coma', () => {
-    const csv = cutListCsv(rows, PRESET_MATERIALS);
+    const csv = cutListCsv(rows, REFERENCE_MATERIALS);
     expect(csv.startsWith('﻿Ref;Pieza;Mueble;Material')).toBe(true);
     const lines = csv.trim().split('\r\n');
     expect(lines).toHaveLength(rows.length + 1);
@@ -23,7 +23,7 @@ describe('CSV de lista de corte', () => {
 
   it('decimales con punto y sin BOM para software de taller', () => {
     const one = groupedRows([{ part: { ...r.parts[0]!, cutLength: mm(700.5) } }]);
-    const csv = cutListCsv(one, PRESET_MATERIALS, { decimal: '.', bom: false });
+    const csv = cutListCsv(one, REFERENCE_MATERIALS, { decimal: '.', bom: false });
     expect(csv.startsWith('Ref;')).toBe(true);
     expect(csv).toContain(';700.5;');
   });

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { compute, mm, newDesign, PRESET_MATERIALS, PRESET_METHODS, setDivisions, type Part } from '@mw/engine';
+import { compute, mm, newDesign, REFERENCE_MATERIALS, REFERENCE_METHODS, setDivisions, type Part } from '@mw/engine';
 import { binaryStl, boxTriangles, crc32, exportStl, slug, zip } from '../src';
 
 let i = 0;
 const gen = () => `s${++i}`;
 const d0 = newDesign({ w: mm(600), h: mm(720), d: mm(560) }, gen);
 const d = setDivisions(d0, d0.root.id, 'y', 1, gen);
-const parts = compute(d, PRESET_METHODS[0]!, PRESET_MATERIALS).parts;
+const parts = compute(d, REFERENCE_METHODS[0]!, REFERENCE_MATERIALS).parts;
 
 /** Lee un STL binario: devuelve los triángulos como [normal, a, b, c]. */
 function readStl(data: Uint8Array) {

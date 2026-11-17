@@ -38,7 +38,7 @@ Post-procesador para la CNC del usuario (uno),cnc,could,yes,no,S28; el usuario n
 Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
 Imprimir planos con cotas,salidas,should,yes,no,S32
 Vista explosionada y puertas abiertas/cerradas,3d,should,yes,partial,"S03; frentes cerrados, abiertos u ocultos; explosionada pendiente"
-Dimensiones permanentes en 3D,3d,should,yes,no,S03
+Dimensiones permanentes en 3D,3d,should,yes,yes,S03; cotas generales y del hueco elegido; botón Cotas
 Deshacer / rehacer,ui,should,yes,yes,global; botones y Ctrl+Z / Ctrl+Y
 Parámetros y variables del mueble,motor,should,yes,no,S23
 Presupuesto PDF para el cliente,salidas,should,partial,no,v6 solo tiene precios; la plantilla es de v7
@@ -54,7 +54,7 @@ Importar DXF,piezas,could,yes,no,S31
 Estructuras de panel compuestas,piezas,could,yes,no,S19
 Proyecto de estancia con muros y suelo,proyecto,could,yes,no,S21
 Mover / girar / agrupar muebles,proyecto,could,yes,no,S21
-Catálogo de modelos de mueble,catálogo,could,yes,no,S22
+Catálogo de modelos de mueble,catálogo,could,yes,partial,S22; 10 plantillas en el motor con dibujo; falta catálogo propio del usuario
 Render con luces y texturas,3d,could,yes,no,S03
 Exportar DXF 3D / 3DS / GLB,salidas,could,yes,no,S30
 Más post-procesadores (MPR / CIX / PGMX / HOP / TCN),cnc,could,yes,no,validar cada uno en máquina real; sin CNC en el taller
@@ -68,3 +68,6 @@ Texturas e iconos de PolyBoard,marca,skip,yes,skip,activos ajenos
 Material y cantos por pieza,materiales,must,yes,yes,S04; solo tableros del mismo espesor; volver al método
 "Cuentas con correo, recuperar contraseña y borrar cuenta",datos,must,no,partial,mejora; Supabase Auth; entrar y borrar probados en el proyecto real; correos de confirmación y nueva contraseña sin probar
 Subir a la nube los datos guardados en el navegador,datos,should,no,yes,mejora; sin duplicar al repetir; probado en el proyecto real
+Barra de herramientas sobre el 3D para el hueco elegido,ui,must,no,yes,"mejora: estante, divisor, puertas y cajones sin buscar en el panel"
+Materiales y métodos de partida de Argentina,materiales,must,no,yes,"melamina 18, fibrofácil 3, tapacanto 0,45 y 2; descontar tapacanto solo desde un espesor"
+Duplicar mueble,mueble,should,yes,yes,en la lista del proyecto

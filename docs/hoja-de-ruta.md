@@ -33,6 +33,20 @@ Pendiente de la fase 2, para más adelante:
 - Cajones interiores (detrás de una puerta) y cajones con frente doble.
 - Tolerancias de encaje propias para los cajones impresos en 3D.
 
+## Constructor de muebles (en curso)
+
+Hecho (17-11-2026):
+
+- Plantillas: bajo con puertas, cajonera, bajo con cajón y puerta, bajo pileta, alacena, alacena abierta, columna, placard, estantería, caja vacía.
+- Barra de herramientas sobre el 3D para el hueco elegido; cotas en 3D; dibujo del frente en la lista y en la galería; duplicar muebles.
+- Materiales y métodos de partida argentinos (melamina 18, fibrofácil 3, tapacanto 0,45 y 2) y descuento de tapacanto solo desde un espesor.
+
+Siguiente:
+
+- **Herrajes y tolerancias**: biblioteca de bisagras (cazoleta 35 mm, codos 0 / 9 / 18, con y sin cierre suave) y correderas (telescópicas de bolas, ocultas bajo el cajón, cajón metálico, de rodillo) con sus medidas reales, que el motor use para las holguras, los largos de guía y los descuentos de cada pieza. Cada herraje con sus avisos (por ejemplo, un cajón más corto que la corredera más corta).
+- **Ambiente**: plano de la cocina o habitación con paredes, colocar y mover módulos en 2D, verlos juntos en 3D y despiece del ambiente.
+- Divisiones libres y proporcionales, cajones interiores, puertas correderas, cornisa y remates.
+
 ## Guardado en la nube (hecho, falta conectar un proyecto real)
 
 - Cuentas con correo y contraseña, confirmación por correo, recuperar contraseña, cerrar sesión en todos los dispositivos y borrar la cuenta.

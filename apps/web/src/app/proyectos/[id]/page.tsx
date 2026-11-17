@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Page } from '@/components/AppShell';
+import { CabinetSketch } from '@/components/CabinetSketch';
 import { NewCabinetDialog } from '@/components/NewCabinetDialog';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/Dialog';
@@ -17,8 +18,8 @@ export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const state = useAsync(async () => {
-    const [project, cabinets, methods] = await Promise.all([data.getProject(id), data.listCabinets(id), data.listMethods()]);
-    return { project, cabinets, methods };
+    const [project, cabinets, methods, materials] = await Promise.all([data.getProject(id), data.listCabinets(id), data.listMethods(), data.listMaterials()]);
+    return { project, cabinets, methods, materials };
   }, [id]);
   const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<Cabinet | null>(null);
@@ -42,7 +43,7 @@ export default function ProjectPage() {
         <ErrorState error={state.error} onRetry={state.reload} />
       </Page>
     );
-  const { project, cabinets, methods } = state.data;
+  const { project, cabinets, methods, materials } = state.data;
   if (!project)
     return (
       <Page title="Proyecto no encontrado" back={back}>
@@ -99,12 +100,18 @@ export default function ProjectPage() {
             </Button>
           }
         >
-          Empieza por las medidas exteriores; luego lo vas dividiendo en huecos con estantes y divisores.
+          Elegí una plantilla (bajo con puertas, cajonera, alacena, columna, placard…) y ajustá las medidas. Después podés cambiar todo en el editor.
         </EmptyState>
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-m border border-border bg-surface shadow-1">
           {cabinets.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-surface-2">
+              <Link href={`/muebles/${c.id}`} className="shrink-0 rounded-s bg-surface-2 p-1" tabIndex={-1} aria-hidden>
+                {(() => {
+                  const m = methods.find((x) => x.id === c.methodId) ?? methods[0];
+                  return m ? <CabinetSketch design={c.design} method={m} materials={materials} className="h-14 w-14" /> : null;
+                })()}
+              </Link>
               <div className="min-w-0 flex-1">
                 <Link href={`/muebles/${c.id}`} className="block truncate font-medium hover:underline" title={c.name}>
                   {c.name}
@@ -121,6 +128,17 @@ export default function ProjectPage() {
                 <ButtonLink size="sm" variant="ghost" href={`/muebles/${c.id}/despiece`}>
                   Despiece
                 </ButtonLink>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  aria-label={`Duplicar ${c.name}`}
+                  onClick={async () => {
+                    await data.createCabinet({ projectId: project.id, name: `${c.name} (copia)`.slice(0, 120), methodId: c.methodId, design: c.design, quantity: c.quantity });
+                    state.reload();
+                  }}
+                >
+                  Duplicar
+                </Button>
                 <Button size="sm" variant="ghost" aria-label={`Eliminar ${c.name}`} onClick={() => setToDelete(c)}>
                   Eliminar
                 </Button>
@@ -134,7 +152,7 @@ export default function ProjectPage() {
         open={creating}
         onClose={() => setCreating(false)}
         methods={methods}
-        defaultName={`Mueble ${cabinets.length + 1}`}
+        materials={materials}
         onCreate={async ({ name, methodId, design }) => {
           const c = await data.createCabinet({ projectId: project.id, name, methodId, design });
           router.push(`/muebles/${c.id}`);

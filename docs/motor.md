@@ -21,7 +21,8 @@ Código: [`packages/engine/src`](../packages/engine/src).
 | `compute.ts` | El cálculo: `compute()` y `resolveSizes()`. |
 | `edit.ts` | Funciones para modificar un diseño sin mutarlo (dividir, fijar medidas, igualar…). |
 | `cutlist.ts` | Filas de la lista de corte (agrupadas o pieza a pieza) y totales de material y costo. |
-| `presets.ts` | Materiales y métodos de partida. |
+| `presets.ts` | Materiales y métodos de partida (Argentina) y el juego de referencia de las pruebas. |
+| `templates.ts` | Plantillas de muebles (bajo con puertas, cajonera, alacena, columna, placard…). |
 
 ## 1. Unidades
 
@@ -111,6 +112,7 @@ interface Method {
   dividerFrontSetback: Len;       // lo mismo para los divisores
   frontEdgeMaterialId: string | null;  // canto del frente visible (null = sin canto)
   edgeReducesCut: boolean;        // si el espesor del canto se descuenta de la medida de corte
+  edgeReduceMin: Len;             // solo se descuentan los cantos de este espesor o más (0 = todos)
   fronts: {
     materialId: string;           // tablero de puertas y frentes de cajón
     edgeMaterialId: string | null;  // canto de los cuatro lados de cada frente
@@ -133,7 +135,16 @@ interface Method {
 
 Los métodos guardados con la versión anterior (sin `fronts` ni `drawer`) se completan con los valores por defecto (`normalizeMethod`), tanto al cargar los datos como dentro de `compute()`.
 
-Métodos de partida (`presets.ts`):
+**Métodos de partida (Argentina)**, `PRESET_METHODS`:
+
+| Método | Estructura y frentes | Fondo | Tapacanto | Cajones |
+| --- | --- | --- | --- | --- |
+| `ar-18-ranura` · Melamina 18 · fondo 3 en ranura | melamina blanca 18 | fibrofácil 3 en ranura de 8 mm a 15 mm del fondo, holgura 1 | 0,45 en el frente de la estructura y en los cuatro lados de cada frente; **no se descuenta** (`edgeReduceMin` = 1 mm) | laterales de melamina 18, fondo de fibrofácil blanco 3 en ranura de 8 a 12 mm, correderas telescópicas (12,5 mm por lado) |
+| `ar-18-clavado` · Melamina 18 · fondo 3 clavado | igual | fibrofácil 3 clavado por detrás | igual | igual, con el fondo clavado por debajo |
+
+Con `edgeReduceMin` = 1 mm, el tapacanto de 0,45 no cambia la medida de corte y uno de 2 mm puesto a mano sí. Es como trabajan muchas madereras. Las pruebas con estas medidas están en `test/argentina.test.ts` (por ejemplo, un bajo de 600 × 860 × 560: costados 860 × 560, tapa 564 × 560, fondo 838 × 578, puerta 857 × 597).
+
+**Juego de referencia**, `REFERENCE_METHODS` y `REFERENCE_MATERIALS` (medidas europeas, eran los de partida hasta el 17-11-2026): son la base de las pruebas y de los ejemplos de este documento.
 
 | Método | Estructura | Trasera | Estantes | Canto frontal |
 | --- | --- | --- | --- | --- |
@@ -166,7 +177,7 @@ Las **claves** de cada pieza (`side.left`, `top`, `zone:z3/div0`…) son estable
 - La **medida de corte** (`cutLength`, `cutWidth`) descuenta el espesor de los cantos si `edgeReducesCut` está activo: el ancho pierde L1 + L2 y el largo pierde A1 + A2.
 - La veta de la pieza es la de su material (`grain: 'length'` = la veta va a lo largo).
 
-### Ejemplo completo: bajo de 600 × 720 × 560 con un estante
+### Ejemplo completo: bajo de 600 × 720 × 560 con un estante (juego de referencia)
 
 Método `std-ranura`: estructura de 19, trasera DM 8 en ranura de 10 mm a 10 mm del fondo con 1 mm de holgura, estantes retranqueados 20 mm, canto PVC de 1 mm.
 
@@ -258,6 +269,10 @@ Ejemplo (bajo de 600 × 720 × 560, tres cajones iguales superpuestos, método e
 - **Cantos**: por lado (`L1`, `L2`, `W1`, `W2`). `null` quita el canto. La medida de corte se recalcula.
 
 Las piezas con cambios llevan `overridden: true`. Como las claves son estables, los cambios sobreviven a los recálculos; si la pieza deja de existir (por ejemplo, se quita el estante), el cambio queda guardado sin efecto.
+
+### Plantillas
+
+`TEMPLATES` (en `templates.ts`) son diseños de partida: `{ id, name, description, group, size, build(size, idGen) }`. `build` arma el diseño con las funciones de edición (zócalo, divisiones, frentes), así que el resultado es un diseño normal, editable como cualquier otro. Las pruebas (`test/templates.test.ts`) comprueban que cada plantilla es válida, se calcula **sin avisos** con los métodos argentinos y los de referencia, y trae lo que dice (cuántas puertas, cajones, estantes…).
 
 ## 5. Salida de `compute()`
 

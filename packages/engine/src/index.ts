@@ -4,3 +4,4 @@ export * from './compute';
 export * from './edit';
 export * from './cutlist';
 export * from './presets';
+export * from './templates';

@@ -1,54 +1,69 @@
 'use client';
 
-import { useState } from 'react';
-import { LIMITS, mm, newDesign, type Len, type Method } from '@mw/engine';
+import { useMemo, useState } from 'react';
+import { LIMITS, TEMPLATES, type CabinetTemplate, type Design, type Len, type Material, type Method } from '@mw/engine';
+import { CabinetSketch } from '@/components/CabinetSketch';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
-import { fmtDims } from '@/lib/format';
+import { fmtDims, fmtMm } from '@/lib/format';
 
-const SHAPES = [
-  { id: 'rect', label: 'Rectangular', ready: true, icon: 'M5 5h14v14H5z' },
-  { id: 'L', label: 'En L', ready: false, icon: 'M5 5h6v8h8v6H5z' },
-  { id: 'corner', label: 'Rinconero', ready: false, icon: 'M5 5h14l-6 6v8H5z' },
-  { id: 'free', label: 'Forma libre', ready: false, icon: 'M5 19V9c0-3 3-4 7-4s7 2 7 6v8z' },
-] as const;
-
-const PRESETS: { label: string; w: number; h: number; d: number }[] = [
-  { label: 'Bajo de cocina', w: 600, h: 720, d: 560 },
-  { label: 'Alto de cocina', w: 600, h: 720, d: 330 },
-  { label: 'Armario', w: 1000, h: 2400, d: 600 },
-  { label: 'Estantería', w: 800, h: 1800, d: 300 },
+const GROUPS: [CabinetTemplate['group'], string][] = [
+  ['bajo', 'Bajo mesada'],
+  ['alto', 'Altos de pared'],
+  ['columna', 'Columnas y placards'],
+  ['otros', 'Otros'],
 ];
 
-/** S02 · Nuevo mueble */
+/**
+ * S02 · Nuevo mueble: se elige una plantilla (bajo con puertas, cajonera, alacena…), se ajustan
+ * las medidas y el método, y se ve el dibujo del frente antes de crearlo.
+ */
 export function NewCabinetDialog({
   open,
   onClose,
   methods,
-  defaultName,
+  materials,
   onCreate,
 }: {
   open: boolean;
   onClose: () => void;
   methods: Method[];
-  defaultName: string;
-  onCreate: (input: { name: string; methodId: string; design: ReturnType<typeof newDesign> }) => Promise<void>;
+  materials: Material[];
+  defaultName?: string;
+  onCreate: (input: { name: string; methodId: string; design: Design }) => Promise<void>;
 }) {
+  const [templateId, setTemplateId] = useState(TEMPLATES[0]!.id);
+  const template = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0]!;
+  const [size, setSize] = useState<{ w: Len; h: Len; d: Len }>(template.size);
   const [name, setName] = useState('');
-  const [size, setSize] = useState<{ w: Len; h: Len; d: Len }>({ w: mm(600), h: mm(720), d: mm(560) });
   const [methodId, setMethodId] = useState(methods[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const method = methods.find((m) => m.id === methodId) ?? methods[0];
+
+  // Para la vista previa: identificadores fijos, así no cambian en cada render.
+  const preview = useMemo(() => {
+    let i = 0;
+    return template.build(size, () => `p${++i}`);
+  }, [template, size]);
+
+  const choose = (t: CabinetTemplate) => {
+    setTemplateId(t.id);
+    setSize(t.size);
+  };
+
+  const autoName = `${template.name} ${fmtMm(size.w)}`;
 
   const submit = async () => {
+    if (!method) return;
     setBusy(true);
     setError(null);
     try {
-      await onCreate({ name: name.trim() || defaultName, methodId: methodId || methods[0]!.id, design: newDesign(size) });
+      await onCreate({ name: name.trim() || autoName, methodId: method.id, design: template.build(size) });
       setName('');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se ha podido crear el mueble.');
+      setError(e instanceof Error ? e.message : 'No se pudo crear el mueble.');
     } finally {
       setBusy(false);
     }
@@ -63,7 +78,7 @@ export function NewCabinetDialog({
       footer={
         <>
           <Button onClick={onClose}>Cancelar</Button>
-          <Button variant="primary" type="submit" form="new-cabinet" disabled={busy || methods.length === 0}>
+          <Button variant="primary" type="submit" form="new-cabinet" disabled={busy || !method}>
             Crear y abrir
           </Button>
         </>
@@ -71,67 +86,64 @@ export function NewCabinetDialog({
     >
       <form
         id="new-cabinet"
-        className="space-y-5"
+        className="space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
         }}
       >
-        <fieldset>
-          <legend className="mb-2 text-xs font-medium text-muted">Forma</legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {SHAPES.map((s) => (
-              <label
-                key={s.id}
-                className={`flex flex-col items-center gap-2 rounded-s border p-3 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus ${
-                  s.ready ? 'cursor-pointer border-accent bg-accent-soft text-accent' : 'cursor-not-allowed border-border text-muted opacity-70'
-                }`}
-              >
-                <input type="radio" name="shape" value={s.id} defaultChecked={s.id === 'rect'} disabled={!s.ready} className="sr-only" />
-                <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.6">
-                  <path d={s.icon} />
-                </svg>
-                <span className="font-medium">{s.label}</span>
-                {!s.ready && <span className="text-xs">Más adelante</span>}
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <TextField label="Nombre" placeholder={defaultName} value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
-
-        <fieldset>
-          <legend className="mb-2 text-xs font-medium text-muted">Medidas exteriores</legend>
-          <div className="mb-3 flex flex-wrap gap-2">
-            {PRESETS.map((p) => {
-              const active = size.w === mm(p.w) && size.h === mm(p.h) && size.d === mm(p.d);
-              return (
-                <button
-                  key={p.label}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setSize({ w: mm(p.w), h: mm(p.h), d: mm(p.d) })}
-                  className={`rounded-full border px-3 py-1 text-xs ${active ? 'border-accent bg-accent-soft text-accent' : 'border-border hover:bg-surface-2'}`}
-                >
-                  {p.label} · {fmtDims(mm(p.w), mm(p.h), mm(p.d))}
-                </button>
-              );
-            })}
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <MmField label="Ancho" value={size.w} min={LIMITS.w.min} max={LIMITS.w.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, w: v }))} />
-            <MmField label="Alto" value={size.h} min={LIMITS.h.min} max={LIMITS.h.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, h: v }))} />
-            <MmField label="Fondo" value={size.d} min={LIMITS.d.min} max={LIMITS.d.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, d: v }))} />
-          </div>
-        </fieldset>
-
-        <SelectField label="Método de fabricación" value={methodId} onChange={(e) => setMethodId(e.target.value)}>
-          {methods.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
+        <fieldset className="space-y-4">
+          <legend className="mb-1 text-xs font-medium text-muted">Elegí una plantilla. Después podés cambiar todo en el editor.</legend>
+          {GROUPS.map(([g, label]) => (
+            <div key={g}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {TEMPLATES.filter((t) => t.group === g).map((t) => {
+                  const active = t.id === templateId;
+                  return (
+                    <label
+                      key={t.id}
+                      className={`flex cursor-pointer flex-col gap-1 rounded-s border p-2 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus ${
+                        active ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2'
+                      }`}
+                    >
+                      <input type="radio" name="template" value={t.id} checked={active} onChange={() => choose(t)} className="sr-only" />
+                      {method && <TemplateThumb template={t} method={method} materials={materials} />}
+                      <span className={`font-medium ${active ? 'text-accent' : ''}`}>{t.name}</span>
+                      <span className="tabular text-xs text-muted">{fmtDims(t.size.w, t.size.h, t.size.d)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
           ))}
-        </SelectField>
+        </fieldset>
+
+        <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_200px]">
+          <div className="space-y-4">
+            <p className="text-sm text-muted">{template.description}</p>
+            <fieldset>
+              <legend className="mb-2 text-xs font-medium text-muted">Medidas exteriores</legend>
+              <div className="grid grid-cols-3 gap-3">
+                <MmField label="Ancho" value={size.w} min={LIMITS.w.min} max={LIMITS.w.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, w: v }))} />
+                <MmField label="Alto" value={size.h} min={LIMITS.h.min} max={LIMITS.h.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, h: v }))} />
+                <MmField label="Fondo" value={size.d} min={LIMITS.d.min} max={LIMITS.d.max} onCommit={(v) => v !== null && setSize((s) => ({ ...s, d: v }))} />
+              </div>
+            </fieldset>
+            <TextField label="Nombre" placeholder={autoName} value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+            <SelectField label="Método de fabricación" value={method?.id ?? ''} onChange={(e) => setMethodId(e.target.value)}>
+              {methods.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+          <div className="flex flex-col items-center justify-center rounded-m bg-surface-2 p-3">
+            {method && <CabinetSketch design={preview} method={method} materials={materials} className="h-48 w-full" title={`Frente de ${template.name}`} />}
+            <p className="tabular mt-2 text-xs text-muted">{fmtDims(size.w, size.h, size.d)} mm</p>
+          </div>
+        </div>
 
         {error && (
           <p role="alert" className="text-sm text-danger">
@@ -141,4 +153,12 @@ export function NewCabinetDialog({
       </form>
     </Dialog>
   );
+}
+
+function TemplateThumb({ template, method, materials }: { template: CabinetTemplate; method: Method; materials: Material[] }) {
+  const design = useMemo(() => {
+    let i = 0;
+    return template.build(template.size, () => `m${++i}`);
+  }, [template]);
+  return <CabinetSketch design={design} method={method} materials={materials} className="h-20 w-full" title={template.name} />;
 }

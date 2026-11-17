@@ -86,8 +86,8 @@ describe('cuenta A', () => {
     current = A.client;
     const methods = await data.listMethods();
     const materials = await data.listMaterials();
-    expect(methods.map((m) => m.id).sort()).toEqual(['std-clavada', 'std-ranura']);
-    expect(materials).toHaveLength(8);
+    expect(methods.map((m) => m.id).sort()).toEqual(['ar-18-clavado', 'ar-18-ranura']);
+    expect(materials).toHaveLength(9);
     expect(methods[0]!.drawer.depthStep).toBe(mm(50));
   });
 
@@ -100,7 +100,7 @@ describe('cuenta A', () => {
     d = setPlinth(d, { height: mm(100), setback: mm(50) });
     d = setFront(d, d.root.id, { kind: 'drawers', mount: 'overlay', sizes: [null, null, null] });
     d = setDrawerSize(d, d.root.id, 0, mm(140));
-    const c = await data.createCabinet({ projectId, name: 'Cajonera', methodId: 'std-ranura', design: d });
+    const c = await data.createCabinet({ projectId, name: 'Cajonera', methodId: 'ar-18-ranura', design: d });
     cabinetId = c.id;
     expect(c.rev).toBe(1);
     const back = await data.getCabinet(c.id);
@@ -122,8 +122,8 @@ describe('cuenta A', () => {
     const m = (await data.listMethods())[0]!;
     await data.saveMethod({ ...m, id: randomUUID(), name: 'Copia de prueba' });
     expect(await data.listMethods()).toHaveLength(3);
-    await expect(data.deleteMethod('std-ranura')).rejects.toThrow(/Lo usa 1 mueble/);
-    await expect(data.deleteMaterial('mel-blanco-19')).rejects.toBeInstanceOf(InUseError);
+    await expect(data.deleteMethod('ar-18-ranura')).rejects.toThrow(/Lo usa 1 mueble/);
+    await expect(data.deleteMaterial('ar-mel-blanca-18')).rejects.toBeInstanceOf(InUseError);
     await data.saveMaterial({ id: 'prueba-mat', name: 'Tablero prueba', kind: 'panel', thickness: mm(18), grain: 'length', priceCents: 1234, color: 'var(--mat-oak)' });
     expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.priceCents).toBe(1234);
     await data.deleteMaterial('prueba-mat');
@@ -141,9 +141,9 @@ describe('cuenta B no ve nada de A', () => {
     await expect(data.saveCabinet(cabinetId, 2, { name: 'Hackeado' })).rejects.toBeInstanceOf(NotFoundError);
     await data.deleteProject(projectId); // no falla, pero no borra nada
     await expect(
-      data.createCabinet({ projectId, name: 'Intruso', methodId: 'std-ranura', design: newDesign({ w: mm(600), h: mm(720), d: mm(560) }) }),
+      data.createCabinet({ projectId, name: 'Intruso', methodId: 'ar-18-ranura', design: newDesign({ w: mm(600), h: mm(720), d: mm(560) }) }),
     ).rejects.toBeInstanceOf(NotFoundError);
-    expect(await data.listMaterials()).toHaveLength(8); // sus propias bibliotecas de partida
+    expect(await data.listMaterials()).toHaveLength(9); // sus propias bibliotecas de partida
   });
 
   it('lo de A sigue intacto', async () => {
@@ -166,7 +166,7 @@ describe('subir los datos del navegador', () => {
       JSON.stringify({
         schema: 2,
         projects: [{ id: pid, name: 'Del navegador', createdAt: t, updatedAt: t }],
-        cabinets: [{ id: cid, projectId: pid, name: 'Despensa local', methodId: 'std-ranura', design: d, rev: 3, quantity: 1, createdAt: t, updatedAt: t }],
+        cabinets: [{ id: cid, projectId: pid, name: 'Despensa local', methodId: 'ar-18-ranura', design: d, rev: 3, quantity: 1, createdAt: t, updatedAt: t }],
         materials: [],
         methods: [],
       }),
@@ -197,6 +197,6 @@ describe('borrar la cuenta', () => {
     expect(res.status).toBe(200);
     expect((await admin.auth.admin.getUserById(A.id)).data.user).toBeNull();
     for (const t of ['projects', 'cabinets', 'materials', 'methods']) expect(await rowsOf(t, A.id), t).toBe(0);
-    expect(await rowsOf('materials', B.id)).toBe(8);
+    expect(await rowsOf('materials', B.id)).toBe(9);
   });
 });

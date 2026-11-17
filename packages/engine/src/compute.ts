@@ -70,6 +70,12 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     return m.thickness;
   };
   const edgeThickness = (id: string | null): Len => (id ? (mats.get(id)?.thickness ?? 0) : 0);
+  /** Lo que un canto descuenta de la medida de corte: su espesor, si el método descuenta y llega al mínimo. */
+  const edgeCut = (id: string | null): Len => {
+    if (!method.edgeReducesCut) return 0;
+    const th = edgeThickness(id);
+    return th >= method.edgeReduceMin ? th : 0;
+  };
   const grainOf = (id: string) => mats.get(id)?.grain ?? 'none';
   const validEdge = (id: string | null) => (id && mats.get(id)?.kind === 'edge' ? id : null);
 
@@ -120,9 +126,8 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       }
     }
 
-    const reduce = method.edgeReducesCut;
-    const cutWidth = p.width - (reduce ? edgeThickness(edges.L1) + edgeThickness(edges.L2) : 0);
-    const cutLength = p.length - (reduce ? edgeThickness(edges.W1) + edgeThickness(edges.W2) : 0);
+    const cutWidth = p.width - edgeCut(edges.L1) - edgeCut(edges.L2);
+    const cutLength = p.length - edgeCut(edges.W1) - edgeCut(edges.W2);
     const { edges: _e, grain, ...rest } = p;
     const part: Part = { ...rest, materialId, cutLength, cutWidth, edges, grain: grain ?? grainOf(materialId) };
     if (overridden) part.overridden = true;

@@ -2,16 +2,12 @@ import {
   designSchema,
   materialSchema,
   methodSchema,
-  mm,
-  newDesign,
   LEGACY_EURO_PRICES,
   normalizeMethod,
   PRESET_MATERIALS,
   PRESET_METHODS,
-  setDivisions,
-  setDrawerSize,
-  setFront,
-  setPlinth,
+  REFERENCE_MATERIALS,
+  templateById,
   type Material,
   type Method,
 } from '@mw/engine';
@@ -47,55 +43,32 @@ const uid = () => globalThis.crypto.randomUUID();
 function seed(): State {
   const t = now();
   const project: Project = { id: uid(), name: 'Cocina de ejemplo', createdAt: t, updatedAt: t };
-  const d0 = newDesign({ w: mm(600), h: mm(720), d: mm(560) });
-  const base: Cabinet = {
-    id: uid(),
-    projectId: project.id,
-    name: 'Bajo fregadero 600',
-    methodId: PRESET_METHODS[0]!.id,
-    design: setDivisions(d0, d0.root.id, 'y', 1),
-    rev: 1,
-    quantity: 1,
-    createdAt: t,
-    updatedAt: t,
-  };
-  const t0 = newDesign({ w: mm(900), h: mm(2000), d: mm(580) });
-  let tall = setDivisions(t0, t0.root.id, 'x', 1);
-  const [left, right] = tall.root.split!.children;
-  tall = setDivisions(tall, left!.id, 'y', 4);
-  tall = setDivisions(tall, right!.id, 'y', 1);
-  const despensa: Cabinet = {
-    id: uid(),
-    projectId: project.id,
-    name: 'Despensa 900',
-    methodId: PRESET_METHODS[0]!.id,
-    design: tall,
-    rev: 1,
-    quantity: 1,
-    createdAt: t,
-    updatedAt: t,
-  };
-  const c0 = newDesign({ w: mm(600), h: mm(720), d: mm(560) });
-  let cajonera = setPlinth(c0, { height: mm(100), setback: mm(50) });
-  cajonera = setFront(cajonera, c0.root.id, { kind: 'drawers', mount: 'overlay', sizes: [null, null, null] });
-  cajonera = setDrawerSize(cajonera, c0.root.id, 0, mm(140));
-  const drawers: Cabinet = {
-    id: uid(),
-    projectId: project.id,
-    name: 'Cajonera 600',
-    methodId: PRESET_METHODS[0]!.id,
-    design: cajonera,
-    rev: 1,
-    quantity: 1,
-    createdAt: t,
-    updatedAt: t,
-  };
-  base.design = setFront(base.design, base.design.root.id, { kind: 'door', leaves: 2, hinge: 'left', mount: 'overlay' });
-  base.design = setPlinth(base.design, { height: mm(100), setback: mm(50) });
+  // Muebles de ejemplo hechos con las plantillas (ver packages/engine/src/templates.ts).
+  const ejemplos: [string, string, number?][] = [
+    ['bajo-pileta', 'Bajo pileta 800'],
+    ['bajo-cajonera', 'Cajonera 450'],
+    ['bajo-mixto', 'Bajo con cajón 600'],
+    ['alacena', 'Alacena 800'],
+    ['columna', 'Columna 600'],
+  ];
+  const cabinets: Cabinet[] = ejemplos.map(([templateId, name]) => {
+    const tpl = templateById(templateId)!;
+    return {
+      id: uid(),
+      projectId: project.id,
+      name,
+      methodId: PRESET_METHODS[0]!.id,
+      design: tpl.build(tpl.size),
+      rev: 1,
+      quantity: 1,
+      createdAt: t,
+      updatedAt: t,
+    };
+  });
   return {
     schema: SCHEMA,
     projects: [project],
-    cabinets: [base, drawers, despensa],
+    cabinets,
     materials: structuredClone(PRESET_MATERIALS),
     methods: structuredClone(PRESET_METHODS),
   };
@@ -105,7 +78,7 @@ function seed(): State {
 function migrate(s: State): State {
   if ((s.schema ?? 1) < 2) {
     // Materiales nuevos de partida que usan los cajones por defecto.
-    for (const m of PRESET_MATERIALS) if (!s.materials.some((x) => x.id === m.id)) s.materials.push(structuredClone(m));
+    for (const m of REFERENCE_MATERIALS) if (!s.materials.some((x) => x.id === m.id)) s.materials.push(structuredClone(m));
     s.methods = s.methods.map((m) => normalizeMethod(m));
   }
   if ((s.schema ?? 1) < 3) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { mm, PRESET_METHODS, type Material, type Method } from '@mw/engine';
+import { mm, PRESET_MATERIALS, PRESET_METHODS, type Material, type Method } from '@mw/engine';
 import { Page } from '@/components/AppShell';
 import { MaterialDialog } from '@/components/libraries/MaterialDialog';
 import { MethodDialog } from '@/components/libraries/MethodDialog';
@@ -27,6 +27,7 @@ export default function LibrariesPage() {
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Deleting>(null);
   const [error, setError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const remove = async (d: NonNullable<Deleting>) => {
     setError(null);
@@ -59,10 +60,45 @@ export default function LibrariesPage() {
       {state.status === 'ready' && (
         <div className="space-y-10">
           {error && (
-            <Alert tone="danger" title="No se ha borrado">
+            <Alert tone="danger" title="No se pudo completar">
               {error}
             </Alert>
           )}
+
+          {(() => {
+            const missingMats = PRESET_MATERIALS.filter((m) => !state.data.materials.some((x) => x.id === m.id));
+            const missingMethods = PRESET_METHODS.filter((m) => !state.data.methods.some((x) => x.id === m.id));
+            if (missingMats.length + missingMethods.length === 0) return null;
+            return (
+              <Alert tone="info" title="Materiales y métodos de partida para Argentina">
+                <p>
+                  Melamina de 18 mm, fibrofácil de 3 mm, tapacantos de 0,45 y 2 mm y dos métodos con esas medidas. Te faltan {missingMats.length} materiales y{' '}
+                  {missingMethods.length} métodos. Se agregan sin precio y sin tocar lo que ya tenés.
+                </p>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  className="mt-2"
+                  disabled={adding}
+                  onClick={async () => {
+                    setAdding(true);
+                    setError(null);
+                    try {
+                      for (const m of missingMats) await data.saveMaterial(m);
+                      for (const m of missingMethods) await data.saveMethod(m);
+                      state.reload();
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : String(e));
+                    } finally {
+                      setAdding(false);
+                    }
+                  }}
+                >
+                  {adding ? 'Agregando…' : 'Agregarlos'}
+                </Button>
+              </Alert>
+            );
+          })()}
 
           {(['panel', 'edge'] as const).map((kind) => {
             const list = state.data.materials.filter((m) => m.kind === kind);

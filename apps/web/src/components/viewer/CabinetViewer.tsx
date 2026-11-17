@@ -1,7 +1,7 @@
 'use client';
 
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
-import { Edges, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
+import { Edges, Html, Line, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
 import { useMemo } from 'react';
 import type { Box, Material, Part, ZoneOut } from '@mw/engine';
 import type { FrontsView, Selection } from '@/components/editor/store';
@@ -78,7 +78,7 @@ export interface ViewerProps {
   materials: Material[];
   selection: Selection;
   hover: string | null;
-  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView };
+  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView; dims: boolean };
   onSelect: (s: Selection) => void;
   onHover: (id: string | null) => void;
 }
@@ -114,6 +114,9 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
   const selectedPart = selection.kind === 'part' ? selection.key : null;
   const visibleZones = zones.filter((z) => z.isLeaf || z.id === selectedZone);
   const shown = view.fronts === 'hidden' ? parts.filter((p) => !isFront(p)) : parts;
+  // Plano delantero (incluye puertas superpuestas) para colocar las cotas por delante del mueble.
+  const frontZ = Math.max(dims.d, ...parts.map((p) => p.box.z + p.box.dz));
+  const zoneOfSel = selectedZone ? zones.find((z) => z.id === selectedZone) : undefined;
   const drawerDepth = useMemo(() => {
     const m = new Map<string, number>();
     for (const p of parts) if (p.role === 'drawer-side' && p.assembly) m.set(p.assembly.id, Math.max(m.get(p.assembly.id) ?? 0, p.length));
@@ -174,6 +177,9 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
           );
         })}
 
+        {view.dims && <Dimensions dims={dims} frontZ={frontZ} color={colors.line} />}
+        {view.dims && zoneOfSel && <ZoneLabel box={zoneOfSel.box} />}
+
         {visibleZones.map((z) => {
           const isSel = z.id === selectedZone;
           const isHover = hover === `zone:${z.id}`;
@@ -207,4 +213,46 @@ function CameraRig({ ortho, dims }: { ortho: boolean; dims: { w: number; h: numb
       <OrbitControls makeDefault enableDamping dampingFactor={0.12} target={[0, 0, 0]} />
     </>
   );
+}
+
+/** Etiqueta de cota: número en mm, sin decimales innecesarios, con coma decimal. */
+const fmt = (len: number) => new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(len / 100);
+
+function DimLabel({ position, children }: { position: [number, number, number]; children: string }) {
+  return (
+    <Html position={position} center zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
+      <span className="tabular whitespace-nowrap rounded-s bg-surface/90 px-1.5 py-0.5 text-[11px] font-medium text-text shadow-1">{children}</span>
+    </Html>
+  );
+}
+
+/**
+ * Cotas generales: ancho por debajo del frente, alto a la izquierda y fondo a la derecha,
+ * separadas 6 cm del mueble para que no tapen nada.
+ */
+function Dimensions({ dims, frontZ, color }: { dims: { w: number; h: number; d: number }; frontZ: number; color: string }) {
+  const off = 6000;
+  const W = dims.w * S, H = dims.h * S, D = dims.d * S, Z = frontZ * S, o = off * S, t = 1500 * S;
+  return (
+    <group>
+      <Line points={[[0, -o, Z], [W, -o, Z]]} color={color} lineWidth={1} />
+      <Line points={[[0, -o - t, Z], [0, -o + t, Z]]} color={color} lineWidth={1} />
+      <Line points={[[W, -o - t, Z], [W, -o + t, Z]]} color={color} lineWidth={1} />
+      <DimLabel position={[W / 2, -o, Z]}>{fmt(dims.w)}</DimLabel>
+
+      <Line points={[[-o, 0, Z], [-o, H, Z]]} color={color} lineWidth={1} />
+      <Line points={[[-o - t, 0, Z], [-o + t, 0, Z]]} color={color} lineWidth={1} />
+      <Line points={[[-o - t, H, Z], [-o + t, H, Z]]} color={color} lineWidth={1} />
+      <DimLabel position={[-o, H / 2, Z]}>{fmt(dims.h)}</DimLabel>
+
+      <Line points={[[W + o, 0, 0], [W + o, 0, D]]} color={color} lineWidth={1} />
+      <DimLabel position={[W + o, 0, D / 2]}>{fmt(dims.d)}</DimLabel>
+    </group>
+  );
+}
+
+/** Medida libre del hueco elegido (ancho × alto), en su centro, por delante. */
+function ZoneLabel({ box }: { box: Box }) {
+  const c = center(box);
+  return <DimLabel position={[c[0], c[1], (box.z + box.dz) * S]}>{`${fmt(box.dx)} × ${fmt(box.dy)}`}</DimLabel>;
 }

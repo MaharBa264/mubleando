@@ -102,3 +102,15 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
 - Los materiales de partida vienen sin precio. Los datos guardados con los precios de partida en euros quedan sin precio: en local, formato versión 3; en Supabase, la migración `20261117000001`. Los precios cambiados a mano no se tocan.
 - El despiece avisa de los materiales sin precio y enlaza a Bibliotecas. Las bibliotecas muestran «sin precio».
 - Vocabulario de la documentación: «costo» y «centavos».
+
+## Constructor: plantillas, herramientas y medidas argentinas (2026-11-17)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `presets.ts`, `templates.ts`, `edgeReduceMin` | hecho | herrajes con sus tolerancias | las pruebas y los ejemplos usaban los materiales de partida: pasaron a un juego de referencia para no rehacer las cifras calculadas a mano |
+| S02 | Nuevo mueble con galería de plantillas | hecho | catálogo propio del usuario | — |
+| S03 | Barra de herramientas sobre el 3D, cotas | hecho; **cotas sin ver en pantalla** (el panel del navegador estaba oculto y el 3D no se dibuja) | arrastrar estantes en 3D | el usuario no encontraba puertas ni cajones: estaban solo en Propiedades al elegir un hueco |
+| — | Lista del proyecto: dibujo y Duplicar | hecho | — | — |
+| S10/S11 | Bibliotecas: agregar los de partida que falten; tapacanto desde X mm en el método | hecho | — | — |
+
+Comprobado: 147 pruebas (9 del método argentino y 33 de plantillas, nuevas); `npm run test:nube` 9 de 9 contra Supabase; en el navegador (modo local) galería con 10 plantillas y dibujos, crear «Bajo con cajón y puerta» (puerta 580 y frente 174, con 3 mm entre ellos, como el cálculo a mano), barra de herramientas (+ Estante, 2 puertas), sin errores de consola.

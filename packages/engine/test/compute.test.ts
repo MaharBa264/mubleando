@@ -5,8 +5,8 @@ import {
   groupedRows,
   mm,
   newDesign,
-  PRESET_MATERIALS,
-  PRESET_METHODS,
+  REFERENCE_MATERIALS,
+  REFERENCE_METHODS,
   setChildSize,
   setDivisions,
   totals,
@@ -19,9 +19,9 @@ import {
 // Un contador único para todo el archivo: dos generadores distintos nunca repiten id.
 let counter = 0;
 const seq = () => () => `z${++counter}`;
-const groove = PRESET_METHODS[0]!;
-const overlay = PRESET_METHODS[1]!;
-const M = PRESET_MATERIALS;
+const groove = REFERENCE_METHODS[0]!;
+const overlay = REFERENCE_METHODS[1]!;
+const M = REFERENCE_MATERIALS;
 const byKey = (parts: Part[], key: string) => {
   const p = parts.find((x) => x.key === key);
   if (!p) throw new Error(`no part ${key}`);

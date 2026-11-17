@@ -20,7 +20,7 @@ export interface EditorState extends Snapshot {
   future: Snapshot[];
   selection: Selection;
   hover: string | null;
-  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView };
+  view: { ortho: boolean; wire: boolean; cameraKey: number; fronts: FrontsView; dims: boolean };
   /** Cambia el diseño y lo apunta en el historial. */
   apply: (fn: (d: Design) => Design) => void;
   setMeta: (patch: Partial<Pick<Snapshot, 'methodId' | 'quantity'>>) => void;
@@ -45,9 +45,10 @@ export function createEditorStore(init: { name: string; design: Design; methodId
       ...init,
       past: [],
       future: [],
-      selection: { kind: 'cabinet' },
+      // Un mueble vacío abre con el interior elegido, para que se vean enseguida las herramientas.
+      selection: !init.design.root.split && !init.design.root.front ? { kind: 'zone', id: init.design.root.id } : { kind: 'cabinet' },
       hover: null,
-      view: { ortho: false, wire: false, cameraKey: 0, fronts: 'closed' },
+      view: { ortho: false, wire: false, cameraKey: 0, fronts: 'closed', dims: true },
 
       apply: (fn) => {
         const next = fn(get().design);

@@ -16,12 +16,26 @@ La primera vez que abres la app aparece la "Cocina de ejemplo", con un bajo de f
 
 Dentro de un proyecto, **Nuevo mueble**:
 
-1. **Nombre**: opcional; si lo dejas vacío se numera solo.
-2. **Forma**: de momento, rectangular. Las demás formas (en L, rinconero, libre) aparecen como "Más adelante".
-3. **Medidas exteriores**: ancho, alto y fondo en milímetros. Hay botones de medidas habituales para ir más rápido. Se aceptan decimales con coma (`560,5`).
-4. **Método de fabricación**: las reglas de construcción (qué tablero, cómo va la trasera, qué canto). Ver [el motor](motor.md#3-el-método-de-fabricación).
+1. **Plantilla**: cada una con un dibujo de su frente. Se pueden cambiar todas después en el editor.
 
-Al crear, se abre el editor.
+   | Grupo | Plantilla | Medidas típicas (mm) | Qué trae |
+   | --- | --- | --- | --- |
+   | Bajo mesada | Bajo con puertas | 600 × 860 × 560 | zócalo, un estante, una puerta (dos si mide más de 600) |
+   | Bajo mesada | Cajonera | 450 × 860 × 560 | zócalo y tres cajones; el de arriba, de 150, para cubiertos |
+   | Bajo mesada | Bajo con cajón y puerta | 600 × 860 × 560 | un cajón arriba y puerta(s) con un estante debajo |
+   | Bajo mesada | Bajo pileta | 800 × 860 × 560 | zócalo y puertas, sin estante (lugar para los caños) |
+   | Altos de pared | Alacena | 800 × 700 × 320 | un estante y puerta(s) |
+   | Altos de pared | Alacena abierta | 600 × 400 × 320 | un estante, sin puertas |
+   | Columnas y placards | Columna / despensa | 600 × 2100 × 560 | puerta abajo con dos estantes y puerta arriba con uno |
+   | Columnas y placards | Placard | 1200 × 2400 × 600 | dos cuerpos: estantes a la izquierda; maletero y espacio para colgar a la derecha |
+   | Otros | Estantería abierta | 800 × 1800 × 300 | cuatro estantes |
+   | Otros | Caja vacía | 600 × 720 × 560 | solo la caja |
+
+2. **Medidas exteriores**: ancho, alto y fondo en milímetros (se aceptan decimales con coma: `560,5`). La plantilla se adapta: por ejemplo, un bajo con puertas de más de 600 mm pasa a dos puertas. El dibujo de la derecha se actualiza al momento.
+3. **Nombre**: opcional; si lo dejás vacío se llama como la plantilla y el ancho («Cajonera 450»).
+4. **Método de fabricación**: las reglas de construcción (qué tablero, cómo va el fondo, qué tapacanto). Ver [el motor](motor.md#3-el-método-de-fabricación).
+
+Al crear, se abre el editor. En la lista del proyecto, cada mueble tiene su dibujo, y **Duplicar** hace una copia exacta (útil para módulos repetidos).
 
 ## 3. El editor
 
@@ -33,10 +47,23 @@ En el ordenador tiene tres columnas:
 
 En el móvil, la vista 3D va arriba y debajo hay dos pestañas: **Propiedades** y **Estructura**.
 
+Encima de la vista 3D, la **barra de herramientas** del hueco elegido (al tocar un hueco en el 3D o en Estructura):
+
+| Botón | Qué hace |
+| --- | --- |
+| + Estante / − Estante | Agrega o quita un estante; los niveles se reparten a partes iguales. |
+| + Divisor / − Divisor | Lo mismo con divisores verticales. |
+| Puerta / 2 puertas | Pone una puerta de una o dos hojas (otra vez el mismo botón la quita). |
+| Cajones | Pone tres cajones (la cantidad y las alturas se ajustan en Propiedades). Si el hueco tenía estantes, se quitan; Ctrl+Z lo deshace. |
+| Sin frente | Quita la puerta o los cajones. |
+
+Si no hay ningún hueco elegido, la barra lo recuerda y ofrece **Elegir el interior**. Un mueble vacío abre ya con el interior elegido.
+
 Debajo de la vista 3D:
 
 - **Perspectiva / Ortogonal**: la ortogonal no deforma las medidas, útil para ver frentes y alineaciones.
 - **Alámbrico**: solo las aristas, para ver lo que hay detrás.
+- **Cotas**: muestra el ancho, el alto y el fondo del mueble, y la medida libre del hueco elegido.
 - **Centrar**: vuelve a encuadrar el mueble.
 
 En la barra de arriba: volver al proyecto, el nombre del mueble (se edita ahí mismo), el estado del guardado, deshacer y rehacer, **STL** y **Despiece**.
@@ -136,7 +163,7 @@ Todas las opciones explicadas, incluidas las de cajones: [Exportaciones → STL]
 **Tableros y cantos.** **Nuevo tablero** / **Nuevo canto**, o **Editar** en uno existente:
 
 - Nombre, espesor y precio en **pesos** (por m² los tableros, por metro los cantos). Se puede escribir como se escribe en Argentina: `25.000`, `25.000,50` o `25000`.
-- Los materiales de partida vienen **sin precio**: cargá los tuyos. Mientras falte alguno, el despiece avisa de cuáles son y el total no los incluye.
+- Los materiales de partida vienen **sin precio**: cargá los tuyos. Son los habituales en Argentina: melamina de 18 mm (blanca, símil madera, gris grafito) y de 15 mm, fibrofácil de 3 mm (crudo y blanco), tapacanto de PVC de 0,45 y 2 mm. Si tu cuenta se creó antes del 17-11-2026, en Bibliotecas aparece **Agregarlos** para sumar los que te falten sin tocar los tuyos. Mientras falte alguno, el despiece avisa de cuáles son y el total no los incluye.
 - **Tiene veta** (solo tableros): las piezas no se podrán girar al colocarlas en el tablero.
 - Color con el que se ve en el 3D.
 

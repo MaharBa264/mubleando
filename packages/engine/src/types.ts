@@ -163,6 +163,11 @@ export interface Method {
   frontEdgeMaterialId: string | null;
   /** Si el espesor del canto se descuenta de la medida de corte. */
   edgeReducesCut: boolean;
+  /**
+   * Solo se descuentan los cantos de este espesor o más. 0 = todos. Por ejemplo, con 1 mm el
+   * tapacanto de 0,45 no cambia la medida de corte y el de 2 mm sí (así trabajan muchas madereras).
+   */
+  edgeReduceMin: Len;
   /** Puertas y frentes de cajón. */
   fronts: {
     materialId: string;
@@ -327,6 +332,7 @@ export const methodSchema: z.ZodType<Method> = z.object({
   dividerFrontSetback: lenSchema.nonnegative(),
   frontEdgeMaterialId: z.string().nullable(),
   edgeReducesCut: z.boolean(),
+  edgeReduceMin: lenSchema.nonnegative(),
   fronts: z.object({
     materialId: z.string().min(1),
     edgeMaterialId: z.string().nullable(),
