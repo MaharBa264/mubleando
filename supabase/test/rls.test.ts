@@ -158,7 +158,7 @@ describe('datos de cada usuario', () => {
 
   describe('integridad', () => {
     it('no se puede borrar un método que use algún mueble', async () => {
-      expect(await errorCode(as(ANA, (tx) => tx.query(`delete from methods where id = 'std'`)))).toBe('23001'); // restrict_violation
+      expect(await errorCode(as(ANA, (tx) => tx.query(`delete from methods where id = 'std'`)))).toBe('23503'); // la clave foránea sigue impidiéndolo
     });
 
     it('un diseño sin árbol de huecos se rechaza', async () => {
@@ -176,8 +176,12 @@ describe('datos de cada usuario', () => {
       });
     });
 
-    it('borrar la cuenta borra todos sus datos', async () => {
-      await as(ANA, (tx) => tx.query(`insert into projects (name) values ('Otro')`));
+    it('borrar la cuenta borra todos sus datos, también si tiene muebles', async () => {
+      // Con muebles que usan un método: así se reprodujo el fallo en Supabase (16-11-2026).
+      await as(ANA, async (tx) => {
+        const p = await tx.query<{ id: string }>(`insert into projects (name) values ('Otro') returning id`);
+        await tx.query(`insert into cabinets (project_id, name, method_id, design) values ($1, 'Con método', 'std', $2)`, [p.rows[0]!.id, design]);
+      });
       await db.query(`delete from auth.users where id = $1`, [ANA]);
       for (const t of ['projects', 'cabinets', 'materials', 'methods']) {
         const r = await db.query<{ n: number }>(`select count(*)::int as n from ${t} where user_id = $1`, [ANA]);

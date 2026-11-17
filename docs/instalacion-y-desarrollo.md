@@ -36,6 +36,7 @@ Todos se lanzan desde la carpeta raíz del repositorio.
 | --- | --- |
 | `npm run dev` | Arranca la aplicación en modo desarrollo en el puerto 3100. |
 | `npm test` | Pasa las pruebas del motor (`packages/engine`), de las exportaciones (`packages/exporters`) y de la base de datos (`supabase`) con Vitest. |
+| `npm run test:nube -w @mw/web` | Prueba de punta a punta contra tu proyecto de Supabase (crea y borra dos cuentas de prueba). Ver [Guardado en la nube](nube.md). |
 | `npm run typecheck` | Comprueba los tipos de TypeScript de los tres paquetes. No genera archivos. |
 | `npm run build` | Compila la aplicación para producción (carpeta `apps/web/.next`). |
 | `npm start -w @mw/web` | Sirve la versión compilada en el puerto 3100. Necesita `npm run build` antes. |

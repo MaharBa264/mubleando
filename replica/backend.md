@@ -6,13 +6,13 @@ Actualizado el 16 de noviembre de 2026. Guía de configuración: [`docs/nube.md`
 
 | Pieza | Estado | Dónde |
 | --- | --- | --- |
-| Base de datos (Postgres en Supabase) | hecha, probada con PGlite; sin probar en un proyecto real | `supabase/migrations/20261116000000_inicial.sql` |
-| Reglas de acceso por fila | hechas y probadas con dos usuarios | misma migración; `supabase/test/rls.test.ts` |
-| Cuentas: correo y contraseña con confirmación | hecho; sin probar con Supabase real | `apps/web/src/app/entrar` |
-| Recuperar la contraseña | hecho; sin probar con Supabase real | `apps/web/src/app/entrar`, `apps/web/src/app/restablecer` |
+| Base de datos (Postgres en Supabase) | hecha; probada con PGlite y en el proyecto real (17-11-2026) | `supabase/migrations/` (3 migraciones) |
+| Reglas de acceso por fila | hechas; probadas con dos usuarios en PGlite y en el proyecto real | `supabase/test/rls.test.ts`, `apps/web/test-nube/nube.test.ts` |
+| Cuentas: correo y contraseña con confirmación | hecho; entrar probado en el proyecto real; **correo de confirmación sin probar** | `apps/web/src/app/entrar` |
+| Recuperar la contraseña | hecho; **sin probar el correo real** | `apps/web/src/app/entrar`, `apps/web/src/app/restablecer` |
 | Cerrar sesión en todos los dispositivos | hecho | `apps/web/src/app/cuenta` |
-| Borrar la cuenta y todos sus datos | hecho; sin probar con Supabase real | `apps/web/src/app/api/cuenta/borrar/route.ts` |
-| Subir los datos del navegador a la cuenta | hecho; sin probar con Supabase real | `apps/web/src/data/cloud.ts` (`importLocalData`) |
+| Borrar la cuenta y todos sus datos | hecho; probado en el proyecto real | `apps/web/src/app/api/cuenta/borrar/route.ts` |
+| Subir los datos del navegador a la cuenta | hecho; probado en el proyecto real | `apps/web/src/data/cloud.ts` (`importLocalData`) |
 | Pagos | no aplica (uso propio) | — |
 | Correo propio (SMTP) | pendiente: hoy usa el servidor de correo de Supabase, con pocos envíos por hora | Supabase → Authentication → SMTP |
 | Trabajos programados | no hacen falta todavía | — |
@@ -40,9 +40,13 @@ Actualizado el 16 de noviembre de 2026. Guía de configuración: [`docs/nube.md`
 - [ ] Política de privacidad que nombre a los encargados del tratamiento (Supabase; el alojamiento, cuando se publique). Pendiente de `/replica-deploy`.
 - [x] Subidas de archivos: no hay.
 
-## Comprobación con un proyecto real (pendiente)
+## Comprobación con el proyecto real
 
-Cuando exista el proyecto de Supabase y `.env.local`:
+Automática: `npm run test:nube -w @mw/web`, con 9 pruebas, pasa (17-11-2026). Cubre los puntos 2, 3, 4, 5, 7, 8 y 9 de la lista de abajo con dos cuentas de prueba que crea y borra.
+
+Encontró un fallo que PGlite no reproducía. Borrar una cuenta con muebles daba «Database error deleting user»; según el registro de Supabase, «permission denied for table projects». El disparador `touch_project` corría con los permisos del rol interno que borra usuarios. Se arregló con la migración `20261117000000`, que lo hace `security definer`. La migración `20261116000001` se escribió antes, con un diagnóstico equivocado; es inocua.
+
+Pendiente a mano: los puntos 1 y 6 (correos reales) y abrir la misma cuenta en dos dispositivos.
 
 1. Crear cuenta → llega el correo → el enlace vuelve a `/entrar` → entrar.
 2. La cuenta nueva tiene los 8 materiales y 2 métodos de partida.

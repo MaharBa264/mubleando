@@ -27,8 +27,13 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
 ### 2. Crear las tablas
 
 1. En el panel del proyecto, abre **SQL Editor** → **New query**.
-2. Copia y pega el contenido entero de [`supabase/migrations/20261116000000_inicial.sql`](../supabase/migrations/20261116000000_inicial.sql).
-3. Pulsa **Run**. Debe terminar sin errores ("Success. No rows returned").
+2. Copia y pega el contenido entero del primer archivo de [`supabase/migrations`](../supabase/migrations) y pulsa **Run**. Debe terminar sin errores ("Success. No rows returned").
+3. Repite con cada archivo siguiente, **en orden** (el nombre empieza por la fecha):
+   - `20261116000000_inicial.sql`: las tablas, las reglas de acceso y la función de guardado.
+   - `20261116000001_borrar_cuenta_con_muebles.sql`: ajuste de la clave foránea de los métodos.
+   - `20261117000000_disparador_con_permisos_del_dueno.sql`: arreglo para poder borrar cuentas que tengan muebles.
+
+Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.
 4. Comprueba en **Table Editor** que aparecen cuatro tablas: `projects`, `cabinets`, `materials` y `methods`, todas con el candado de *RLS enabled*.
 
 (Si en el futuro usas la herramienta de línea de comandos de Supabase, `supabase db push` aplica las migraciones de la carpeta `supabase/migrations` en orden. No hace falta para empezar.)
@@ -135,7 +140,32 @@ Aplica la migración a un Postgres real que corre en memoria ([PGlite](https://p
 - No se borra un método en uso; borrar un proyecto borra sus muebles; borrar la cuenta borra todo lo suyo y nada de los demás.
 - Se rechaza un diseño sin árbol de huecos.
 
-Lo que estas pruebas **no** cubren: la conexión real con un proyecto de Supabase (las peticiones de `cloud.ts`, los correos y el borrado de cuentas). Eso se comprueba a mano la primera vez que se conecte un proyecto, con la lista de [`replica/backend.md`](../replica/backend.md).
+Además, `borrar-cuenta.test.ts` borra una cuenta con muebles forzando los 24 órdenes posibles en que Postgres puede encadenar los borrados.
+
+Un caso que PGlite **no reproduce**: en Supabase, al borrar una cuenta, los disparadores se ejecutan con los permisos del rol interno que borra el usuario (`supabase_auth_admin`), que no tiene acceso a nuestras tablas. Por eso cualquier disparador que toque otra tabla debe ser `security definer` (ver la migración del 17-11-2026). Ese caso se comprobó directamente contra Supabase.
+
+### Prueba contra tu proyecto real
+
+```bash
+npm run test:nube -w @mw/web
+```
+
+No forma parte de `npm test`, porque necesita tu proyecto de Supabase y `apps/web/.env.local` con las tres variables. Hace esto:
+
+1. Crea dos cuentas de prueba ya confirmadas, con la clave secreta. No envía ningún correo; las direcciones son `@example.com`, que no existen.
+2. Usa la capa de datos real de la app (`src/data/cloud.ts`) para comprobar:
+   - que una cuenta nueva recibe las bibliotecas de partida;
+   - que un proyecto y un mueble con zócalo y cajones se guardan y vuelven idénticos;
+   - el control de versión y el conflicto;
+   - el borrado protegido de métodos y tableros en uso;
+   - que la segunda cuenta no ve, no cambia y no borra nada de la primera;
+   - la subida de datos del navegador sin duplicar;
+   - la ruta de borrar cuenta, que rechaza una sesión falsa y borra la cuenta con todos sus datos sin tocar la otra.
+3. Al terminar, pase lo que pase, borra las dos cuentas.
+
+No imprime claves ni contraseñas. Conviene lanzarla después de aplicar cada migración nueva.
+
+Lo que **no** cubre: los correos de confirmación y de nueva contraseña, que se comprueban creando tu cuenta desde la app.
 
 ## Limitaciones actuales
 

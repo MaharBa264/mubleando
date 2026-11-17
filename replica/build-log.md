@@ -69,3 +69,12 @@ Comprobado: 47 pruebas del motor (25 nuevas con cifras calculadas a mano) y 15 d
 Comprobado: 14 pruebas de la base de datos (dos usuarios, conflictos de versión, borrados en cascada y restringidos), 47 del motor y 15 de exportaciones; `tsc` y `next build` sin errores; en el navegador, el modo local sigue igual y con una dirección de Supabase falsa la app manda a `/entrar` recordando la página, muestra «No hay conexión con el servidor» al entrar, y la ruta de borrar cuenta responde 501 sin clave de servicio.
 
 No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo crea el usuario). Lista de comprobación en `replica/backend.md`.
+
+## Nube: comprobación con el proyecto real (2026-11-17)
+
+- Primera conexión. En `.env.local`, la dirección del proyecto terminaba en `/rest/v1/`; se corrigió.
+- `npm run test:nube -w @mw/web`: prueba de punta a punta contra Supabase con dos cuentas temporales.
+- Fallo encontrado: no se podía borrar una cuenta con muebles («permission denied for table projects»). Corregido con la migración `20261117000000` (disparador `security definer`).
+  - Lo que costó más de lo previsto: PGlite no reproduce los permisos con que Supabase ejecuta los disparadores al borrar usuarios. Un primer arreglo, la migración `20261116000001`, partió de una hipótesis equivocada. La causa real salió del registro de Auth de Supabase.
+- Pruebas de la base de datos: 38, con el borrado de una cuenta con muebles en los 24 órdenes de cascada posibles.
+- Pendiente: probar los correos reales (confirmación y nueva contraseña) y el uso en dos dispositivos.
