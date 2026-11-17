@@ -86,3 +86,9 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
 - Probado en local con `workerd` (`cf:preview`): la app redirige a entrar, conecta con Supabase y la ruta de borrar cuenta lee el secreto (401 con un token falso). `npm run test:nube`: 9 de 9.
 - `npm audit`: avisos en `glob` y `minimatch` dentro de las herramientas de compilación del adaptador; no llegan a la app publicada.
 - Pendiente: el usuario entra en Cloudflare (`wrangler login`), se guarda el secreto y se publica; después, las direcciones en Supabase.
+
+## Primera publicación en Cloudflare (2026-11-17)
+
+- `wrangler login` (autorizado por el usuario) y `npm run cf:deploy`: Worker `mubleando` publicado en `https://mubleando.maharba264.workers.dev`.
+- Comprobado: la página de inicio, «Entrar», el manifiesto, los iconos y el service worker responden 200; sin errores de consola; a 375 px sin desbordes; el service worker toma el control (instalable).
+- Pendiente del usuario: guardar el secreto `SUPABASE_SERVICE_ROLE_KEY` en el Worker (hasta entonces, borrar la cuenta responde 501) y añadir la dirección publicada en Supabase (Site URL y Redirect URLs).
