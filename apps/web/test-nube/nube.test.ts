@@ -3,7 +3,7 @@
  *
  *   npm run test:nube -w @mw/web
  *
- * Necesita apps/web/.env.local con las tres variables. Crea dos cuentas de prueba ya
+ * Necesita apps/web/.env.local (dirección y clave pública) y apps/web/.dev.vars (clave secreta). Crea dos cuentas de prueba ya
  * confirmadas con la clave secreta (no se envía ningún correo; direcciones @example.com que no
  * existen), ejercita la capa de datos real (src/data/cloud.ts) y la ruta de borrar cuenta, y al
  * final borra las dos cuentas y todos sus datos, falle lo que falle. No imprime claves ni contraseñas.
@@ -14,10 +14,13 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { mm, newDesign, setDrawerSize, setFront, setPlinth } from '@mw/engine';
 
+// Variables públicas de .env.local y la clave secreta de .dev.vars (que no se empaqueta al publicar).
 const env: Record<string, string> = {};
-for (const l of readFileSync(new URL('../.env.local', import.meta.url), 'utf8').split(/\r?\n/)) {
-  const m = /^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/.exec(l);
-  if (m) env[m[1]!] = m[2]!;
+for (const file of ['../.env.local', '../.dev.vars']) {
+  for (const l of readFileSync(new URL(file, import.meta.url), 'utf8').split(/\r?\n/)) {
+    const m = /^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/.exec(l);
+    if (m) env[m[1]!] = m[2]!;
+  }
 }
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL!;
 const ANON = env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;

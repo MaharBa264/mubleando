@@ -72,6 +72,7 @@ Toda la documentación está en español, en la carpeta [`docs/`](docs/README.md
 - [El motor de cálculo](docs/motor.md): cómo se calculan las piezas, las convenciones de construcción y un ejemplo con todas las cifras.
 - [Exportaciones](docs/exportaciones.md): CSV para la maderera y STL para impresión 3D (escalas, espesor mínimo, cajones).
 - [La aplicación web](docs/app-web.md): pantallas, editor, guardado de datos, modo sin conexión.
+- [Publicar](docs/publicar.md): ponerla en internet con Cloudflare Workers, gratis.
 - [Guardado en la nube](docs/nube.md): configurar Supabase paso a paso, cuentas, tablas y reglas de acceso.
 - [Hoja de ruta](docs/hoja-de-ruta.md): qué viene después y en qué orden.
 - [Cómo contribuir](docs/contribuir.md): ramas, commits, pruebas y estilo.

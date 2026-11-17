@@ -59,17 +59,24 @@ En **Authentication**:
    - **Project URL**.
    - La clave pública: **anon** (o **publishable**).
    - La clave secreta: **service_role** (o **secret**). Solo hace falta para poder borrar cuentas desde la app.
-2. En la carpeta `apps/web`, copia `.env.example` como `.env.local` y rellénalo:
+2. En la carpeta `apps/web`, copia `.env.example` como `.env.local` y rellena las dos variables públicas. La dirección es solo `https://tu-proyecto.supabase.co`, sin `/rest/v1/` al final:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=la-clave-anon
-SUPABASE_SERVICE_ROLE_KEY=la-clave-service-role
+NEXT_PUBLIC_SUPABASE_ANON_KEY=la-clave-anon-o-publishable
 ```
+
+   Y en la misma carpeta crea `.dev.vars` con la clave secreta:
+
+```
+SUPABASE_SERVICE_ROLE_KEY=la-clave-service-role-o-secret
+```
+
+   La secreta no puede ir en `.env.local`: el adaptador de Cloudflare empaqueta en la app todo lo que hay en los archivos `.env` (ver [publicar.md](publicar.md)).
 
 3. Reinicia la app (`npm run dev`). Ahora pide entrar.
 
-`.env.local` está en `.gitignore`: **no se sube a GitHub**. La clave anon es pública a propósito (va dentro de la app en el navegador; sin sesión no da acceso a nada). La clave service_role **nunca** debe llevar `NEXT_PUBLIC_` delante ni compartirse: quien la tenga puede leer y borrar toda la base de datos.
+`.env.local` y `.dev.vars` están en `.gitignore`: **no se suben a GitHub**. La clave anon es pública a propósito (va dentro de la app en el navegador; sin sesión no da acceso a nada). La clave service_role **nunca** debe llevar `NEXT_PUBLIC_` delante ni compartirse: quien la tenga puede leer y borrar toda la base de datos.
 
 ### 5. Primer uso
 

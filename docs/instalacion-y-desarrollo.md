@@ -36,6 +36,8 @@ Todos se lanzan desde la carpeta raíz del repositorio.
 | --- | --- |
 | `npm run dev` | Arranca la aplicación en modo desarrollo en el puerto 3100. |
 | `npm test` | Pasa las pruebas del motor (`packages/engine`), de las exportaciones (`packages/exporters`) y de la base de datos (`supabase`) con Vitest. |
+| `npm run cf:preview -w @mw/web` | Compila la app como Worker de Cloudflare y la sirve en `http://localhost:8787` ([publicar.md](publicar.md)). |
+| `npm run cf:deploy -w @mw/web` | Publica en Cloudflare. |
 | `npm run test:nube -w @mw/web` | Prueba de punta a punta contra tu proyecto de Supabase (crea y borra dos cuentas de prueba). Ver [Guardado en la nube](nube.md). |
 | `npm run typecheck` | Comprueba los tipos de TypeScript de los tres paquetes. No genera archivos. |
 | `npm run build` | Compila la aplicación para producción (carpeta `apps/web/.next`). |
@@ -93,13 +95,13 @@ Archivos de configuración de la raíz:
 
 ## Variables de entorno
 
-Van en `apps/web/.env.local` (no se sube a GitHub). La plantilla es `apps/web/.env.example`.
+Las públicas van en `apps/web/.env.local` y la secreta en `apps/web/.dev.vars`. Ninguno de los dos se sube a GitHub. La plantilla es `apps/web/.env.example`.
 
 | Variable | Para qué |
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Dirección del proyecto de Supabase. Con esta y la siguiente, la app usa la nube y pide entrar. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave pública del proyecto. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta, solo en el servidor, para borrar cuentas. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave secreta, solo en el servidor, para borrar cuentas. Va en `.dev.vars` y, al publicar, como secreto del Worker ([publicar.md](publicar.md)). Con `npm run dev` no se lee, así que borrar la cuenta solo funciona con `npm run cf:preview` o publicada. |
 
 Al cambiar `.env.local`, el servidor de desarrollo lo recarga solo; si no, reinícialo.
 

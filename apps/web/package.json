@@ -7,11 +7,15 @@
     "build": "next build",
     "start": "next start --port 3100",
     "typecheck": "tsc --noEmit",
-    "test:nube": "vitest run --config test-nube/vitest.config.ts"
+    "test:nube": "vitest run --config test-nube/vitest.config.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --port 8787",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@mw/engine": "*",
     "@mw/exporters": "*",
+    "@opennextjs/cloudflare": "1.20.15",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@supabase/supabase-js": "2.118.0",
@@ -28,6 +32,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
     "postcss": "^8.5.33",
-    "tailwindcss": "^4.3.5"
+    "tailwindcss": "^4.3.5",
+    "wrangler": "4.156.2"
   }
 }

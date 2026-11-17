@@ -1,0 +1,16 @@
+// Configuración del Worker de Cloudflare que sirve la app (ver docs/publicar.md).
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  // Nombre del Worker. La dirección pública será https://mubleando.<tu-subdominio>.workers.dev
+  "name": "mubleando",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  // nodejs_compat: Next.js necesita las APIs de Node. global_fetch_strictly_public: el Worker no puede
+  // llamar por fetch a direcciones internas de Cloudflare, solo a internet (Supabase).
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+}

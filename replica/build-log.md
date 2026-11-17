@@ -78,3 +78,11 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
   - Lo que costó más de lo previsto: PGlite no reproduce los permisos con que Supabase ejecuta los disparadores al borrar usuarios. Un primer arreglo, la migración `20261116000001`, partió de una hipótesis equivocada. La causa real salió del registro de Auth de Supabase.
 - Pruebas de la base de datos: 38, con el borrado de una cuenta con muebles en los 24 órdenes de cascada posibles.
 - Pendiente: probar los correos reales (confirmación y nueva contraseña) y el uso en dos dispositivos.
+
+## Publicación en Cloudflare: preparación (2026-11-17)
+
+- Adaptador OpenNext (`@opennextjs/cloudflare` 1.20.15, `wrangler` 4.156.2), `wrangler.jsonc`, scripts `cf:build`, `cf:preview` y `cf:deploy`. Compila en Windows.
+- Lo que costó más de lo previsto: el adaptador empaqueta dentro del Worker todos los archivos `.env`, incluidos los de desarrollo. La clave secreta pasó a `.dev.vars`, que no se empaqueta; en Cloudflare irá como secreto del Worker. Comprobado que el valor no aparece en `.open-next`.
+- Probado en local con `workerd` (`cf:preview`): la app redirige a entrar, conecta con Supabase y la ruta de borrar cuenta lee el secreto (401 con un token falso). `npm run test:nube`: 9 de 9.
+- `npm audit`: avisos en `glob` y `minimatch` dentro de las herramientas de compilación del adaptador; no llegan a la app publicada.
+- Pendiente: el usuario entra en Cloudflare (`wrangler login`), se guarda el secreto y se publica; después, las direcciones en Supabase.
