@@ -11,7 +11,7 @@ Actualizado el 16 de noviembre de 2026. Guía de configuración: [`docs/nube.md`
 | Cuentas: correo y contraseña con confirmación | hecho; entrar probado en el proyecto real; **correo de confirmación sin probar** | `apps/web/src/app/entrar` |
 | Recuperar la contraseña | hecho; **sin probar el correo real** | `apps/web/src/app/entrar`, `apps/web/src/app/restablecer` |
 | Cerrar sesión en todos los dispositivos | hecho | `apps/web/src/app/cuenta` |
-| Borrar la cuenta y todos sus datos | hecho; probado en el proyecto real | `apps/web/src/app/api/cuenta/borrar/route.ts` |
+| Borrar la cuenta y todos sus datos | hecho; probado en el proyecto real y en la app publicada en Cloudflare | `apps/web/src/app/api/cuenta/borrar/route.ts` |
 | Subir los datos del navegador a la cuenta | hecho; probado en el proyecto real | `apps/web/src/data/cloud.ts` (`importLocalData`) |
 | Pagos | no aplica (uso propio) | — |
 | Correo propio (SMTP) | pendiente: hoy usa el servidor de correo de Supabase, con pocos envíos por hora | Supabase → Authentication → SMTP |

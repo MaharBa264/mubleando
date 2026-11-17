@@ -91,4 +91,6 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
 
 - `wrangler login` (autorizado por el usuario) y `npm run cf:deploy`: Worker `mubleando` publicado en `https://mubleando.maharba264.workers.dev`.
 - Comprobado: la página de inicio, «Entrar», el manifiesto, los iconos y el service worker responden 200; sin errores de consola; a 375 px sin desbordes; el service worker toma el control (instalable).
-- Pendiente del usuario: guardar el secreto `SUPABASE_SERVICE_ROLE_KEY` en el Worker (hasta entonces, borrar la cuenta responde 501) y añadir la dirección publicada en Supabase (Site URL y Redirect URLs).
+- El usuario guardó el secreto `SUPABASE_SERVICE_ROLE_KEY` en el Worker (`wrangler secret put`) y añadió la dirección publicada en Supabase (Site URL y Redirect URLs).
+- Comprobado en la app publicada: borrar una cuenta con proyecto, mueble y método responde 200 y no deja ni la cuenta ni sus filas.
+- Pendiente: los correos reales (confirmación y nueva contraseña) con la cuenta del usuario, y el uso en el móvil.
