@@ -20,7 +20,7 @@ Código: [`packages/engine/src`](../packages/engine/src).
 | `types.ts` | Tipos del diseño, el método, los materiales y las piezas, y el esquema zod del diseño. |
 | `compute.ts` | El cálculo: `compute()` y `resolveSizes()`. |
 | `edit.ts` | Funciones para modificar un diseño sin mutarlo (dividir, fijar medidas, igualar…). |
-| `cutlist.ts` | Filas de la lista de corte (agrupadas o pieza a pieza) y totales de material y coste. |
+| `cutlist.ts` | Filas de la lista de corte (agrupadas o pieza a pieza) y totales de material y costo. |
 | `presets.ts` | Materiales y métodos de partida. |
 
 ## 1. Unidades
@@ -314,11 +314,11 @@ Los identificadores de los huecos nuevos salen de un generador (`IdGen`). En la 
 
 - `individualRows(items)`: una fila por pieza, con referencias P1, P2…
 - `groupedRows(items)`: junta las piezas iguales (mismo material, espesor, medida de corte, veta y cantos) en una fila con su cantidad. Referencias G1, G2…
-- `totals(items, materials)`: por material, número de piezas, m² (con la medida de corte) y coste; por canto, metros (con la medida acabada) y coste; y el total.
+- `totals(items, materials)`: por material, número de piezas, m² (con la medida de corte) y costo; por canto, metros (con la medida acabada) y costo; y el total.
 
 Cada `item` es `{ part, qty?, source? }`: `qty` multiplica la pieza (un mueble repetido 3 veces en el proyecto) y `source` es el nombre del mueble, que aparece en la lista del proyecto.
 
-Los precios están en **céntimos** (enteros) por el mismo motivo que las medidas: el tablero en céntimos por m² y el canto en céntimos por metro lineal.
+Los precios están en **centavos** (enteros) por el mismo motivo que las medidas: el tablero en centavos por m² y el canto en centavos por metro lineal.
 
 ## 9. Pruebas
 

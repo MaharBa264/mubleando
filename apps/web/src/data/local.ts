@@ -4,6 +4,7 @@ import {
   methodSchema,
   mm,
   newDesign,
+  LEGACY_EURO_PRICES,
   normalizeMethod,
   PRESET_MATERIALS,
   PRESET_METHODS,
@@ -25,9 +26,9 @@ const KEY = 'mueblesweb:v1';
 
 /**
  * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
- * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones.
+ * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos.
  */
-const SCHEMA = 2;
+const SCHEMA = 3;
 
 interface State {
   schema?: number;
@@ -106,6 +107,10 @@ function migrate(s: State): State {
     // Materiales nuevos de partida que usan los cajones por defecto.
     for (const m of PRESET_MATERIALS) if (!s.materials.some((x) => x.id === m.id)) s.materials.push(structuredClone(m));
     s.methods = s.methods.map((m) => normalizeMethod(m));
+  }
+  if ((s.schema ?? 1) < 3) {
+    // Paso de euros a pesos: los materiales de partida que nadie tocó quedan sin precio.
+    for (const m of s.materials) if (LEGACY_EURO_PRICES[m.id] === m.priceCents) m.priceCents = 0;
   }
   s.schema = SCHEMA;
   // Bibliotecas dañadas: se descartan solo las entradas inválidas.

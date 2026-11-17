@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="es">
+    <html lang="es-AR">
       <body className="font-sans antialiased">
         <AppShell>{children}</AppShell>
         <PwaRegister />

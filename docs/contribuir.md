@@ -41,7 +41,7 @@ Y abre la app (`npm run dev`) para probar a mano lo que hayas tocado, también c
 
 - **TypeScript estricto.** Nada de `any` salvo que no haya otra forma, y entonces con un comentario.
 - **Medidas en centésimas de mm** (enteros) en todo el motor y las exportaciones. Se convierten a mm solo para mostrarlas o escribirlas en un archivo.
-- **Precios en céntimos** (enteros).
+- **Precios en centavos** (enteros).
 - **El motor es puro**: sin React, sin navegador, sin red, sin fechas ni números aleatorios. Si una función del motor necesita un identificador nuevo, lo recibe por parámetro (`IdGen`).
 - **Toda función del motor o de las exportaciones lleva pruebas.** Para las medidas, la prueba debe dar cifras concretas comprobadas a mano, no solo "que no falle".
 - **Colores y medidas de la interfaz** como variables CSS (`globals.css`), nunca sueltos en los componentes.

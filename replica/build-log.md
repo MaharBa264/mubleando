@@ -94,3 +94,11 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
 - El usuario guardó el secreto `SUPABASE_SERVICE_ROLE_KEY` en el Worker (`wrangler secret put`) y añadió la dirección publicada en Supabase (Site URL y Redirect URLs).
 - Comprobado en la app publicada: borrar una cuenta con proyecto, mueble y método responde 200 y no deja ni la cuenta ni sus filas.
 - Pendiente: los correos reales (confirmación y nueva contraseña) con la cuenta del usuario, y el uso en el móvil.
+
+## Pesos argentinos (2026-11-17)
+
+- Moneda ARS y formato `es-AR` en toda la app (`lib/format.ts`): `$ 12.345,67`, `2.400 × 599,5`, fechas argentinas. `<html lang="es-AR">`.
+- Los precios se escriben como en Argentina (`25.000`, `25.000,50`); `parseCents` con pruebas.
+- Los materiales de partida vienen sin precio. Los datos guardados con los precios de partida en euros quedan sin precio: en local, formato versión 3; en Supabase, la migración `20261117000001`. Los precios cambiados a mano no se tocan.
+- El despiece avisa de los materiales sin precio y enlaza a Bibliotecas. Las bibliotecas muestran «sin precio».
+- Vocabulario de la documentación: «costo» y «centavos».

@@ -36,7 +36,7 @@ Diálogos:
 | `components/CutListView.tsx` | La lista de corte: agrupada o pieza a pieza, tarjetas en el móvil y tabla en el ordenador, totales, imprimir y CSV. |
 | `components/editor/` | El editor (ver abajo). |
 | `components/viewer/CabinetViewer.tsx` | El visor 3D. |
-| `lib/format.ts` | Formato de medidas, dinero, números y fechas en español (`fmtMm`, `fmtMoney`…) y `parseMm`, que acepta coma decimal. |
+| `lib/format.ts` | Formato de Argentina (`LOCALE = 'es-AR'`, `CURRENCY = 'ARS'`): medidas, pesos, números y fechas (`fmtMm`, `fmtMoney`…). `parseMm` acepta coma o punto decimal; `parseCents` lee precios como `25.000,50`. Pruebas en `lib/format.test.ts`. Para otro país basta con cambiar esas dos constantes. |
 | `lib/download.ts` | `downloadBlob`: descarga un archivo generado en el navegador. |
 | `lib/useAsync.ts` | Hook para cargar datos con estados de carga, error y reintento. |
 

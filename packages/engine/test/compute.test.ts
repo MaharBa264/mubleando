@@ -219,7 +219,9 @@ describe('lista de corte y totales', () => {
   });
 
   it('suma superficie, canto y coste', () => {
-    const t = totals(items, M);
+    // Los materiales de partida no traen precio: se le pone uno para probar la cuenta.
+    const priced = M.map((m) => (m.id === 'mel-blanco-19' ? { ...m, priceCents: 1150 } : m.id === 'pvc-blanco-1' ? { ...m, priceCents: 45 } : m));
+    const t = totals(items, priced);
     const mel = t.panels.find((p) => p.materialId === 'mel-blanco-19')!;
     const area = 2 * (2 * 720 * 559 + 2 * 562 * 559 + 2 * 562 * 521); // mm²
     expect(mel.areaM2).toBeCloseTo(area / 1e6, 9);

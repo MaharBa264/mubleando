@@ -1,6 +1,6 @@
 # Mubleando
 
-Aplicación web y móvil para diseñar muebles de tablero (cocinas, armarios, estanterías) y sacar de cada diseño todo lo necesario para fabricarlo: la lista de corte para mandar a la maderera, el material y el coste, y los archivos STL para imprimir el mueble en 3D como maqueta.
+Aplicación web y móvil para diseñar muebles de tablero (cocinas, armarios, estanterías) y sacar de cada diseño todo lo necesario para fabricarlo: la lista de corte para mandar a la maderera, el material y el costo, y los archivos STL para imprimir el mueble en 3D como maqueta.
 
 Funciona en el navegador del ordenador y del móvil, y se puede instalar como aplicación (PWA). El nombre interno del código sigue siendo `mueblesweb` hasta que se elija la marca definitiva.
 
@@ -19,7 +19,7 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Deshacer y rehacer (Ctrl+Z / Ctrl+Y) | Hecho |
 | Lista de corte agrupada o pieza a pieza, por mueble y por proyecto | Hecho |
 | Exportar la lista de corte a CSV (para la maderera, Excel o un optimizador) | Hecho |
-| Metros cuadrados de tablero, metros de canto y coste estimado | Hecho |
+| Metros cuadrados de tablero, metros de canto y costo estimado | Hecho |
 | Exportar a STL para impresión 3D: mueble completo o pieza a pieza, a escala, con los cajones integrados o aparte | Hecho |
 | Puertas de una o dos hojas, superpuestas o encastradas | Hecho |
 | Cajones con su caja completa (laterales, trasera, contrafrente, fondo) | Hecho |

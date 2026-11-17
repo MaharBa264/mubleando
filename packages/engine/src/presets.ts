@@ -1,16 +1,19 @@
 import type { Material, Method } from './types';
 import { mm } from './units';
 
-/** Materiales de partida. Precios orientativos, editables por el usuario. */
+/**
+ * Materiales de partida. Vienen **sin precio** (0): cada taller carga los suyos en Bibliotecas,
+ * en pesos. El despiece avisa de los materiales sin precio.
+ */
 export const PRESET_MATERIALS: Material[] = [
-  { id: 'mel-blanco-19', name: 'Melamina blanca 19', kind: 'panel', thickness: mm(19), grain: 'none', priceCents: 1150, color: 'var(--mat-white)' },
-  { id: 'mel-roble-19', name: 'Melamina roble 19', kind: 'panel', thickness: mm(19), grain: 'length', priceCents: 1480, color: 'var(--mat-oak)' },
-  { id: 'mel-grafito-16', name: 'Melamina grafito 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 1320, color: 'var(--mat-graphite)' },
-  { id: 'mel-blanco-16', name: 'Melamina blanca 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 1050, color: 'var(--mat-white)' },
-  { id: 'dm-8', name: 'DM 8', kind: 'panel', thickness: mm(8), grain: 'none', priceCents: 640, color: 'var(--mat-mdf)' },
-  { id: 'hdf-3', name: 'HDF 3 blanco', kind: 'panel', thickness: mm(3), grain: 'none', priceCents: 380, color: 'var(--mat-white)' },
-  { id: 'pvc-blanco-1', name: 'Canto PVC blanco 1', kind: 'edge', thickness: mm(1), grain: 'none', priceCents: 45, color: 'var(--mat-white)' },
-  { id: 'abs-roble-2', name: 'Canto ABS roble 2', kind: 'edge', thickness: mm(2), grain: 'none', priceCents: 90, color: 'var(--mat-oak)' },
+  { id: 'mel-blanco-19', name: 'Melamina blanca 19', kind: 'panel', thickness: mm(19), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
+  { id: 'mel-roble-19', name: 'Melamina roble 19', kind: 'panel', thickness: mm(19), grain: 'length', priceCents: 0, color: 'var(--mat-oak)' },
+  { id: 'mel-grafito-16', name: 'Melamina grafito 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 0, color: 'var(--mat-graphite)' },
+  { id: 'mel-blanco-16', name: 'Melamina blanca 16', kind: 'panel', thickness: mm(16), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
+  { id: 'dm-8', name: 'DM 8', kind: 'panel', thickness: mm(8), grain: 'none', priceCents: 0, color: 'var(--mat-mdf)' },
+  { id: 'hdf-3', name: 'HDF 3 blanco', kind: 'panel', thickness: mm(3), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
+  { id: 'pvc-blanco-1', name: 'Canto PVC blanco 1', kind: 'edge', thickness: mm(1), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
+  { id: 'abs-roble-2', name: 'Canto ABS roble 2', kind: 'edge', thickness: mm(2), grain: 'none', priceCents: 0, color: 'var(--mat-oak)' },
 ];
 
 /** Frentes por defecto: melamina blanca 19 con canto de PVC de 1 mm en los cuatro lados y 3 mm de holgura. */
@@ -68,3 +71,9 @@ export function normalizeMethod(m: Omit<Method, 'fronts' | 'drawer'> & Partial<P
     drawer: { ...DEFAULT_DRAWER, ...m.drawer },
   };
 }
+
+/**
+ * Precios que traían los materiales de partida hasta el 17-11-2026, cuando estaban en euros.
+ * Sirven para reconocer los que nadie ha tocado y ponerlos sin precio al pasar a pesos.
+ */
+export const LEGACY_EURO_PRICES: Readonly<Record<string, number>> = { 'mel-blanco-19': 1150, 'mel-roble-19': 1480, 'mel-grafito-16': 1320, 'mel-blanco-16': 1050, 'dm-8': 640, 'hdf-3': 380, 'pvc-blanco-1': 45, 'abs-roble-2': 90 };

@@ -13,7 +13,7 @@ Actualizada el 15 de noviembre de 2026.
 
 - Motor de cálculo: caja, trasera en ranura o clavada, estantes y divisores anidados, medidas fijas o repartidas, canto frontal, medidas de corte.
 - Proyectos y muebles, editor 3D con estructura y propiedades, deshacer y rehacer, guardado automático con detección de conflictos.
-- Despiece agrupado o pieza a pieza, por mueble y por proyecto; CSV; totales de material y coste.
+- Despiece agrupado o pieza a pieza, por mueble y por proyecto; CSV; totales de material y costo.
 - PWA (instalable, sin conexión en producción).
 - Exportación STL para impresión 3D (añadida tras la fase 1).
 

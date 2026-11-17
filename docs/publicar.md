@@ -2,7 +2,7 @@
 
 Publicada, la app tiene una dirección en internet con HTTPS, por ejemplo `https://mubleando.<tu-subdominio>.workers.dev`. Se abre desde cualquier ordenador o móvil y en el móvil se puede instalar como aplicación.
 
-| Pieza | Dónde vive | Coste |
+| Pieza | Dónde vive | Costo |
 | --- | --- | --- |
 | La app (páginas, motor, visor 3D) | **Cloudflare Workers** | Plan gratuito: 100 000 peticiones al día, de sobra para un taller. Admite uso comercial. |
 | Los datos y las cuentas | **Supabase** (ver [nube.md](nube.md)) | Plan gratuito. |

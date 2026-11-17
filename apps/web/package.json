@@ -10,7 +10,8 @@
     "test:nube": "vitest run --config test-nube/vitest.config.ts",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview --port 8787",
-    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "test": "vitest run"
   },
   "dependencies": {
     "@mw/engine": "*",

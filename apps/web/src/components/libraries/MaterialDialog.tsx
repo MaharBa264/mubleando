@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
+import { parseCents } from '@/lib/format';
 
 /** Colores del visor 3D disponibles para un material (tokens de globals.css). */
 export const MATERIAL_COLORS: [string, string][] = [
@@ -19,15 +20,8 @@ export const MATERIAL_COLORS: [string, string][] = [
   ['var(--mat-black)', 'Negro'],
 ];
 
-/** "11,50" o "11.5" → 1150 céntimos. null si no es un precio válido. */
-export function parseCents(text: string): number | null {
-  const t = text.trim().replace(/\s|€/g, '').replace(',', '.');
-  if (t === '') return 0;
-  if (!/^\d+(\.\d{0,2})?$/.test(t)) return null;
-  return Math.round(Number(t) * 100);
-}
-
-const centsText = (c: number) => (c / 100).toFixed(2).replace('.', ',');
+/** Centavos → texto editable sin separador de miles: 2000050 → "20000,50"; 0 → "". */
+const centsText = (c: number) => (c === 0 ? '' : (c / 100).toFixed(2).replace('.', ','));
 
 /** S11 / S12 · Crear o editar un tablero o un canto. */
 export function MaterialDialog({
@@ -51,7 +45,7 @@ export function MaterialDialog({
 
   const save = async () => {
     if (!m.name.trim()) return setError('Ponle un nombre.');
-    if (cents === null) return setError('El precio tiene que ser un número, por ejemplo 11,50.');
+    if (cents === null) return setError('El precio tiene que ser un número, por ejemplo 25.000 o 25.000,50.');
     setBusy(true);
     setError(null);
     try {
@@ -84,7 +78,8 @@ export function MaterialDialog({
           <MmField label="Espesor" value={m.thickness} min={mm(0.1)} max={mm(100)} onCommit={(v) => v !== null && setM({ ...m, thickness: v })} />
           <div>
             <TextField
-              label={panel ? 'Precio por m² (€)' : 'Precio por metro (€)'}
+              label={panel ? 'Precio por m² ($)' : 'Precio por metro ($)'}
+              placeholder={panel ? 'Ej.: 25.000' : 'Ej.: 900'}
               inputMode="decimal"
               value={price}
               aria-invalid={cents === null}

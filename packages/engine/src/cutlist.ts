@@ -81,7 +81,7 @@ export interface Totals {
   totalCents: number;
 }
 
-/** Superficie de tablero (medida de corte), metros de canto y coste. */
+/** Superficie de tablero (medida de corte), metros de canto y costo. */
 export function totals(items: readonly CutItem[], materials: readonly Material[]): Totals {
   const mats = new Map(materials.map((m) => [m.id, m]));
   const area = new Map<string, { a: number; n: number }>();

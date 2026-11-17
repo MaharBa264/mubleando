@@ -52,7 +52,7 @@ export default function LibrariesPage() {
   return (
     <Page title="Bibliotecas">
       <p className="-mt-3 mb-6 text-sm text-muted">
-        Tus tableros, cantos y métodos de fabricación. Los precios sirven para calcular el coste del material en el despiece.
+        Tus tableros, cantos y métodos de fabricación. Los precios, en pesos, sirven para calcular el costo del material en el despiece.
       </p>
       {state.status === 'loading' && <LoadingBlock />}
       {state.status === 'error' && <ErrorState error={state.error} onRetry={state.reload} />}
@@ -84,7 +84,8 @@ export default function LibrariesPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium break-words">{m.name}</span>
                         <span className="tabular block text-xs text-muted">
-                          {fmtMm(m.thickness)} mm{m.grain === 'length' ? ' · con veta' : ''} · {fmtMoney(m.priceCents)} / {kind === 'panel' ? 'm²' : 'm'}
+                          {fmtMm(m.thickness)} mm{m.grain === 'length' ? ' · con veta' : ''} ·{' '}
+                          {m.priceCents > 0 ? `${fmtMoney(m.priceCents)} / ${kind === 'panel' ? 'm²' : 'm'}` : <span className="font-medium text-warning">sin precio</span>}
                         </span>
                       </span>
                       <span className="flex shrink-0 gap-1">

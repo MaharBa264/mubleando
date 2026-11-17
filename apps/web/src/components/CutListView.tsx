@@ -6,6 +6,7 @@ import { cutListCsv } from '@mw/exporters';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
 import { downloadBlob } from '@/lib/download';
+import Link from 'next/link';
 import { fmtMm, fmtMoney, fmtNum } from '@/lib/format';
 
 /** S24 · Lista de corte (agrupada o pieza a pieza), totales y descarga CSV. */
@@ -27,6 +28,15 @@ export function CutListView({
   const matName = (id: string | null) => (id ? (materials.find((m) => m.id === id)?.name ?? id) : '');
   const showSources = items.some((i) => i.source) && new Set(items.map((i) => i.source)).size > 1;
   const pieces = items.reduce((s, i) => s + (i.qty ?? 1), 0);
+  // Materiales usados que no tienen precio cargado: el total saldría incompleto.
+  const unpriced = useMemo(() => {
+    const used = new Set<string>();
+    for (const { part } of items) {
+      used.add(part.materialId);
+      for (const e of Object.values(part.edges)) if (e) used.add(e);
+    }
+    return materials.filter((m) => used.has(m.id) && m.priceCents === 0);
+  }, [items, materials]);
 
   if (items.length === 0) {
     return <EmptyState title="No hay piezas">Añade muebles al proyecto para ver su lista de corte.</EmptyState>;
@@ -174,7 +184,7 @@ export function CutListView({
               <li key={p.materialId} className="tabular flex justify-between gap-3">
                 <span className="truncate">{p.name}</span>
                 <span className="shrink-0 text-muted">
-                  {p.pieces} pzs · {fmtNum(p.areaM2, 2)} m² · {fmtMoney(p.costCents)}
+                  {p.pieces} pzs · {fmtNum(p.areaM2, 2)} m² · {p.costCents > 0 ? fmtMoney(p.costCents) : 'sin precio'}
                 </span>
               </li>
             ))}
@@ -190,13 +200,24 @@ export function CutListView({
                 <li key={e.materialId} className="tabular flex justify-between gap-3">
                   <span className="truncate">{e.name}</span>
                   <span className="shrink-0 text-muted">
-                    {fmtNum(e.lengthMl, 2)} m · {fmtMoney(e.costCents)}
+                    {fmtNum(e.lengthMl, 2)} m · {e.costCents > 0 ? fmtMoney(e.costCents) : 'sin precio'}
                   </span>
                 </li>
               ))}
             </ul>
           )}
         </div>
+        {unpriced.length > 0 && (
+          <div className="no-print md:col-span-2">
+            <Alert tone="info" title={unpriced.length === 1 ? 'Un material no tiene precio' : `${unpriced.length} materiales no tienen precio`}>
+              {unpriced.map((m) => m.name).join(', ')}. El total no los incluye.{' '}
+              <Link href="/bibliotecas" className="font-medium underline">
+                Cargá los precios en Bibliotecas
+              </Link>
+              .
+            </Alert>
+          </div>
+        )}
         <div className="flex items-baseline justify-between rounded-m bg-accent-soft px-4 py-3 text-accent md:col-span-2">
           <span className="text-sm font-medium">
             {pieces} piezas · material estimado (sin mermas ni mano de obra)

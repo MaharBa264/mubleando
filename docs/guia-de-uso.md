@@ -111,7 +111,7 @@ Desde el editor (**Despiece**) o desde el proyecto (**despiece del proyecto**).
 
 - **Agrupada**: las piezas iguales en una fila con su cantidad. **Pieza a pieza**: una fila por pieza.
 - Las medidas grandes son las **de corte**, ya descontado el canto.
-- Abajo, el resumen: piezas y m² por tablero, metros de canto y coste estimado del material (sin mermas ni mano de obra).
+- Abajo, el resumen: piezas y m² por tablero, metros de canto y costo estimado del material (sin mermas ni mano de obra).
 - **Imprimir** saca una versión limpia para papel o PDF.
 - **Descargar CSV** baja la lista para Excel o para mandarla a la maderera.
 
@@ -135,7 +135,8 @@ Todas las opciones explicadas, incluidas las de cajones: [Exportaciones → STL]
 
 **Tableros y cantos.** **Nuevo tablero** / **Nuevo canto**, o **Editar** en uno existente:
 
-- Nombre, espesor y precio (por m² los tableros, por metro los cantos). El precio admite coma: `11,50`.
+- Nombre, espesor y precio en **pesos** (por m² los tableros, por metro los cantos). Se puede escribir como se escribe en Argentina: `25.000`, `25.000,50` o `25000`.
+- Los materiales de partida vienen **sin precio**: cargá los tuyos. Mientras falte alguno, el despiece avisa de cuáles son y el total no los incluye.
 - **Tiene veta** (solo tableros): las piezas no se podrán girar al colocarlas en el tablero.
 - Color con el que se ve en el 3D.
 

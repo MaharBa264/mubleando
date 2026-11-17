@@ -32,6 +32,7 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
    - `20261116000000_inicial.sql`: las tablas, las reglas de acceso y la función de guardado.
    - `20261116000001_borrar_cuenta_con_muebles.sql`: ajuste de la clave foránea de los métodos.
    - `20261117000000_disparador_con_permisos_del_dueno.sql`: arreglo para poder borrar cuentas que tengan muebles.
+   - `20261117000001_precios_en_pesos.sql`: deja sin precio los materiales de partida que seguían con su precio en euros.
 
 Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.
 4. Comprueba en **Table Editor** que aparecen cuatro tablas: `projects`, `cabinets`, `materials` y `methods`, todas con el candado de *RLS enabled*.
@@ -94,7 +95,7 @@ SUPABASE_SERVICE_ROLE_KEY=la-clave-service-role-o-secret
 | --- | --- | --- |
 | `projects` | Proyectos: nombre y fechas. | `id` (uuid) |
 | `cabinets` | Muebles: proyecto, nombre, método, diseño completo en JSON (`design`), versión (`rev`), unidades. | `id` (uuid) |
-| `materials` | Tableros y cantos: tipo, espesor, veta, precio en céntimos, color. | (`user_id`, `id`) |
+| `materials` | Tableros y cantos: tipo, espesor, veta, precio en centavos, color. | (`user_id`, `id`) |
 | `methods` | Métodos de fabricación: nombre y el resto del método en JSON (`spec`). | (`user_id`, `id`) |
 
 Todas llevan `user_id`, que la base de datos rellena sola con el usuario de la sesión (`auth.uid()`). Los tableros y métodos tienen identificadores de texto únicos **por usuario**, para que cada cuenta tenga sus propios `mel-blanco-19` o `std-ranura` de partida.

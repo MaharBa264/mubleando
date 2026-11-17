@@ -134,7 +134,7 @@ export interface Material {
   thickness: Len;
   /** 'length' = la veta va a lo largo de la pieza; no se puede girar al optimizar. */
   grain: 'none' | 'length';
-  /** Precio en céntimos por m² (tableros) o por metro lineal (cantos). */
+  /** Precio en centavos por m² (tableros) o por metro lineal (cantos). */
   priceCents: number;
   /** Color para el visor 3D, como token o valor CSS. */
   color: string;
