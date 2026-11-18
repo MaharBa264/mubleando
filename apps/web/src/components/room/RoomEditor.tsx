@@ -11,6 +11,7 @@ import { ConflictError, data, type Cabinet, type Room } from '@/data';
 import { PlanView } from './PlanView';
 import { RoomPanel } from './RoomPanel';
 import { createRoomStore } from './roomStore';
+import type { WallsMode } from './RoomViewer3D';
 
 const RoomViewer3D = dynamic(() => import('./RoomViewer3D'), { ssr: false, loading: () => <Skeleton className="h-full w-full rounded-none" /> });
 
@@ -28,7 +29,7 @@ export function RoomEditor({ room, cabinets: initialCabinets, materials, methods
   const canUndo = useStore(store, (s) => s.past.length > 0);
   const canRedo = useStore(store, (s) => s.future.length > 0);
   const [cabinets, setCabinets] = useState(initialCabinets);
-  const [wallsGhost, setWallsGhost] = useState(false);
+  const [wallsMode, setWallsMode] = useState<WallsMode>('auto');
 
   const sizes = useMemo(() => Object.fromEntries(cabinets.map((c) => [c.id, c.design.size])), [cabinets]);
   const names = useMemo(() => Object.fromEntries(cabinets.map((c) => [c.id, c.name])), [cabinets]);
@@ -176,13 +177,21 @@ export function RoomEditor({ room, cabinets: initialCabinets, materials, methods
                 placed={placed}
                 materials={materials}
                 selectedId={selection.kind === 'placement' ? selection.id : null}
-                wallsGhost={wallsGhost}
+                wallsMode={wallsMode}
                 onSelect={(id) => store.getState().select(id ? { kind: 'placement', id } : { kind: 'none' })}
               />
-              <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-m bg-surface/95 p-1 shadow-1">
-                <button type="button" aria-pressed={wallsGhost} className={toggle(wallsGhost)} onClick={() => setWallsGhost((v) => !v)}>
-                  Paredes transparentes
-                </button>
+              <div role="radiogroup" aria-label="Paredes" className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-m bg-surface/95 p-1 shadow-1">
+                {(
+                  [
+                    ['auto', 'Paredes: automático'],
+                    ['ghost', 'Transparentes'],
+                    ['solid', 'Sólidas'],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button key={k} type="button" role="radio" aria-checked={wallsMode === k} className={toggle(wallsMode === k)} onClick={() => setWallsMode(k)}>
+                    {label}
+                  </button>
+                ))}
               </div>
             </>
           )}

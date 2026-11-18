@@ -1,10 +1,10 @@
 'use client';
 
-import { Canvas, type ThreeEvent } from '@react-three/fiber';
+import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Edges, OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { DoubleSide, Shape } from 'three';
-import { wallPieces, type Material, type Part, type PlanPoint, type RoomPlan } from '@mw/engine';
+import { wallPieces, walls, type Material, type Part, type PlanPoint, type RoomPlan } from '@mw/engine';
 
 /** Centésimas de mm → metros de la escena. */
 const S = 1 / 100_000;
@@ -35,7 +35,8 @@ function Prism({ points, y0, y1, color, opacity = 1 }: { points: readonly PlanPo
   return (
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, y1 * S, 0]}>
       <extrudeGeometry args={[shape, { depth: (y1 - y0) * S, bevelEnabled: false }]} />
-      <meshStandardMaterial color={color} transparent={opacity < 1} opacity={opacity} depthWrite={opacity >= 1} side={DoubleSide} roughness={0.95} />
+      {/* Siempre "transparent": así cambiar la opacidad no obliga a recompilar el material. */}
+      <meshStandardMaterial color={color} transparent opacity={opacity} depthWrite={opacity >= 1} side={DoubleSide} roughness={0.95} />
     </mesh>
   );
 }
@@ -49,12 +50,15 @@ export interface PlacedCabinet {
   parts: Part[];
 }
 
+/** Cómo se ven las paredes: 'auto' = transparentes solo las que tapan la vista desde la cámara. */
+export type WallsMode = 'auto' | 'ghost' | 'solid';
+
 export interface RoomViewerProps {
   plan: RoomPlan;
   placed: PlacedCabinet[];
   materials: Material[];
   selectedId: string | null;
-  wallsGhost: boolean;
+  wallsMode: WallsMode;
   onSelect: (placementId: string | null) => void;
 }
 
@@ -78,7 +82,29 @@ export default function RoomViewer3D(props: RoomViewerProps) {
   );
 }
 
-function Scene({ plan, placed, materials, selectedId, wallsGhost, onSelect }: RoomViewerProps) {
+/**
+ * Paredes que tapan la vista: las que dejan la cámara del lado de fuera de su cara interior.
+ * Se recalcula en cada fotograma, pero solo se actualiza el estado cuando cambia el conjunto.
+ */
+function useOccluding(plan: RoomPlan, mode: WallsMode) {
+  const ws = useMemo(() => walls(plan), [plan]);
+  const [hidden, setHidden] = useState<ReadonlySet<number>>(new Set());
+  const last = useRef('');
+  useFrame(({ camera }) => {
+    if (mode !== 'auto') return;
+    const cx = camera.position.x / S;
+    const cy = camera.position.z / S;
+    const ids = ws.filter((w) => (cx - w.a.x) * w.inward.x + (cy - w.a.y) * w.inward.y < 0).map((w) => w.index);
+    const key = ids.join(',');
+    if (key !== last.current) {
+      last.current = key;
+      setHidden(new Set(ids));
+    }
+  });
+  return mode === 'ghost' ? null : mode === 'solid' ? new Set<number>() : hidden;
+}
+
+function Scene({ plan, placed, materials, selectedId, wallsMode, onSelect }: RoomViewerProps) {
   const colors = useMemo(() => {
     const m = new Map(materials.map((x) => [x.id, resolveColor(x.color)]));
     return {
@@ -90,12 +116,14 @@ function Scene({ plan, placed, materials, selectedId, wallsGhost, onSelect }: Ro
     };
   }, [materials]);
   const pieces = useMemo(() => wallPieces(plan), [plan]);
+  // null = todas transparentes; si no, el conjunto de paredes que tapan la vista.
+  const occluding = useOccluding(plan, wallsMode);
 
   return (
     <>
       <Prism points={plan.corners} y0={-2000} y1={0} color={colors.floor} />
       {pieces.map((p, i) => (
-        <Prism key={i} points={p.quad} y0={p.y0} y1={p.y1} color={colors.wall} opacity={wallsGhost ? 0.25 : 1} />
+        <Prism key={i} points={p.quad} y0={p.y0} y1={p.y1} color={colors.wall} opacity={occluding === null || occluding.has(p.wallIndex) ? 0.18 : 1} />
       ))}
       {placed.map((c) => {
         const isSel = c.placementId === selectedId;
