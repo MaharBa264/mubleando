@@ -12,7 +12,7 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { mm, newDesign, setDrawerSize, setFront, setPlinth } from '@mw/engine';
+import { mm, newDesign, rectRoom, setDrawerSize, setFront, setPlinth } from '@mw/engine';
 
 // Variables públicas de .env.local y la clave secreta de .dev.vars (que no se empaqueta al publicar).
 const env: Record<string, string> = {};
@@ -154,6 +154,35 @@ describe('cuenta B no ve nada de A', () => {
   });
 });
 
+describe('ambientes', () => {
+  let roomId = '';
+
+  it('A crea un ambiente con un mueble colocado; vuelve idéntico', async () => {
+    current = A.client;
+    const plan = rectRoom(mm(3200), mm(2600));
+    plan.placements = [{ id: randomUUID(), cabinetId, x: 0, y: 0, rotation: 0, elevation: 0 }];
+    const r = await data.createRoom({ projectId, name: 'Cocina', plan });
+    roomId = r.id;
+    expect(r.rev).toBe(1);
+    expect((await data.getRoom(roomId))?.plan).toEqual(plan);
+    expect((await data.listRooms(projectId)).map((x) => x.name)).toEqual(['Cocina']);
+  });
+
+  it('guardar sube la versión; una versión vieja da conflicto', async () => {
+    current = A.client;
+    expect(await data.saveRoom(roomId, 1, { name: 'Cocina grande' })).toBe(2);
+    await expect(data.saveRoom(roomId, 1, { name: 'otra' })).rejects.toBeInstanceOf(ConflictError);
+  });
+
+  it('B no ve ni puede guardar el ambiente de A', async () => {
+    current = B.client;
+    expect(await data.getRoom(roomId)).toBeNull();
+    expect(await data.listRooms(projectId)).toEqual([]);
+    await expect(data.saveRoom(roomId, 2, { name: 'Hackeado' })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(data.createRoom({ projectId, name: 'Intruso', plan: rectRoom(mm(1000), mm(1000)) })).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
 describe('subir los datos del navegador', () => {
   it('copia proyectos y muebles; repetir no duplica', async () => {
     current = A.client;
@@ -196,7 +225,7 @@ describe('borrar la cuenta', () => {
     const res = await deleteAccount(new Request('http://x/api/cuenta/borrar', { method: 'POST', headers: { Authorization: `Bearer ${A.token}` } }));
     expect(res.status).toBe(200);
     expect((await admin.auth.admin.getUserById(A.id)).data.user).toBeNull();
-    for (const t of ['projects', 'cabinets', 'materials', 'methods']) expect(await rowsOf(t, A.id), t).toBe(0);
+    for (const t of ['projects', 'cabinets', 'rooms', 'materials', 'methods']) expect(await rowsOf(t, A.id), t).toBe(0);
     expect(await rowsOf('materials', B.id)).toBe(9);
   });
 });

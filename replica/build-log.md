@@ -131,3 +131,5 @@ Comprobado: 147 pruebas (9 del método argentino y 33 de plantillas, nuevas); `n
 | S21 | Proyecto: lista de ambientes; editor de ambiente (planta, paredes, aberturas, muebles, avisos, 3D) | hecho; **3D sin ver en pantalla** (panel del navegador oculto) | casa con varios ambientes; arrastrar en 3D | arrastrar con el puntero en SVG convirtiendo coordenadas de pantalla a planta |
 
 Comprobado: 24 pruebas de geometría (fuera de escuadra con relleno de 11,2 mm a mano, L, cierre, arrimar a pared, aberturas, trozos de pared) y 6 de la tabla de ambientes en PGlite; en el navegador (modo local), cocina de ejemplo sin avisos, esquina a 92° con avisos de columna metida en la pared y alacena con relleno de 0 a 11,2 mm, colocar un mueble en un hueco libre, «Contar 2» en el despiece, arrastrar un mueble y el imán a la pared de abajo (giro de 180°, aviso de puerta tapada), vista 3D sin errores.
+
+- 2026-11-18: el usuario aplicó la migración de ambientes en Supabase. `npm run test:nube` pasa 12 de 12 (3 nuevas de ambientes: crear y leer idéntico, conflicto de versión, otra cuenta no lo ve ni lo cambia; el borrado de cuenta también borra sus ambientes).
