@@ -6,3 +6,4 @@ export * from './cutlist';
 export * from './presets';
 export * from './templates';
 export * from './room';
+export * from './hardware';

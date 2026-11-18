@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { hardwareChoiceSchema, type HardwareChoice, type HardwareItem } from './hardware';
 import type { Len } from './units';
 
 // ───────────────────────── documento de diseño (lo que se guarda) ─────────────────────────
@@ -40,7 +41,13 @@ export interface DrawerFront {
   sizes: (Len | null)[];
 }
 
-export type Front = DoorFront | DrawerFront;
+/** Puertas corredizas: hojas en dos rieles, dentro del hueco. Las medidas salen del sistema corredizo elegido. */
+export interface SlidingFront {
+  kind: 'sliding';
+  leaves: 2 | 3;
+}
+
+export type Front = DoorFront | DrawerFront | SlidingFront;
 
 export interface Zone {
   id: string;
@@ -97,6 +104,8 @@ export interface Design {
   overrides?: Record<string, PartOverride>;
   /** Cómo se unen tapa, base y fondo. Ausente = lo habitual. */
   construction?: Construction;
+  /** Herrajes elegidos para este mueble. Lo que falta sale del método de fabricación. */
+  hardware?: HardwareChoice;
 }
 
 const lenSchema = z.number().int();
@@ -107,6 +116,10 @@ const frontSchema = z.discriminatedUnion('kind', [
     leaves: z.union([z.literal(1), z.literal(2)]),
     hinge: z.enum(['left', 'right']),
     mount: z.enum(['overlay', 'inset']),
+  }),
+  z.object({
+    kind: z.literal('sliding'),
+    leaves: z.union([z.literal(2), z.literal(3)]),
   }),
   z.object({
     kind: z.literal('drawers'),
@@ -156,6 +169,7 @@ export const designSchema: z.ZodType<Design> = z.object({
       railWidth: lenSchema.positive().optional(),
     })
     .optional(),
+  hardware: hardwareChoiceSchema.optional(),
 });
 
 // ───────────────────────── bibliotecas ─────────────────────────
@@ -212,6 +226,8 @@ export interface Method {
      */
     gap: Len;
   };
+  /** Herrajes por defecto de los muebles hechos con este método. Sin herraje, se usan las holguras de aquí. */
+  hardware?: HardwareChoice;
   /** Estructura de los cajones. */
   drawer: {
     /** Tablero de laterales, trasera y contrafrente. */
@@ -298,6 +314,8 @@ export interface Part {
   overridden?: boolean;
   /** Solo puertas: lado de las bisagras (para abrirla en el visor y, más adelante, taladrar). */
   hinge?: 'left' | 'right';
+  /** Solo puertas corredizas: riel en el que va la hoja. */
+  track?: 'front' | 'back';
 }
 
 export interface PartAssembly {
@@ -327,7 +345,8 @@ export interface Warning {
     | 'front_collision'
     | 'drawer_too_small'
     | 'drawer_on_split'
-    | 'override_ignored';
+    | 'override_ignored'
+    | 'hardware_mismatch';
   message: string;
   zoneId?: string;
 }
@@ -336,6 +355,8 @@ export interface ComputeResult {
   parts: Part[];
   zones: ZoneOut[];
   warnings: Warning[];
+  /** Herrajes que lleva el mueble (bisagras, correderas, sistemas corredizos), si se pasó la biblioteca. */
+  hardware: HardwareItem[];
 }
 
 // ───────────────────────── validación de bibliotecas guardadas ─────────────────────────
@@ -366,6 +387,7 @@ export const methodSchema: z.ZodType<Method> = z.object({
   frontEdgeMaterialId: z.string().nullable(),
   edgeReducesCut: z.boolean(),
   edgeReduceMin: lenSchema.nonnegative(),
+  hardware: hardwareChoiceSchema.optional(),
   fronts: z.object({
     materialId: z.string().min(1),
     edgeMaterialId: z.string().nullable(),

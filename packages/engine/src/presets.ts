@@ -1,3 +1,4 @@
+import { DEFAULT_HARDWARE_CHOICE } from './hardware';
 import type { Material, Method } from './types';
 import { mm } from './units';
 
@@ -135,6 +136,7 @@ export const PRESET_METHODS: Method[] = [
     frontEdgeMaterialId: 'ar-tc-blanco-045',
     edgeReducesCut: true,
     edgeReduceMin: mm(1),
+    hardware: { ...DEFAULT_HARDWARE_CHOICE },
     fronts: { materialId: 'ar-mel-blanca-18', edgeMaterialId: 'ar-tc-blanco-045', gap: mm(3) },
     drawer: { ...AR_DRAWER },
   },
@@ -148,6 +150,7 @@ export const PRESET_METHODS: Method[] = [
     frontEdgeMaterialId: 'ar-tc-blanco-045',
     edgeReducesCut: true,
     edgeReduceMin: mm(1),
+    hardware: { ...DEFAULT_HARDWARE_CHOICE },
     fronts: { materialId: 'ar-mel-blanca-18', edgeMaterialId: 'ar-tc-blanco-045', gap: mm(3) },
     drawer: { ...AR_DRAWER, bottomMode: 'under', grooveDepth: 0, grooveHeight: 0 },
   },

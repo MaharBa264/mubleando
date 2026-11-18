@@ -1,4 +1,5 @@
-import type { Box, ComputeResult, Design, Edges, Front, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
+import type { Box, ComputeResult, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
+import { hingeCount, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
 import { normalizeMethod } from './presets';
 import { distribute, mm, toMm, type Len } from './units';
 
@@ -35,6 +36,7 @@ interface NewPart {
   grain?: Part['grain'];
   assembly?: PartAssembly;
   hinge?: Part['hinge'];
+  track?: Part['track'];
 }
 
 /** Rectángulo en el plano del frente (x, y). */
@@ -52,7 +54,7 @@ interface Rect {
  * Orden de las piezas: costados, tapa, base, trasera, estantes y divisores, zócalo,
  * puertas, y por cada cajón su frente y su caja.
  */
-export function compute(design: Design, methodIn: Method, materials: readonly Material[]): ComputeResult {
+export function compute(design: Design, methodIn: Method, materials: readonly Material[], hardwareLib: readonly Hardware[] = []): ComputeResult {
   // Un método guardado con una versión anterior (sin frentes ni cajones) se completa en lugar de fallar.
   const method = normalizeMethod(methodIn);
   const mats = new Map(materials.map((m) => [m.id, m]));
@@ -60,6 +62,22 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   const parts: Part[] = [];
   const zones: ZoneOut[] = [];
   const overrides = design.overrides ?? {};
+
+  // ── herrajes: el que elige el mueble, o el del método ──
+  const pickHw = <K extends HardwareKind>(kind: K) => {
+    const id = design.hardware?.[kind] ?? method.hardware?.[kind];
+    return id ? (hardwareLib.find((h) => h.id === id && h.kind === kind) as Extract<Hardware, { kind: K }> | undefined) : undefined;
+  };
+  const hinge = pickHw('hinge');
+  const slide = pickHw('slide');
+  const slidingHw = pickHw('sliding');
+  const items = new Map<string, HardwareItem>();
+  const addItem = (hw: Hardware, qty: number, unit: HardwareItem['unit'], note?: string) => {
+    const key = `${hw.id}|${note ?? ''}`;
+    const prev = items.get(key);
+    if (prev) prev.qty += qty;
+    else items.set(key, { hardwareId: hw.id, name: hw.name, kind: hw.kind, qty, unit, priceCents: hw.priceCents, note });
+  };
 
   const thicknessOf = (id: string, what: string): Len => {
     const m = mats.get(id);
@@ -220,7 +238,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   const innerH = innerTopY - (plinthH + t);
   if (innerW <= 0 || innerH <= 0) {
     warnings.push({ code: 'zone_too_small', message: 'El mueble es más estrecho o más bajo que dos tableros.' });
-    return { parts, zones, warnings };
+    return { parts, zones, warnings, hardware: [] };
   }
 
   const frontEdgeOnly = methodFrontEdge ? { ...NO_EDGES, L1: methodFrontEdge } : { ...NO_EDGES };
@@ -358,7 +376,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   const innerBottomY = plinthH + t;
 
   /** Rectángulo que ocupa el frente de un hueco, según el montaje y lo que rodea al hueco. */
-  const frontRect = (b: Box, mount: Front['mount']): Rect => {
+  const frontRect = (b: Box, mount: FrontMount): Rect => {
     if (mount === 'inset') return { x: b.x + gap, y: b.y + gap, w: b.dx - 2 * gap, h: b.dy - 2 * gap };
     // Superpuesto: sobre la estructura exterior tapa todo el tablero menos media holgura;
     // sobre un estante o divisor, solo hasta la mitad del tablero menos media holgura.
@@ -371,19 +389,66 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     const top = b.y + b.dy === innerTopY ? (topMode === 'none' ? -half : outer) : inside;
     return { x: b.x - left, y: b.y - bottom, w: b.dx + left + right, h: b.dy + bottom + top };
   };
-  const frontZ = (mount: Front['mount']) => (mount === 'inset' ? D - tf : D);
+  const frontZ = (mount: FrontMount) => (mount === 'inset' ? D - tf : D);
 
-  /** ¿Hay estantes o divisores dentro del hueco que choquen con un frente encastrado? */
-  const insetCollision = (zone: Zone) => {
+  /** ¿Hay estantes o divisores dentro del hueco retranqueados menos que `needed` (chocarían con el frente)? */
+  const setbackCollision = (zone: Zone, needed: Len): boolean => {
     if (!zone.split) return false;
     const setback = zone.split.axis === 'y' ? method.shelfFrontSetback : method.dividerFrontSetback;
-    return setback < tf || zone.split.children.some(insetCollision);
+    return setback < needed || zone.split.children.some((c) => setbackCollision(c, needed));
   };
+  const insetCollision = (zone: Zone) => setbackCollision(zone, tf);
+  // Sistema corredizo: el elegido o, si no hay, el de partida de 2 hojas (sus medidas típicas).
+  const slidingSpec: SlidingSpec = slidingHw?.spec ?? (PRESET_HARDWARE.find((h) => h.kind === 'sliding')!.spec as SlidingSpec);
 
   let doorCount = 0;
   let drawerCount = 0;
 
   for (const { zone, front, box } of fronted) {
+    // ── puertas corredizas: dentro del hueco, en dos rieles ──
+    if (front.kind === 'sliding') {
+      const sp = slidingSpec;
+      const n = front.leaves;
+      const needed = sp.frontSetback + 2 * tf + sp.trackGap;
+      if (setbackCollision(zone, needed)) {
+        warnings.push({
+          code: 'front_collision',
+          message: `Las puertas corredizas ocupan ${toMm(needed)} mm desde el frente: los estantes o divisores de detrás tienen que ir retranqueados al menos eso.`,
+          zoneId: zone.id,
+        });
+      }
+      const h = box.dy - sp.topGap - sp.bottomGap;
+      const widths = distribute(box.dx + (n - 1) * sp.overlap, n);
+      if (h <= 0 || widths.some((w) => w <= sp.overlap)) {
+        warnings.push({ code: 'zone_too_small', message: 'El hueco es demasiado chico para puertas corredizas.', zoneId: zone.id });
+        continue;
+      }
+      const zFront = D - sp.frontSetback - tf;
+      const zBack = zFront - tf - sp.trackGap;
+      let x = box.x;
+      widths.forEach((w, i) => {
+        doorCount++;
+        // Con 2 hojas: la izquierda atrás y la derecha adelante. Con 3: las de los extremos adelante.
+        const track: 'front' | 'back' = i % 2 === (n === 2 ? 1 : 0) ? 'front' : 'back';
+        addPart({
+          key: `zone:${zone.id}/sliding${i}`,
+          role: 'door',
+          name: `Puerta corrediza ${doorCount}`,
+          materialId: fm.materialId,
+          thickness: tf,
+          length: h,
+          width: w,
+          box: { x, y: box.y + sp.bottomGap, z: track === 'front' ? zFront : zBack, dx: w, dy: h, dz: tf },
+          zoneId: zone.id,
+          edges: { ...frontEdges },
+          track,
+        });
+        x += w - sp.overlap;
+      });
+      if (slidingHw) addItem(slidingHw, 1, 'juego', `rieles de ${toMm(box.dx)} mm`);
+      continue;
+    }
+
     if (front.mount === 'inset' && insetCollision(zone)) {
       warnings.push({
         code: 'front_collision',
@@ -417,8 +482,22 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
           edges: { ...frontEdges },
           hinge: front.leaves === 2 ? (i === 0 ? 'left' : 'right') : front.hinge,
         });
+        if (hinge) addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
         x += w + gap;
       });
+      if (hinge) {
+        const crank = hinge.spec.crank;
+        if ((front.mount === 'inset') !== (crank === 'inset')) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message:
+              front.mount === 'inset'
+                ? `La puerta es encastrada y la bisagra «${hinge.name}» es para puertas superpuestas: hace falta una de codo 18.`
+                : `La puerta es superpuesta y la bisagra «${hinge.name}» es para puertas encastradas.`,
+            zoneId: zone.id,
+          });
+        }
+      }
       continue;
     }
 
@@ -459,22 +538,53 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     });
   }
 
-  /** Caja de un cajón: dos laterales enteros, trasera y contrafrente entre laterales, y fondo. */
+  /**
+   * Caja de un cajón: dos laterales enteros, trasera y contrafrente entre laterales, y fondo.
+   * Con corredera elegida, sus medidas mandan:
+   * - de bolas o de rodillo: hueco a cada lado según la corredera y fondo = el largo de corredera más grande que entra;
+   * - oculta bajo el cajón: ancho interior = hueco − descuento (42 mm en Blum Tandem), caja centrada, largo = nominal − descuento;
+   * - cajón metálico: los laterales son de metal (no se cortan); solo fondo y trasera, con los descuentos del sistema.
+   */
   function addDrawerBox(o: { key: string; label: string; assembly: PartAssembly; zoneId: string; opening: Box; fy: Len; fh: Len; inset: boolean }) {
     const dm = method.drawer;
     const td = thicknessOf(dm.materialId, 'los cajones');
     const tb = thicknessOf(dm.bottomMaterialId, 'el fondo de los cajones');
     const { opening: b } = o;
+    const sl = slide?.spec;
 
     // Altura: la parte del frente que cae dentro del hueco, menos las holguras de arriba y abajo.
     const lo = Math.max(o.fy, b.y);
     const hi = Math.min(o.fy + o.fh, b.y + b.dy);
     const y0 = lo + dm.bottomClearance;
     const boxH = hi - lo - dm.bottomClearance - dm.topClearance;
-    const boxW = b.dx - 2 * dm.sideClearance;
     const frontDepth = o.inset ? tf : 0;
     const avail = b.dz - frontDepth - dm.rearClearance;
-    const depth = dm.depthStep > 0 && avail >= dm.depthStep ? Math.floor(avail / dm.depthStep) * dm.depthStep : avail;
+
+    // Largo de la corredera (si hay) y fondo de la caja.
+    let nominal: Len | null = null;
+    let depth: Len;
+    if (sl) {
+      nominal = pickLength(sl.lengths, avail);
+      if (nominal === null) {
+        warnings.push({
+          code: 'drawer_too_small',
+          message: `En el ${o.label} no entra ninguna «${slide!.name}»: hay ${toMm(Math.max(avail, 0))} mm de fondo libre y la más corta mide ${toMm(Math.min(...sl.lengths))} mm.`,
+          zoneId: o.zoneId,
+        });
+        return;
+      }
+      depth = sl.type === 'undermount' ? nominal - sl.lengthDeduction : nominal;
+    } else {
+      depth = dm.depthStep > 0 && avail >= dm.depthStep ? Math.floor(avail / dm.depthStep) * dm.depthStep : avail;
+    }
+
+    // Ancho de la caja y posición.
+    let boxW: Len;
+    if (sl && sl.type === 'undermount') boxW = b.dx - sl.innerWidthDeduction + 2 * td;
+    else if (sl && (sl.type === 'ball' || sl.type === 'roller')) boxW = b.dx - 2 * sl.sideClearance;
+    else if (sl && sl.type === 'metal') boxW = b.dx - sl.bottomWidthDeduction;
+    else boxW = b.dx - 2 * dm.sideClearance;
+    const x0 = b.x + Math.round((b.dx - boxW) / 2);
 
     if (boxH < MIN_DRAWER_BOX_H || depth < MIN_DRAWER_DEPTH || boxW <= 2 * td) {
       warnings.push({
@@ -484,14 +594,38 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       });
       return;
     }
+    if (sl && sl.type === 'undermount' && sl.maxSideThickness > 0 && td > sl.maxSideThickness) {
+      warnings.push({
+        code: 'hardware_mismatch',
+        message: `La «${slide!.name}» admite laterales de hasta ${toMm(sl.maxSideThickness)} mm y los del método son de ${toMm(td)} mm.`,
+        zoneId: o.zoneId,
+      });
+    }
+    if (slide && nominal !== null) addItem(slide, 1, 'par', `de ${toMm(nominal)} mm`);
 
-    const x0 = b.x + dm.sideClearance;
     const z0 = D - frontDepth - depth;
+    const common = { thickness: td, materialId: dm.materialId, zoneId: o.zoneId, assembly: o.assembly };
+
+    // Cajón metálico: solo fondo y trasera de madera.
+    if (sl && sl.type === 'metal') {
+      const bw = b.dx - sl.bottomWidthDeduction;
+      const bd = nominal! - sl.bottomLengthDeduction;
+      const backW = b.dx - sl.backWidthDeduction;
+      addPart({
+        key: `${o.key}/bottom`, role: 'drawer-bottom', name: `Fondo ${o.label}`, materialId: dm.bottomMaterialId, thickness: tb,
+        length: bd, width: bw, box: { x: b.x + Math.round((b.dx - bw) / 2), y: y0, z: D - frontDepth - bd, dx: bw, dy: tb, dz: bd }, zoneId: o.zoneId, assembly: o.assembly, edges: { ...NO_EDGES },
+      });
+      addPart({
+        ...common, key: `${o.key}/back`, role: 'drawer-back', name: `Trasera ${o.label}`, length: backW, width: boxH - tb,
+        box: { x: b.x + Math.round((b.dx - backW) / 2), y: y0 + tb, z: D - frontDepth - bd, dx: backW, dy: boxH - tb, dz: td },
+      });
+      return;
+    }
+
     const under = dm.bottomMode === 'under';
     const sy = under ? y0 + tb : y0; // los laterales apoyan sobre el fondo si va clavado debajo
     const sh = under ? boxH - tb : boxH;
     const innerBW = boxW - 2 * td;
-    const common = { thickness: td, materialId: dm.materialId, zoneId: o.zoneId, assembly: o.assembly };
 
     addPart({ ...common, key: `${o.key}/side.left`, role: 'drawer-side', name: `Lateral izquierdo ${o.label}`, length: depth, width: sh, box: { x: x0, y: sy, z: z0, dx: td, dy: sh, dz: depth } });
     addPart({ ...common, key: `${o.key}/side.right`, role: 'drawer-side', name: `Lateral derecho ${o.label}`, length: depth, width: sh, box: { x: x0 + boxW - td, y: sy, z: z0, dx: td, dy: sh, dz: depth } });
@@ -537,7 +671,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     return true;
   });
 
-  return { parts, zones, warnings: unique };
+  return { parts, zones, warnings: unique, hardware: [...items.values()] };
 }
 
 /**
