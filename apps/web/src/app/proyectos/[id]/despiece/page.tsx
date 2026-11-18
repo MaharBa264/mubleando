@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { compute } from '@mw/engine';
+import { compute, type HardwareItem } from '@mw/engine';
 import { Page } from '@/components/AppShell';
 import { CutListView } from '@/components/CutListView';
 import { ButtonLink } from '@/components/ui/Button';
@@ -16,13 +16,14 @@ const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/
 export default function ProjectCutListPage() {
   const { id } = useParams<{ id: string }>();
   const state = useAsync(async () => {
-    const [project, cabinets, materials, methods] = await Promise.all([
+    const all = await Promise.all([
       data.getProject(id),
       data.listCabinets(id),
       data.listMaterials(),
       data.listMethods(),
-    ]);
-    return { project, cabinets, materials, methods };
+      data.listHardware(),
+    ]).then(([project, cabinets, materials, methods, hardware]) => ({ project, cabinets, materials, methods, hardware }));
+    return all;
   }, [id]);
 
   if (state.status === 'loading')
@@ -37,7 +38,7 @@ export default function ProjectCutListPage() {
         <ErrorState error={state.error} onRetry={state.reload} />
       </Page>
     );
-  const { project, cabinets, materials, methods } = state.data;
+  const { project, cabinets, materials, methods, hardware } = state.data;
   if (!project)
     return (
       <Page title="Despiece del proyecto">
@@ -46,10 +47,12 @@ export default function ProjectCutListPage() {
     );
 
   const warnings: string[] = [];
+  const hwItems: HardwareItem[] = [];
   const items = cabinets.flatMap((c) => {
     const method = methods.find((m) => m.id === c.methodId) ?? methods[0]!;
-    const r = compute(c.design, method, materials);
+    const r = compute(c.design, method, materials, hardware);
     for (const w of r.warnings) warnings.push(`${c.name}: ${w.message}`);
+    for (const h of r.hardware) hwItems.push({ ...h, qty: h.qty * c.quantity });
     return r.parts.map((part) => ({ part, qty: c.quantity, source: c.name }));
   });
 
@@ -65,7 +68,7 @@ export default function ProjectCutListPage() {
       <p className="-mt-4 mb-6 text-sm text-muted">
         {cabinets.length} {cabinets.length === 1 ? 'mueble' : 'muebles'}
       </p>
-      <CutListView items={items} materials={materials} fileName={slug(project.name)} warnings={warnings} />
+      <CutListView items={items} materials={materials} hardware={hwItems} fileName={slug(project.name)} warnings={warnings} />
     </Page>
   );
 }

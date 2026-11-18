@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { analyzeRoom, compute, type Material, type Method } from '@mw/engine';
+import { analyzeRoom, compute, type Hardware, type Material, type Method } from '@mw/engine';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { ConflictError, data, type Cabinet, type Room } from '@/data';
@@ -18,7 +18,19 @@ const RoomViewer3D = dynamic(() => import('./RoomViewer3D'), { ssr: false, loadi
 type SaveState = { kind: 'saved' } | { kind: 'saving' } | { kind: 'error'; message: string } | { kind: 'conflict' };
 
 /** Editor de un ambiente: planta (o 3D) a un lado y panel de paredes, aberturas, muebles y avisos al otro. */
-export function RoomEditor({ room, cabinets: initialCabinets, materials, methods }: { room: Room; cabinets: Cabinet[]; materials: Material[]; methods: Method[] }) {
+export function RoomEditor({
+  room,
+  cabinets: initialCabinets,
+  materials,
+  methods,
+  hardware,
+}: {
+  room: Room;
+  cabinets: Cabinet[];
+  materials: Material[];
+  methods: Method[];
+  hardware: Hardware[];
+}) {
   const storeRef = useRef<ReturnType<typeof createRoomStore>>(null);
   storeRef.current ??= createRoomStore({ name: room.name, plan: room.plan });
   const store = storeRef.current;
@@ -41,10 +53,10 @@ export function RoomEditor({ room, cabinets: initialCabinets, materials, methods
     const m = new Map<string, ReturnType<typeof compute>['parts']>();
     for (const c of cabinets) {
       const method = methods.find((x) => x.id === c.methodId) ?? methods[0];
-      if (method) m.set(c.id, compute(c.design, method, materials).parts);
+      if (method) m.set(c.id, compute(c.design, method, materials, hardware).parts);
     }
     return m;
-  }, [cabinets, methods, materials]);
+  }, [cabinets, methods, materials, hardware]);
   const placed = useMemo(
     () =>
       plan.placements.flatMap((p) => {

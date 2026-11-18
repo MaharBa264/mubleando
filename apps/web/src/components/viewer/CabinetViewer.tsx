@@ -42,6 +42,11 @@ const isFront = (p: Part) => p.role === 'door' || p.role === 'drawer-front';
 function placement(p: Part, mode: FrontsView, drawerDepth: Map<string, number>) {
   const c = center(p.box);
   if (mode !== 'open') return { group: [0, 0, 0] as [number, number, number], rot: 0, mesh: c };
+  if (p.role === 'door' && p.track) {
+    // Corrediza abierta: las hojas de adelante se corren media hoja a la izquierda; las de atrás, a la derecha.
+    const shift = (p.box.dx / 2) * S * (p.track === 'front' ? -1 : 1);
+    return { group: [shift, 0, 0] as [number, number, number], rot: 0, mesh: c };
+  }
   if (p.role === 'door') {
     const left = p.hinge !== 'right';
     const pivot: [number, number, number] = [(left ? p.box.x : p.box.x + p.box.dx) * S, c[1], p.box.z * S];

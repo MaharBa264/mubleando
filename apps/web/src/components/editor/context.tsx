@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { useStore } from 'zustand';
-import type { ComputeResult, Material, Method } from '@mw/engine';
+import type { ComputeResult, Hardware, Material, Method } from '@mw/engine';
 import type { EditorState, EditorStore } from './store';
 
 export interface EditorEnv {
@@ -11,6 +11,7 @@ export interface EditorEnv {
   materials: Material[];
   methods: Method[];
   method: Method;
+  hardware: Hardware[];
   labels: Map<string, { short: string; full: string }>;
 }
 

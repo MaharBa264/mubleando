@@ -1,4 +1,4 @@
-import type { Design, Material, Method, RoomPlan } from '@mw/engine';
+import type { Design, Hardware, Material, Method, RoomPlan } from '@mw/engine';
 
 export interface Project {
   id: string;
@@ -97,4 +97,9 @@ export interface DataLayer {
   saveMethod(method: Method): Promise<Method>;
   /** Lanza InUseError si algún mueble lo usa o si es el último. */
   deleteMethod(id: string): Promise<void>;
+  listHardware(): Promise<Hardware[]>;
+  /** Crea o actualiza (por id) un herraje. */
+  saveHardware(hw: Hardware): Promise<Hardware>;
+  /** Lanza InUseError si algún método lo usa por defecto. */
+  deleteHardware(id: string): Promise<void>;
 }

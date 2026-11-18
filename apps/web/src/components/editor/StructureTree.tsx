@@ -35,7 +35,7 @@ export function StructureTree() {
             {labels.get(z.id)?.short}
             {z.front && (
               <span className="ml-1 text-xs font-normal text-muted">
-                · {z.front.kind === 'door' ? (z.front.leaves === 2 ? '2 puertas' : 'puerta') : `${z.front.sizes.length} ${z.front.sizes.length === 1 ? 'cajón' : 'cajones'}`}
+                · {z.front.kind === 'door' ? (z.front.leaves === 2 ? '2 puertas' : 'puerta') : z.front.kind === 'sliding' ? `corrediza de ${z.front.leaves}` : `${z.front.sizes.length} ${z.front.sizes.length === 1 ? 'cajón' : 'cajones'}`}
               </span>
             )}
           </span>

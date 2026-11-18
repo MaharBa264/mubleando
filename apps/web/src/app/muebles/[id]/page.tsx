@@ -11,8 +11,8 @@ import { useAsync } from '@/lib/useAsync';
 export default function CabinetPage() {
   const { id } = useParams<{ id: string }>();
   const state = useAsync(async () => {
-    const [cabinet, materials, methods] = await Promise.all([data.getCabinet(id), data.listMaterials(), data.listMethods()]);
-    return { cabinet, materials, methods };
+    const [cabinet, materials, methods, hardware] = await Promise.all([data.getCabinet(id), data.listMaterials(), data.listMethods(), data.listHardware()]);
+    return { cabinet, materials, methods, hardware };
   }, [id]);
 
   if (state.status === 'loading')
@@ -30,7 +30,7 @@ export default function CabinetPage() {
         <ErrorState error={state.error} onRetry={state.reload} />
       </Page>
     );
-  const { cabinet, materials, methods } = state.data;
+  const { cabinet, materials, methods, hardware } = state.data;
   if (!cabinet)
     return (
       <Page title="Mueble no encontrado">
@@ -45,5 +45,5 @@ export default function CabinetPage() {
         <EmptyState title="No hay métodos de fabricación">Hace falta al menos un método para calcular las piezas.</EmptyState>
       </Page>
     );
-  return <Editor cabinet={cabinet} materials={materials} methods={methods} />;
+  return <Editor cabinet={cabinet} materials={materials} methods={methods} hardware={hardware} />;
 }

@@ -34,7 +34,8 @@ export function QuickTools() {
   const split = zone.split;
   const panels = (axis: 'x' | 'y') => (split?.axis === axis ? split.children.length - 1 : 0);
   const front = zone.front;
-  const frontKind = !front ? 'none' : front.kind === 'drawers' ? 'drawers' : front.leaves === 2 ? 'door2' : 'door1';
+  const frontKind = !front ? 'none' : front.kind === 'drawers' ? 'drawers' : front.kind === 'sliding' ? 'sliding' : front.leaves === 2 ? 'door2' : 'door1';
+  const mount = front && front.kind !== 'sliding' ? front.mount : 'overlay';
   const putFront = (f: Front | undefined) => apply((d) => setFront(d, id, f));
 
   const btn = (active = false) =>
@@ -68,18 +69,27 @@ export function QuickTools() {
         </button>
       )}
       <span className="mx-1 h-4 w-px bg-border" aria-hidden />
-      <button type="button" className={btn(frontKind === 'door1')} aria-pressed={frontKind === 'door1'} onClick={() => putFront(frontKind === 'door1' ? undefined : { kind: 'door', leaves: 1, hinge: 'left', mount: front?.mount ?? 'overlay' })}>
+      <button type="button" className={btn(frontKind === 'door1')} aria-pressed={frontKind === 'door1'} onClick={() => putFront(frontKind === 'door1' ? undefined : { kind: 'door', leaves: 1, hinge: 'left', mount })}>
         Puerta
       </button>
-      <button type="button" className={btn(frontKind === 'door2')} aria-pressed={frontKind === 'door2'} onClick={() => putFront(frontKind === 'door2' ? undefined : { kind: 'door', leaves: 2, hinge: 'left', mount: front?.mount ?? 'overlay' })}>
+      <button type="button" className={btn(frontKind === 'door2')} aria-pressed={frontKind === 'door2'} onClick={() => putFront(frontKind === 'door2' ? undefined : { kind: 'door', leaves: 2, hinge: 'left', mount })}>
         2 puertas
+      </button>
+      <button
+        type="button"
+        className={btn(frontKind === 'sliding')}
+        aria-pressed={frontKind === 'sliding'}
+        title="Puertas corredizas de dos hojas, en rieles dentro del hueco"
+        onClick={() => putFront(frontKind === 'sliding' ? undefined : { kind: 'sliding', leaves: 2 })}
+      >
+        Corrediza
       </button>
       <button
         type="button"
         className={btn(frontKind === 'drawers')}
         aria-pressed={frontKind === 'drawers'}
         title={split ? 'Al poner cajones se quitan los estantes o divisores de este hueco (Ctrl+Z para deshacer)' : 'Tres cajones; después cambiás la cantidad y las alturas en Propiedades'}
-        onClick={() => putFront(frontKind === 'drawers' ? undefined : { kind: 'drawers', mount: front?.mount ?? 'overlay', sizes: [null, null, null] })}
+        onClick={() => putFront(frontKind === 'drawers' ? undefined : { kind: 'drawers', mount, sizes: [null, null, null] })}
       >
         Cajones
       </button>

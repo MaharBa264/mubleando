@@ -1,5 +1,8 @@
 import {
+  DEFAULT_HARDWARE_CHOICE,
   designSchema,
+  hardwareSchema,
+  PRESET_HARDWARE,
   materialSchema,
   methodSchema,
   LEGACY_EURO_PRICES,
@@ -11,6 +14,7 @@ import {
   rectRoom,
   roomPlanSchema,
   templateById,
+  type Hardware,
   type Material,
   type Method,
 } from '@mw/engine';
@@ -25,15 +29,16 @@ const KEY = 'mueblesweb:v1';
 
 /**
  * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
- * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos · 4: ambientes.
+ * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos · 4: ambientes · 5: herrajes.
  */
-const SCHEMA = 4;
+const SCHEMA = 5;
 
 interface State {
   schema?: number;
   projects: Project[];
   cabinets: Cabinet[];
   rooms: Room[];
+  hardware: Hardware[];
   materials: Material[];
   methods: Method[];
 }
@@ -91,6 +96,7 @@ function seed(): State {
     projects: [project],
     cabinets,
     rooms: [room],
+    hardware: structuredClone(PRESET_HARDWARE),
     materials: structuredClone(PRESET_MATERIALS),
     methods: structuredClone(PRESET_METHODS),
   };
@@ -108,6 +114,12 @@ function migrate(s: State): State {
     for (const m of s.materials) if (LEGACY_EURO_PRICES[m.id] === m.priceCents) m.priceCents = 0;
   }
   s.rooms = (s.rooms ?? []).filter((r) => roomPlanSchema.safeParse(r.plan).success);
+  if ((s.schema ?? 1) < 5) {
+    // Herrajes de partida y, en los métodos argentinos de partida, los herrajes por defecto.
+    s.hardware = structuredClone(PRESET_HARDWARE);
+    s.methods = s.methods.map((m) => (m.id.startsWith('ar-18-') && !m.hardware ? { ...m, hardware: { ...DEFAULT_HARDWARE_CHOICE } } : m));
+  }
+  s.hardware = (s.hardware ?? []).filter((h) => hardwareSchema.safeParse(h).success);
   s.schema = SCHEMA;
   // Bibliotecas dañadas: se descartan solo las entradas inválidas.
   s.materials = s.materials.filter((m) => materialSchema.safeParse(m).success);
@@ -340,6 +352,28 @@ export const localData: DataLayer = {
   async listMethods() {
     await tick();
     return clone(load().methods);
+  },
+  async listHardware() {
+    await tick();
+    return clone(load().hardware);
+  },
+  async saveHardware(hw) {
+    await tick();
+    const s = load();
+    const h = hardwareSchema.parse({ ...hw, name: hw.name.trim() });
+    const i = s.hardware.findIndex((x) => x.id === h.id);
+    if (i >= 0) s.hardware[i] = h;
+    else s.hardware.push(h);
+    persist();
+    return clone(h);
+  },
+  async deleteHardware(id) {
+    await tick();
+    const s = load();
+    const users = s.methods.filter((m) => m.hardware && Object.values(m.hardware).includes(id));
+    if (users.length > 0) throw new InUseError(`Lo usa${users.length > 1 ? 'n' : ''} por defecto ${users.map((m) => `«${m.name}»`).join(', ')}. Cambiá ese herraje en el método antes de borrarlo.`);
+    s.hardware = s.hardware.filter((h) => h.id !== id);
+    persist();
   },
   async saveMethod(method) {
     await tick();

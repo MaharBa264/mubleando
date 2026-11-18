@@ -18,6 +18,8 @@ import {
   setShelfHeight,
   setSize,
   type Construction,
+  type HardwareChoice,
+  type HardwareKind,
   type Design,
   type Edges,
   type Front,
@@ -157,6 +159,8 @@ function CabinetProps() {
 
       <ConstructionSection />
 
+      <HardwareSection />
+
       <Section title="Fabricación">
         <SelectField label="Método" value={methodId} onChange={(e) => setMeta({ methodId: e.target.value })}>
           {methods.map((m) => (
@@ -180,6 +184,54 @@ function CabinetProps() {
       </Section>
       <Warnings />
     </>
+  );
+}
+
+const HW_LABEL: Record<HardwareKind, string> = { hinge: 'Bisagras', slide: 'Correderas de cajón', sliding: 'Sistema corredizo' };
+
+/** Herrajes del mueble: los del método o los que se elijan aquí. Cambian holguras y descuentos. */
+function HardwareSection() {
+  const { hardware, method, result } = useEnv();
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
+  const set = (kind: HardwareKind, id: string) =>
+    apply((d) => {
+      const next: HardwareChoice = { ...d.hardware };
+      if (id) next[kind] = id;
+      else delete next[kind];
+      if (Object.keys(next).length === 0) {
+        const { hardware: _h, ...rest } = d;
+        return rest;
+      }
+      return { ...d, hardware: next };
+    });
+  if (hardware.length === 0) return null;
+  const nameOf = (id?: string) => hardware.find((h) => h.id === id)?.name ?? 'ninguno (holguras del método)';
+  return (
+    <Section title="Herrajes">
+      {(['hinge', 'slide', 'sliding'] as const).map((kind) => (
+        <SelectField key={kind} label={HW_LABEL[kind]} value={design.hardware?.[kind] ?? ''} onChange={(e) => set(kind, e.target.value)}>
+          <option value="">Del método: {nameOf(method.hardware?.[kind])}</option>
+          {hardware
+            .filter((h) => h.kind === kind)
+            .map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+              </option>
+            ))}
+        </SelectField>
+      ))}
+      {result.hardware.length > 0 && (
+        <ul className="space-y-0.5 text-xs text-muted">
+          {result.hardware.map((h) => (
+            <li key={h.hardwareId + (h.note ?? '')}>
+              {h.qty} {h.unit === 'par' ? (h.qty === 1 ? 'par' : 'pares') : h.unit === 'juego' ? (h.qty === 1 ? 'juego' : 'juegos') : h.qty === 1 ? 'unidad' : 'unidades'} · {h.name}
+              {h.note ? ` · ${h.note}` : ''}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
   );
 }
 
@@ -340,14 +392,15 @@ function FrontSection({ zoneId }: { zoneId: string }) {
   const box = result.zones.find((z) => z.id === zoneId)!.box;
   const front = zone.front;
   const kind = front?.kind ?? 'none';
-  const mount: FrontMount = front?.mount ?? 'overlay';
+  const mount: FrontMount = front && front.kind !== 'sliding' ? front.mount : 'overlay';
   const covering = coveringZone(design, zoneId);
   const hasInnerFronts = (z: typeof zone): boolean => !!z.split?.children.some((c) => c.front || hasInnerFronts(c));
 
   const put = (f: Front | undefined) => apply((d) => setFront(d, zoneId, f));
-  const choose = (k: 'none' | 'door' | 'drawers') => {
+  const choose = (k: 'none' | 'door' | 'drawers' | 'sliding') => {
     if (k === 'none') put(undefined);
     else if (k === 'door') put({ kind: 'door', leaves: box.dx > mm(600) ? 2 : 1, hinge: 'left', mount });
+    else if (k === 'sliding') put({ kind: 'sliding', leaves: box.dx > mm(1500) ? 3 : 2 });
     else put({ kind: 'drawers', mount, sizes: [null, null, null] });
   };
 
@@ -362,6 +415,7 @@ function FrontSection({ zoneId }: { zoneId: string }) {
         options={[
           ['none', 'Abierto'],
           ['door', 'Puerta'],
+          ['sliding', 'Corrediza'],
           ['drawers', 'Cajones'],
         ]}
       />
@@ -373,7 +427,24 @@ function FrontSection({ zoneId }: { zoneId: string }) {
       {kind === 'none' && hasInnerFronts(zone) && <p className="text-xs text-muted">Los huecos de dentro tienen sus propios frentes.</p>}
       {kind === 'drawers' && zone.split && <p className="text-xs text-warning">Los cajones necesitan un hueco sin divisiones.</p>}
 
-      {front && (
+      {front?.kind === 'sliding' && (
+        <>
+          <Segmented
+            label="Hojas"
+            value={front.leaves}
+            onChange={(n) => put({ ...front, leaves: n })}
+            options={[
+              [2, 'Dos hojas'],
+              [3, 'Tres hojas'],
+            ]}
+          />
+          <p className="text-xs text-muted">
+            Las hojas van dentro del hueco, en dos rieles. El solape, las luces arriba y abajo y la distancia al frente salen del sistema corredizo (Mueble completo → Herrajes).
+          </p>
+        </>
+      )}
+
+      {front && front.kind !== 'sliding' && (
         <Segmented
           label="Montaje"
           value={mount}

@@ -13,9 +13,9 @@ export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const state = useAsync(async () => {
     const room = await data.getRoom(id);
-    if (!room) return { room: null, cabinets: [], materials: [], methods: [] };
-    const [cabinets, materials, methods] = await Promise.all([data.listCabinets(room.projectId), data.listMaterials(), data.listMethods()]);
-    return { room, cabinets, materials, methods };
+    if (!room) return { room: null, cabinets: [], materials: [], methods: [], hardware: [] };
+    const [cabinets, materials, methods, hardware] = await Promise.all([data.listCabinets(room.projectId), data.listMaterials(), data.listMethods(), data.listHardware()]);
+    return { room, cabinets, materials, methods, hardware };
   }, [id]);
 
   if (state.status === 'loading')
@@ -32,7 +32,7 @@ export default function RoomPage() {
         <ErrorState error={state.error} onRetry={state.reload} />
       </Page>
     );
-  const { room, cabinets, materials, methods } = state.data;
+  const { room, cabinets, materials, methods, hardware } = state.data;
   if (!room)
     return (
       <Page title="Ambiente no encontrado">
@@ -41,5 +41,5 @@ export default function RoomPage() {
         </EmptyState>
       </Page>
     );
-  return <RoomEditor room={room} cabinets={cabinets} materials={materials} methods={methods} />;
+  return <RoomEditor room={room} cabinets={cabinets} materials={materials} methods={methods} hardware={hardware} />;
 }

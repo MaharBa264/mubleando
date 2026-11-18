@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { groupedRows, individualRows, totals, type CutItem, type Material } from '@mw/engine';
+import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
@@ -13,11 +13,14 @@ import { fmtMm, fmtMoney, fmtNum } from '@/lib/format';
 export function CutListView({
   items,
   materials,
+  hardware = [],
   fileName,
   warnings = [],
 }: {
   items: CutItem[];
   materials: Material[];
+  /** Herrajes del mueble o del proyecto (ya multiplicados por la cantidad de cada mueble). */
+  hardware?: HardwareItem[];
   fileName: string;
   warnings?: string[];
 }) {
@@ -25,6 +28,18 @@ export function CutListView({
   const [decimal, setDecimal] = useState<',' | '.'>(',');
   const rows = useMemo(() => (mode === 'grouped' ? groupedRows(items) : individualRows(items)), [items, mode]);
   const sum = useMemo(() => totals(items, materials), [items, materials]);
+  // Herrajes iguales (mismo herraje y mismo detalle) en una línea.
+  const hw = useMemo(() => {
+    const m = new Map<string, HardwareItem>();
+    for (const h of hardware) {
+      const k = `${h.hardwareId}|${h.note ?? ''}`;
+      const prev = m.get(k);
+      if (prev) m.set(k, { ...prev, qty: prev.qty + h.qty });
+      else m.set(k, { ...h });
+    }
+    return [...m.values()];
+  }, [hardware]);
+  const hwCents = hw.reduce((s, h) => s + h.qty * h.priceCents, 0);
   const matName = (id: string | null) => (id ? (materials.find((m) => m.id === id)?.name ?? id) : '');
   const showSources = items.some((i) => i.source) && new Set(items.map((i) => i.source)).size > 1;
   const pieces = items.reduce((s, i) => s + (i.qty ?? 1), 0);
@@ -218,11 +233,27 @@ export function CutListView({
             </Alert>
           </div>
         )}
+        {hw.length > 0 && (
+          <div className="rounded-m border border-border bg-surface p-4 shadow-1 md:col-span-2">
+            <h3 className="mb-3 text-sm font-semibold">Herrajes</h3>
+            <ul className="space-y-1 text-sm">
+              {hw.map((h) => (
+                <li key={h.hardwareId + (h.note ?? '')} className="tabular flex justify-between gap-3">
+                  <span className="min-w-0 truncate">
+                    {h.qty} {h.unit === 'par' ? (h.qty === 1 ? 'par' : 'pares') : h.unit === 'juego' ? (h.qty === 1 ? 'juego' : 'juegos') : h.qty === 1 ? 'unidad' : 'unidades'} · {h.name}
+                    {h.note && <span className="text-muted"> · {h.note}</span>}
+                  </span>
+                  <span className="shrink-0 text-muted">{h.priceCents > 0 ? fmtMoney(h.qty * h.priceCents) : 'sin precio'}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className="flex items-baseline justify-between rounded-m bg-accent-soft px-4 py-3 text-accent md:col-span-2">
           <span className="text-sm font-medium">
-            {pieces} piezas · material estimado (sin mermas ni mano de obra)
+            {pieces} piezas · material{hw.length > 0 ? ' y herrajes' : ''} estimado (sin mermas ni mano de obra)
           </span>
-          <span className="tabular text-xl font-semibold">{fmtMoney(sum.totalCents)}</span>
+          <span className="tabular text-xl font-semibold">{fmtMoney(sum.totalCents + hwCents)}</span>
         </div>
       </section>
     </div>

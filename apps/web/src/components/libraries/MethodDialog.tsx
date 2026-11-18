@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { mm, type Len, type Material, type Method } from '@mw/engine';
+import { mm, type Hardware, type HardwareKind, type Len, type Material, type Method } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
@@ -24,6 +24,7 @@ export function MethodDialog({
   initial,
   isNew,
   materials,
+  hardware = [],
   onClose,
   onSave,
 }: {
@@ -31,6 +32,7 @@ export function MethodDialog({
   initial: Method;
   isNew: boolean;
   materials: Material[];
+  hardware?: Hardware[];
   onClose: () => void;
   onSave: (m: Method) => Promise<void>;
 }) {
@@ -155,6 +157,41 @@ export function MethodDialog({
             {len('Holgura entre frentes', m.fronts.gap, (v) => fronts({ gap: v }), 'Superpuestos: la mitad queda en el borde del mueble. Encastrados: alrededor de todo el frente.', mm(20))}
           </div>
         </Group>
+
+        {hardware.length > 0 && (
+          <Group title="Herrajes por defecto" hint="Los usan los muebles hechos con este método, salvo que el mueble elija otros. Sin herraje, se usan las holguras de abajo.">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {(
+                [
+                  ['hinge', 'Bisagras'],
+                  ['slide', 'Correderas'],
+                  ['sliding', 'Sistema corredizo'],
+                ] as [HardwareKind, string][]
+              ).map(([kind, label]) => (
+                <SelectField
+                  key={kind}
+                  label={label}
+                  value={m.hardware?.[kind] ?? ''}
+                  onChange={(e) => {
+                    const next = { ...m.hardware };
+                    if (e.target.value) next[kind] = e.target.value;
+                    else delete next[kind];
+                    setM({ ...m, hardware: next });
+                  }}
+                >
+                  <option value="">Ninguno</option>
+                  {hardware
+                    .filter((h) => h.kind === kind)
+                    .map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.name}
+                      </option>
+                    ))}
+                </SelectField>
+              ))}
+            </div>
+          </Group>
+        )}
 
         <Group title="Cajones" hint="Caja con dos laterales enteros, trasera y contrafrente entre ellos, y fondo.">
           <div className="grid gap-3 sm:grid-cols-2">

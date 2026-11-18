@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { compute, type Material, type Method } from '@mw/engine';
+import { compute, type Hardware, type Material, type Method } from '@mw/engine';
 import { buttonClass, Button } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { StlExportDialog } from '@/components/StlExportDialog';
@@ -28,7 +28,7 @@ const FRONTS_LABEL = { closed: 'Frentes cerrados', open: 'Frentes abiertos', hid
 type SaveState = { kind: 'saved' } | { kind: 'saving' } | { kind: 'error'; message: string } | { kind: 'conflict' };
 
 /** S03 · Editor de mueble: estructura + visor 3D + propiedades. */
-export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; materials: Material[]; methods: Method[] }) {
+export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cabinet; materials: Material[]; methods: Method[]; hardware: Hardware[] }) {
   const storeRef = useRef<ReturnType<typeof createEditorStore>>(null);
   storeRef.current ??= createEditorStore({
     name: cabinet.name,
@@ -49,7 +49,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
   const canRedo = useStore(store, (s) => s.future.length > 0);
 
   const method = methods.find((m) => m.id === methodId) ?? methods[0]!;
-  const result = useMemo(() => compute(design, method, materials), [design, method, materials]);
+  const result = useMemo(() => compute(design, method, materials, hardware), [design, method, materials, hardware]);
   const labels = useMemo(() => zoneLabels(design), [design]);
   const hasFronts = result.parts.some((p) => p.role === 'door' || p.role === 'drawer-front');
 
@@ -111,7 +111,7 @@ export function Editor({ cabinet, materials, methods }: { cabinet: Cabinet; mate
     return () => window.removeEventListener('keydown', h);
   }, [store]);
 
-  const env: EditorEnv = { store, result, materials, methods, method, labels };
+  const env: EditorEnv = { store, result, materials, methods, method, hardware, labels };
   const [mobileTab, setMobileTab] = useState<'props' | 'tree'>('props');
 
   return (

@@ -9,7 +9,10 @@ import {
   PRESET_MATERIALS,
   PRESET_METHODS,
   type Design,
+  hardwareSchema,
+  PRESET_HARDWARE,
   roomPlanSchema,
+  type Hardware,
   type Material,
   type Method,
   type RoomPlan,
@@ -123,6 +126,9 @@ function toRoom(r: RoomRow): Room {
 const MISSING_ROOMS =
   'Falta crear la tabla de ambientes en Supabase: pegá en el SQL Editor la migración supabase/migrations/20261118000000_ambientes.sql (ver docs/nube.md).';
 
+const MISSING_HARDWARE =
+  'Falta crear la tabla de herrajes en Supabase: pegá en el SQL Editor la migración supabase/migrations/20261118000001_herrajes.sql (ver docs/nube.md).';
+
 /** La tabla no existe todavía (PostgREST: PGRST205; Postgres: 42P01). */
 const isMissingTable = (e: PostgrestError) => e.code === 'PGRST205' || e.code === '42P01';
 
@@ -139,6 +145,33 @@ async function userId(): Promise<string> {
   const id = data.session?.user.id;
   if (!id) throw new Error('Tienes que entrar con tu cuenta.');
   return id;
+}
+
+interface HardwareRow {
+  id: string;
+  name: string;
+  kind: Hardware['kind'];
+  price_cents: number;
+  spec: Hardware['spec'];
+}
+const toHardware = (r: HardwareRow) => ({ id: r.id, name: r.name, kind: r.kind, priceCents: r.price_cents, spec: r.spec }) as Hardware;
+const fromHardware = (h: Hardware, userId: string) => ({ user_id: userId, id: h.id, name: h.name, kind: h.kind, price_cents: h.priceCents, spec: h.spec });
+
+let hardwareChecked: string | null = null;
+
+/** Si la cuenta no tiene herrajes (cuenta nueva o anterior a los herrajes), le copia los de partida. Una vez por sesión. */
+async function ensureHardware() {
+  const uid = await userId();
+  if (hardwareChecked === uid) return;
+  const sb = supabase();
+  const { count, error } = await sb.from('hardware').select('id', { count: 'exact', head: true });
+  if (error && isMissingTable(error)) return; // falta la migración: se sigue sin herrajes
+  if (error) fail(error, 'leer los herrajes');
+  if (!count) {
+    const r = await sb.from('hardware').upsert(PRESET_HARDWARE.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (r.error) fail(r.error, 'crear los herrajes de partida');
+  }
+  hardwareChecked = uid;
 }
 
 // ───────────────────────── bibliotecas de partida ─────────────────────────
@@ -280,6 +313,28 @@ export const cloudData: DataLayer = {
   async deleteRoom(id) {
     const { error } = await supabase().from('rooms').delete().eq('id', id);
     if (error) fail(error, 'borrar el ambiente');
+  },
+
+  async listHardware() {
+    await ensureHardware();
+    const { data, error } = await supabase().from('hardware').select('id, name, kind, price_cents, spec').order('created_at');
+    if (error && isMissingTable(error)) return [];
+    if (error) fail(error, 'cargar los herrajes');
+    return (data as HardwareRow[]).map(toHardware).filter((h) => hardwareSchema.safeParse(h).success);
+  },
+  async saveHardware(hw) {
+    const h = hardwareSchema.parse({ ...hw, name: hw.name.trim() });
+    const { error } = await supabase().from('hardware').upsert(fromHardware(h, await userId()), { onConflict: 'user_id,id' });
+    if (error && isMissingTable(error)) throw new Error(MISSING_HARDWARE);
+    if (error) fail(error, 'guardar el herraje');
+    return h;
+  },
+  async deleteHardware(id) {
+    const methods = await cloudData.listMethods();
+    const users = methods.filter((m) => m.hardware && Object.values(m.hardware).includes(id));
+    if (users.length > 0) throw new InUseError(`Lo usa${users.length > 1 ? 'n' : ''} por defecto ${users.map((m) => `«${m.name}»`).join(', ')}. Cambiá ese herraje en el método antes de borrarlo.`);
+    const { error } = await supabase().from('hardware').delete().eq('id', id);
+    if (error) fail(error, 'borrar el herraje');
   },
 
   async listMaterials() {

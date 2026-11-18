@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { mm, PRESET_MATERIALS, PRESET_METHODS, type Material, type Method } from '@mw/engine';
+import { mm, PRESET_HARDWARE, PRESET_MATERIALS, PRESET_METHODS, type Hardware, type Material, type Method } from '@mw/engine';
 import { Page } from '@/components/AppShell';
 import { MaterialDialog } from '@/components/libraries/MaterialDialog';
+import { HardwareDialog, HW_KIND_LABEL } from '@/components/libraries/HardwareDialog';
 import { MethodDialog } from '@/components/libraries/MethodDialog';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/Dialog';
@@ -17,13 +18,14 @@ const uid = () => globalThis.crypto.randomUUID();
 type Editing =
   | { kind: 'material'; value: Material }
   | { kind: 'method'; value: Method; isNew: boolean }
+  | { kind: 'hardware'; value: Hardware; isNew: boolean }
   | null;
 
-type Deleting = { kind: 'material' | 'method'; id: string; name: string } | null;
+type Deleting = { kind: 'material' | 'method' | 'hardware'; id: string; name: string } | null;
 
 /** S10 / S11 / S12 · Tableros, cantos y métodos de fabricación, editables. */
 export default function LibrariesPage() {
-  const state = useAsync(async () => ({ materials: await data.listMaterials(), methods: await data.listMethods() }), []);
+  const state = useAsync(async () => ({ materials: await data.listMaterials(), methods: await data.listMethods(), hardware: await data.listHardware() }), []);
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Deleting>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export default function LibrariesPage() {
     setError(null);
     try {
       if (d.kind === 'material') await data.deleteMaterial(d.id);
+      else if (d.kind === 'hardware') await data.deleteHardware(d.id);
       else await data.deleteMethod(d.id);
       state.reload();
     } catch (e) {
@@ -139,6 +142,52 @@ export default function LibrariesPage() {
             );
           })}
 
+          <section aria-labelledby="h-hardware">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <h2 id="h-hardware" className="text-lg font-semibold">
+                Herrajes
+              </h2>
+              <div className="flex flex-wrap gap-1">
+                {(['hinge', 'slide', 'sliding'] as const).map((kind) => (
+                  <Button
+                    key={kind}
+                    size="sm"
+                    onClick={() => {
+                      const base = PRESET_HARDWARE.find((h) => h.kind === kind)!;
+                      setEditing({ kind: 'hardware', isNew: true, value: { ...structuredClone(base), id: crypto.randomUUID(), name: '', priceCents: 0 } as Hardware });
+                    }}
+                  >
+                    + {HW_KIND_LABEL[kind]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {state.data.hardware.length === 0 ? (
+              <p className="rounded-m border border-dashed border-border px-4 py-3 text-sm text-muted">Todavía no hay herrajes.</p>
+            ) : (
+              <ul className="divide-y divide-border rounded-m border border-border bg-surface shadow-1">
+                {state.data.hardware.map((h) => (
+                  <li key={h.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-medium break-words">{h.name}</span>
+                      <span className="block text-xs text-muted">
+                        {HW_KIND_LABEL[h.kind]} · {h.priceCents > 0 ? fmtMoney(h.priceCents) : <span className="font-medium text-warning">sin precio</span>}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => setEditing({ kind: 'hardware', value: h, isNew: false })}>
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="ghost" aria-label={`Borrar ${h.name}`} onClick={() => setDeleting({ kind: 'hardware', id: h.id, name: h.name })}>
+                        Borrar
+                      </Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section aria-labelledby="h-methods">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 id="h-methods" className="text-lg font-semibold">
@@ -190,6 +239,7 @@ export default function LibrariesPage() {
               isNew={editing.isNew}
               initial={editing.value}
               materials={state.data.materials}
+              hardware={state.data.hardware}
               onClose={() => setEditing(null)}
               onSave={async (m) => {
                 await data.saveMethod(m);
@@ -197,9 +247,22 @@ export default function LibrariesPage() {
               }}
             />
           )}
+          {editing?.kind === 'hardware' && (
+            <HardwareDialog
+              key={editing.value.id}
+              open
+              isNew={editing.isNew}
+              initial={editing.value}
+              onClose={() => setEditing(null)}
+              onSave={async (h) => {
+                await data.saveHardware(h);
+                state.reload();
+              }}
+            />
+          )}
           <ConfirmDialog
             open={!!deleting}
-            title={deleting?.kind === 'method' ? 'Borrar método' : 'Borrar material'}
+            title={deleting?.kind === 'method' ? 'Borrar método' : deleting?.kind === 'hardware' ? 'Borrar herraje' : 'Borrar material'}
             message={<>¿Borrar «{deleting?.name}»? No se puede deshacer.</>}
             confirmLabel="Borrar"
             onConfirm={() => deleting && void remove(deleting)}

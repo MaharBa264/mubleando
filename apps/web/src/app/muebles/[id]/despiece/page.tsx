@@ -17,8 +17,8 @@ const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/
 export default function CabinetCutListPage() {
   const { id } = useParams<{ id: string }>();
   const state = useAsync(async () => {
-    const [cabinet, materials, methods] = await Promise.all([data.getCabinet(id), data.listMaterials(), data.listMethods()]);
-    return { cabinet, materials, methods };
+    const [cabinet, materials, methods, hardware] = await Promise.all([data.getCabinet(id), data.listMaterials(), data.listMethods(), data.listHardware()]);
+    return { cabinet, materials, methods, hardware };
   }, [id]);
 
   if (state.status === 'loading')
@@ -33,7 +33,7 @@ export default function CabinetCutListPage() {
         <ErrorState error={state.error} onRetry={state.reload} />
       </Page>
     );
-  const { cabinet, materials, methods } = state.data;
+  const { cabinet, materials, methods, hardware } = state.data;
   if (!cabinet)
     return (
       <Page title="Despiece">
@@ -42,7 +42,8 @@ export default function CabinetCutListPage() {
     );
 
   const method = methods.find((m) => m.id === cabinet.methodId) ?? methods[0]!;
-  const r = compute(cabinet.design, method, materials);
+  const r = compute(cabinet.design, method, materials, hardware);
+  const hwItems = r.hardware.map((h) => ({ ...h, qty: h.qty * cabinet.quantity }));
   const items = r.parts.map((part) => ({ part, qty: cabinet.quantity, source: cabinet.name }));
 
   return (
@@ -58,7 +59,7 @@ export default function CabinetCutListPage() {
         {fmtDims(cabinet.design.size.w, cabinet.design.size.h, cabinet.design.size.d)} mm · {method.name}
         {cabinet.quantity > 1 && ` · ${cabinet.quantity} unidades`}
       </p>
-      <CutListView items={items} materials={materials} fileName={slug(cabinet.name)} warnings={r.warnings.map((w) => w.message)} />
+      <CutListView items={items} materials={materials} hardware={hwItems} fileName={slug(cabinet.name)} warnings={r.warnings.map((w) => w.message)} />
     </Page>
   );
 }
