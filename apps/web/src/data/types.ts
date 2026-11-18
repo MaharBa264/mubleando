@@ -1,4 +1,4 @@
-import type { Design, Material, Method } from '@mw/engine';
+import type { Design, Material, Method, RoomPlan } from '@mw/engine';
 
 export interface Project {
   id: string;
@@ -25,6 +25,20 @@ export interface Cabinet {
 }
 
 export type CabinetPatch = Partial<Pick<Cabinet, 'design' | 'name' | 'methodId' | 'quantity'>>;
+
+/** Un ambiente del proyecto: su planta (paredes, aberturas) y los muebles colocados. */
+export interface Room {
+  id: string;
+  projectId: string;
+  name: string;
+  plan: RoomPlan;
+  /** Se sube en cada guardado, como en los muebles. */
+  rev: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RoomPatch = Partial<Pick<Room, 'name' | 'plan'>>;
 
 export class ConflictError extends Error {
   constructor() {
@@ -65,6 +79,13 @@ export interface DataLayer {
   /** Guarda si `rev` coincide; devuelve la nueva rev o lanza ConflictError. */
   saveCabinet(id: string, rev: number, patch: CabinetPatch): Promise<number>;
   deleteCabinet(id: string): Promise<void>;
+
+  listRooms(projectId: string): Promise<Room[]>;
+  getRoom(id: string): Promise<Room | null>;
+  createRoom(input: { projectId: string; name: string; plan: RoomPlan }): Promise<Room>;
+  /** Como saveCabinet: guarda si `rev` coincide y devuelve la nueva rev; si no, ConflictError. */
+  saveRoom(id: string, rev: number, patch: RoomPatch): Promise<number>;
+  deleteRoom(id: string): Promise<void>;
 
   listMaterials(): Promise<Material[]>;
   /** Crea o actualiza (por id) un tablero o canto. */

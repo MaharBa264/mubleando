@@ -9,12 +9,14 @@ import {
   PRESET_MATERIALS,
   PRESET_METHODS,
   type Design,
+  roomPlanSchema,
   type Material,
   type Method,
+  type RoomPlan,
 } from '@mw/engine';
 import { supabase } from '@/lib/supabase';
 import { readLocalState } from './local';
-import { ConflictError, InUseError, NotFoundError, type Cabinet, type DataLayer, type Project } from './types';
+import { ConflictError, InUseError, NotFoundError, type Cabinet, type DataLayer, type Project, type Room } from './types';
 
 /**
  * Capa de datos en la nube (Supabase). Misma interfaz que la local, así que las pantallas no cambian.
@@ -102,6 +104,19 @@ function fromMethod(m: Method, userId: string) {
 }
 
 const CABINET_COLUMNS = 'id, project_id, name, method_id, design, rev, quantity, created_at, updated_at';
+const ROOM_COLUMNS = 'id, project_id, name, plan, rev, created_at, updated_at';
+
+interface RoomRow extends ProjectRow {
+  project_id: string;
+  plan: RoomPlan;
+  rev: number;
+}
+
+function toRoom(r: RoomRow): Room {
+  const parsed = roomPlanSchema.safeParse(r.plan);
+  if (!parsed.success) throw new Error(`El ambiente «${r.name}» tiene la planta dañada y no se puede abrir.`);
+  return { id: r.id, projectId: r.project_id, name: r.name, plan: parsed.data, rev: r.rev, createdAt: r.created_at, updatedAt: r.updated_at };
+}
 
 // ───────────────────────── errores ─────────────────────────
 
@@ -218,6 +233,46 @@ export const cloudData: DataLayer = {
     if (error) fail(error, 'borrar el mueble');
   },
 
+  async listRooms(projectId) {
+    const { data, error } = await supabase().from('rooms').select(ROOM_COLUMNS).eq('project_id', projectId).order('created_at');
+    if (error) fail(error, 'cargar los ambientes');
+    return (data as RoomRow[]).flatMap((r) => {
+      try {
+        return [toRoom(r)];
+      } catch {
+        return [];
+      }
+    });
+  },
+  async getRoom(id) {
+    const { data, error } = await supabase().from('rooms').select(ROOM_COLUMNS).eq('id', id).maybeSingle();
+    if (error) fail(error, 'cargar el ambiente');
+    return data ? toRoom(data as RoomRow) : null;
+  },
+  async createRoom({ projectId, name, plan }) {
+    roomPlanSchema.parse(plan);
+    const { data, error } = await supabase()
+      .from('rooms')
+      .insert({ user_id: await userId(), project_id: projectId, name: name.trim() || 'Ambiente', plan })
+      .select(ROOM_COLUMNS)
+      .single();
+    if (error?.code === '23503') throw new NotFoundError('ese proyecto');
+    if (error) fail(error, 'crear el ambiente');
+    return toRoom(data as RoomRow);
+  },
+  async saveRoom(id, rev, patch) {
+    if (patch.plan && !roomPlanSchema.safeParse(patch.plan).success) throw new Error('La planta no es válida.');
+    const { data, error } = await supabase().rpc('save_room', { p_id: id, p_rev: rev, p_patch: patch });
+    if (error?.code === 'MW409') throw new ConflictError();
+    if (error?.code === 'MW404') throw new NotFoundError('ese ambiente');
+    if (error) fail(error, 'guardar el ambiente');
+    return data as number;
+  },
+  async deleteRoom(id) {
+    const { error } = await supabase().from('rooms').delete().eq('id', id);
+    if (error) fail(error, 'borrar el ambiente');
+  },
+
   async listMaterials() {
     await ensureLibrary();
     const { data, error } = await supabase().from('materials').select('id, name, kind, thickness, grain, price_cents, color').order('created_at');
@@ -319,6 +374,14 @@ export async function importLocalData(): Promise<ImportSummary> {
     { ...opts, onConflict: 'id' },
   );
   if (cabs.error) fail(cabs.error, 'subir los muebles');
+  const rooms = s.rooms ?? [];
+  if (rooms.length > 0) {
+    const r = await sb.from('rooms').upsert(
+      rooms.map((x) => ({ id: x.id, user_id: uid, project_id: x.projectId, name: x.name, plan: x.plan, created_at: x.createdAt, updated_at: x.updatedAt })),
+      { ...opts, onConflict: 'id' },
+    );
+    if (r.error) fail(r.error, 'subir los ambientes');
+  }
   libraryChecked = null;
   return { projects: s.projects.length, cabinets: s.cabinets.length, materials: s.materials.length, methods: s.methods.length };
 }

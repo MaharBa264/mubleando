@@ -7,11 +7,14 @@ import {
   PRESET_MATERIALS,
   PRESET_METHODS,
   REFERENCE_MATERIALS,
+  mm,
+  rectRoom,
+  roomPlanSchema,
   templateById,
   type Material,
   type Method,
 } from '@mw/engine';
-import { ConflictError, InUseError, NotFoundError, type Cabinet, type DataLayer, type Project } from './types';
+import { ConflictError, InUseError, NotFoundError, type Cabinet, type DataLayer, type Project, type Room } from './types';
 
 /**
  * Capa de datos local (localStorage). Misma interfaz que tendrá la de Supabase.
@@ -22,14 +25,15 @@ const KEY = 'mueblesweb:v1';
 
 /**
  * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
- * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos.
+ * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos · 4: ambientes.
  */
-const SCHEMA = 3;
+const SCHEMA = 4;
 
 interface State {
   schema?: number;
   projects: Project[];
   cabinets: Cabinet[];
+  rooms: Room[];
   materials: Material[];
   methods: Method[];
 }
@@ -65,10 +69,28 @@ function seed(): State {
       updatedAt: t,
     };
   });
+  // Un ambiente de ejemplo: cocina de 3,20 × 2,60 con ventana sobre la pileta y puerta, y los
+  // muebles colocados contra la pared de arriba (la alacena, colgada a 1,45 m).
+  const plan = rectRoom(mm(3200), mm(2600));
+  const [c0, , c2] = plan.corners;
+  plan.openings = [
+    { id: uid(), wallId: c0!.id, kind: 'window', offset: mm(1050), width: mm(1000), height: mm(1100), sill: mm(1000) },
+    { id: uid(), wallId: c2!.id, kind: 'door', offset: mm(300), width: mm(800), height: mm(2050), sill: 0 },
+  ];
+  const byName = (n: string) => cabinets.find((c) => c.name === n)!.id;
+  plan.placements = [
+    ['Columna 600', 0, 0],
+    ['Cajonera 450', 600, 0],
+    ['Bajo pileta 800', 1050, 0],
+    ['Bajo con cajón 600', 1850, 0],
+    ['Alacena 800', 2400, 1450],
+  ].map(([name, x, elevation]) => ({ id: uid(), cabinetId: byName(name as string), x: mm(x as number), y: 0, rotation: 0, elevation: mm(elevation as number) }));
+  const room: Room = { id: uid(), projectId: project.id, name: 'Cocina', plan, rev: 1, createdAt: t, updatedAt: t };
   return {
     schema: SCHEMA,
     projects: [project],
     cabinets,
+    rooms: [room],
     materials: structuredClone(PRESET_MATERIALS),
     methods: structuredClone(PRESET_METHODS),
   };
@@ -85,6 +107,7 @@ function migrate(s: State): State {
     // Paso de euros a pesos: los materiales de partida que nadie tocó quedan sin precio.
     for (const m of s.materials) if (LEGACY_EURO_PRICES[m.id] === m.priceCents) m.priceCents = 0;
   }
+  s.rooms = (s.rooms ?? []).filter((r) => roomPlanSchema.safeParse(r.plan).success);
   s.schema = SCHEMA;
   // Bibliotecas dañadas: se descartan solo las entradas inválidas.
   s.materials = s.materials.filter((m) => materialSchema.safeParse(m).success);
@@ -97,7 +120,7 @@ function migrate(s: State): State {
  * Lee lo guardado en este navegador sin crear los datos de ejemplo.
  * Lo usa la subida a la nube. Devuelve null si no hay nada guardado.
  */
-export function readLocalState(): Pick<State, 'projects' | 'cabinets' | 'materials' | 'methods'> | null {
+export function readLocalState(): Pick<State, 'projects' | 'cabinets' | 'rooms' | 'materials' | 'methods'> | null {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
@@ -199,6 +222,7 @@ export const localData: DataLayer = {
     const s = load();
     s.projects = s.projects.filter((p) => p.id !== id);
     s.cabinets = s.cabinets.filter((c) => c.projectId !== id);
+    s.rooms = s.rooms.filter((r) => r.projectId !== id);
     persist();
   },
 
@@ -241,6 +265,49 @@ export const localData: DataLayer = {
     const c = s.cabinets.find((x) => x.id === id);
     s.cabinets = s.cabinets.filter((x) => x.id !== id);
     if (c) touchProject(s, c.projectId);
+    persist();
+  },
+
+  async listRooms(projectId) {
+    await tick();
+    return clone(load().rooms.filter((r) => r.projectId === projectId)).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  },
+  async getRoom(id) {
+    await tick();
+    const r = load().rooms.find((x) => x.id === id);
+    return r ? clone(r) : null;
+  },
+  async createRoom({ projectId, name, plan }) {
+    await tick();
+    const s = load();
+    if (!s.projects.some((p) => p.id === projectId)) throw new NotFoundError('ese proyecto');
+    roomPlanSchema.parse(plan);
+    const t = now();
+    const r: Room = { id: uid(), projectId, name: name.trim() || 'Ambiente', plan, rev: 1, createdAt: t, updatedAt: t };
+    s.rooms.push(r);
+    touchProject(s, projectId);
+    persist();
+    return clone(r);
+  },
+  async saveRoom(id, rev, patch) {
+    await tick();
+    memory = null;
+    const s = load();
+    const r = s.rooms.find((x) => x.id === id);
+    if (!r) throw new NotFoundError('ese ambiente');
+    if (r.rev !== rev) throw new ConflictError();
+    if (patch.plan && !roomPlanSchema.safeParse(patch.plan).success) throw new Error('La planta no es válida.');
+    Object.assign(r, clone(patch), { rev: r.rev + 1, updatedAt: now() });
+    touchProject(s, r.projectId);
+    persist();
+    return r.rev;
+  },
+  async deleteRoom(id) {
+    await tick();
+    const s = load();
+    const r = s.rooms.find((x) => x.id === id);
+    s.rooms = s.rooms.filter((x) => x.id !== id);
+    if (r) touchProject(s, r.projectId);
     persist();
   },
 
