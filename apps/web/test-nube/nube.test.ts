@@ -154,6 +154,21 @@ describe('cuenta B no ve nada de A', () => {
   });
 });
 
+describe('herrajes', () => {
+  it('cuenta nueva: recibe los 10 herrajes de partida; se pueden guardar y no se borra uno en uso', async () => {
+    current = A.client;
+    const hw = await data.listHardware();
+    expect(hw).toHaveLength(10);
+    const ball = hw.find((h) => h.id === 'hw-corredera-bolas-45')!;
+    await data.saveHardware({ ...ball, priceCents: 250000 });
+    expect((await data.listHardware()).find((h) => h.id === ball.id)?.priceCents).toBe(250000);
+    // Los métodos de partida la usan por defecto.
+    await expect(data.deleteHardware('hw-corredera-bolas-45')).rejects.toBeInstanceOf(InUseError);
+    current = B.client;
+    expect((await data.listHardware()).find((h) => h.id === ball.id)?.priceCents).toBe(0);
+  });
+});
+
 describe('ambientes', () => {
   let roomId = '';
 
@@ -225,7 +240,7 @@ describe('borrar la cuenta', () => {
     const res = await deleteAccount(new Request('http://x/api/cuenta/borrar', { method: 'POST', headers: { Authorization: `Bearer ${A.token}` } }));
     expect(res.status).toBe(200);
     expect((await admin.auth.admin.getUserById(A.id)).data.user).toBeNull();
-    for (const t of ['projects', 'cabinets', 'rooms', 'materials', 'methods']) expect(await rowsOf(t, A.id), t).toBe(0);
+    for (const t of ['projects', 'cabinets', 'rooms', 'materials', 'methods', 'hardware']) expect(await rowsOf(t, A.id), t).toBe(0);
     expect(await rowsOf('materials', B.id)).toBe(9);
   });
 });
