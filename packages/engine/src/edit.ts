@@ -1,4 +1,4 @@
-import type { Design, Front, PartOverride, Plinth, Split, Zone } from './types';
+import type { Construction, Design, Front, PartOverride, Plinth, Split, Zone } from './types';
 import type { Len } from './units';
 
 export type IdGen = () => string;
@@ -184,7 +184,9 @@ export function setPlinth(design: Design, plinth: Plinth | undefined): Design {
  */
 export function setOverride(design: Design, partKey: string, override: PartOverride | undefined): Design {
   const next = { ...(design.overrides ?? {}) };
-  const empty = !override || (override.materialId === undefined && (!override.edges || Object.keys(override.edges).length === 0));
+  const empty =
+    !override ||
+    (override.materialId === undefined && override.frontSetback === undefined && (!override.edges || Object.keys(override.edges).length === 0));
   if (empty) delete next[partKey];
   else next[partKey] = override;
   if (Object.keys(next).length === 0) {
@@ -192,4 +194,41 @@ export function setOverride(design: Design, partKey: string, override: PartOverr
     return rest;
   }
   return { ...design, overrides: next };
+}
+
+/** Cambia cómo se arma la caja (tapa, base, fondo, travesaños). Los valores habituales se quitan del diseño. */
+export function setConstruction(design: Design, patch: Partial<Construction>): Design {
+  const next: Construction = { ...design.construction, ...patch };
+  if (next.top === 'between') delete next.top;
+  if (next.bottom === 'between') delete next.bottom;
+  if (next.back === 'method') delete next.back;
+  if (next.top !== 'rails') delete next.railWidth;
+  if (Object.keys(next).length === 0) {
+    const { construction: _c, ...rest } = design;
+    return rest;
+  }
+  return { ...design, construction: next };
+}
+
+/**
+ * Pone el estante `index` de un hueco dividido en estantes a una altura exacta: `y` es la
+ * distancia desde el piso del hueco hasta la cara de abajo del estante.
+ *
+ * `current` son las alturas que tienen ahora los niveles (las calcula el motor: `ZoneOut.box.dy`).
+ * Para que el estante quede exactamente ahí aunque cambien las demás medidas, se fijan los niveles
+ * de debajo con su altura actual y el nivel justo debajo del estante con la que haga falta.
+ * Los niveles de encima siguen como estaban (si eran automáticos, se reparten lo que quede).
+ */
+export function setShelfHeight(design: Design, zoneId: string, index: number, y: Len, thickness: Len, current: readonly Len[]): Design {
+  const zone = findZone(design.root, zoneId);
+  const split = zone?.split;
+  if (!split || split.axis !== 'y' || index < 0 || index >= split.children.length - 1) return design;
+  let d = design;
+  let start = 0;
+  for (let k = 0; k < index; k++) {
+    const size = split.sizes[k] ?? current[k] ?? 0;
+    d = setChildSize(d, zoneId, k, size);
+    start += size + thickness;
+  }
+  return setChildSize(d, zoneId, index, Math.max(1, y - start));
 }

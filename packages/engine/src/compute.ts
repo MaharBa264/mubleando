@@ -116,6 +116,8 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
           });
         }
       }
+      // El retranqueo ya se aplicó al calcular la caja de la pieza (estantes y divisores).
+      if (ov.frontSetback !== undefined && (p.role === 'shelf' || p.role === 'divider')) overridden = true;
       if (ov.edges) {
         const next = { ...edges };
         for (const side of ['L1', 'L2', 'W1', 'W2'] as const) {
@@ -134,6 +136,12 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     parts.push(part);
   };
 
+  // ── cómo se arma la caja ──
+  const cons = design.construction ?? {};
+  const topMode = cons.top ?? 'between';
+  const bottomMode = cons.bottom ?? 'between';
+  const railW = cons.railWidth ?? mm(100);
+
   // ── zócalo: la base sube; los costados siguen enteros hasta el suelo ──
   const plinthH: Len = design.plinth && design.plinth.height > 0 ? design.plinth.height : 0;
   if (plinthH > 0 && plinthH >= H - 2 * t) {
@@ -146,7 +154,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   let innerZ0: Len = 0;
   let backPart: NewPart | null = null;
 
-  if (back.mode !== 'none') {
+  if (back.mode !== 'none' && cons.back !== 'none') {
     const tb = thicknessOf(back.materialId, 'la trasera');
     if (back.mode === 'overlay') {
       carcassZ0 = tb;
@@ -168,7 +176,8 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       const into = back.grooveDepth - back.clearance; // lo que entra la trasera en cada ranura
       innerZ0 = back.inset + tb;
       const bw = W - 2 * t + 2 * into;
-      const bh = H - plinthH - 2 * t + 2 * into;
+      // Sin tapa, el fondo solo entra en la ranura de la base y llega hasta arriba del todo.
+      const bh = topMode === 'none' ? H - plinthH - t + into : H - plinthH - 2 * t + 2 * into;
       backPart = {
         key: 'back',
         role: 'back',
@@ -184,54 +193,86 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
 
   const carcassDz = D - carcassZ0;
 
-  // ── caja: los costados van enteros; tapa y base entre costados ──
-  addPart({
-    key: 'side.left',
-    role: 'side',
-    name: 'Costado izquierdo',
-    materialId: method.carcassMaterialId,
-    thickness: t,
-    length: H,
-    width: carcassDz,
-    box: { x: 0, y: 0, z: carcassZ0, dx: t, dy: H, dz: carcassDz },
-  });
-  addPart({
-    key: 'side.right',
-    role: 'side',
-    name: 'Costado derecho',
-    materialId: method.carcassMaterialId,
-    thickness: t,
-    length: H,
-    width: carcassDz,
-    box: { x: W - t, y: 0, z: carcassZ0, dx: t, dy: H, dz: carcassDz },
-  });
+  // ── caja ──
+  // Costados: enteros salvo que la tapa vaya encima (terminan debajo de ella) o la base debajo
+  // (empiezan encima de ella).
+  const sideY0: Len = bottomMode === 'under' ? plinthH + t : 0;
+  const sideY1: Len = topMode === 'over' ? H - t : H;
+  for (const [key, name, x] of [
+    ['side.left', 'Costado izquierdo', 0],
+    ['side.right', 'Costado derecho', W - t],
+  ] as const) {
+    addPart({
+      key,
+      role: 'side',
+      name,
+      materialId: method.carcassMaterialId,
+      thickness: t,
+      length: sideY1 - sideY0,
+      width: carcassDz,
+      box: { x, y: sideY0, z: carcassZ0, dx: t, dy: sideY1 - sideY0, dz: carcassDz },
+    });
+  }
 
   const innerW = W - 2 * t;
-  const innerH = H - 2 * t - plinthH;
+  // Arriba del hueco interior: la cara de abajo de la tapa (o de los travesaños), o el borde del mueble si no hay tapa.
+  const innerTopY: Len = topMode === 'none' ? H : H - t;
+  const innerH = innerTopY - (plinthH + t);
   if (innerW <= 0 || innerH <= 0) {
     warnings.push({ code: 'zone_too_small', message: 'El mueble es más estrecho o más bajo que dos tableros.' });
     return { parts, zones, warnings };
   }
 
-  addPart({
-    key: 'top',
-    role: 'top',
-    name: 'Tapa',
-    materialId: method.carcassMaterialId,
-    thickness: t,
-    length: innerW,
-    width: carcassDz,
-    box: { x: t, y: H - t, z: carcassZ0, dx: innerW, dy: t, dz: carcassDz },
-  });
+  const frontEdgeOnly = methodFrontEdge ? { ...NO_EDGES, L1: methodFrontEdge } : { ...NO_EDGES };
+  if (topMode === 'between' || topMode === 'over') {
+    const full = topMode === 'over';
+    addPart({
+      key: 'top',
+      role: 'top',
+      name: 'Tapa',
+      materialId: method.carcassMaterialId,
+      thickness: t,
+      length: full ? W : innerW,
+      width: carcassDz,
+      box: { x: full ? 0 : t, y: H - t, z: carcassZ0, dx: full ? W : innerW, dy: t, dz: carcassDz },
+      // Encima de los costados se le ven también las puntas: llevan el mismo tapacanto que el frente.
+      edges: full && methodFrontEdge ? { ...NO_EDGES, L1: methodFrontEdge, W1: methodFrontEdge, W2: methodFrontEdge } : undefined,
+    });
+  } else if (topMode === 'rails') {
+    const rw = Math.min(railW, Math.floor(carcassDz / 2));
+    addPart({
+      key: 'top.rail.front',
+      role: 'top',
+      name: 'Travesaño delantero',
+      materialId: method.carcassMaterialId,
+      thickness: t,
+      length: innerW,
+      width: rw,
+      box: { x: t, y: H - t, z: D - rw, dx: innerW, dy: t, dz: rw },
+      edges: frontEdgeOnly,
+    });
+    addPart({
+      key: 'top.rail.back',
+      role: 'top',
+      name: 'Travesaño trasero',
+      materialId: method.carcassMaterialId,
+      thickness: t,
+      length: innerW,
+      width: rw,
+      box: { x: t, y: H - t, z: carcassZ0, dx: innerW, dy: t, dz: rw },
+      edges: { ...NO_EDGES },
+    });
+  }
+  const bottomFull = bottomMode === 'under';
   addPart({
     key: 'bottom',
     role: 'bottom',
     name: 'Base',
     materialId: method.carcassMaterialId,
     thickness: t,
-    length: innerW,
+    length: bottomFull ? W : innerW,
     width: carcassDz,
-    box: { x: t, y: plinthH, z: carcassZ0, dx: innerW, dy: t, dz: carcassDz },
+    box: { x: bottomFull ? 0 : t, y: plinthH, z: carcassZ0, dx: bottomFull ? W : innerW, dy: t, dz: carcassDz },
   });
   if (backPart) addPart(backPart);
 
@@ -258,7 +299,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       pos += size;
       if (i < n - 1) {
         if (split.axis === 'y') {
-          const dz = box.dz - method.shelfFrontSetback;
+          const dz = box.dz - (overrides[`zone:${zone.id}/div${i}`]?.frontSetback ?? method.shelfFrontSetback);
           addPart({
             key: `zone:${zone.id}/div${i}`,
             role: 'shelf',
@@ -271,7 +312,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
             zoneId: zone.id,
           });
         } else {
-          const dz = box.dz - method.dividerFrontSetback;
+          const dz = box.dz - (overrides[`zone:${zone.id}/div${i}`]?.frontSetback ?? method.dividerFrontSetback);
           addPart({
             key: `zone:${zone.id}/div${i}`,
             role: 'divider',
@@ -299,9 +340,10 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       name: 'Zócalo',
       materialId: method.carcassMaterialId,
       thickness: t,
-      length: innerW,
+      // Con la base debajo de los costados, los costados no llegan al suelo: el zócalo va de lado a lado.
+      length: bottomFull ? W : innerW,
       width: plinthH,
-      box: { x: t, y: 0, z: D - setback - t, dx: innerW, dy: plinthH, dz: t },
+      box: { x: bottomFull ? 0 : t, y: 0, z: D - setback - t, dx: bottomFull ? W : innerW, dy: plinthH, dz: t },
       edges: { ...NO_EDGES },
     });
   }
@@ -325,7 +367,8 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     const left = b.x === t ? outer : inside;
     const right = b.x + b.dx === W - t ? outer : inside;
     const bottom = b.y === innerBottomY ? outer : inside;
-    const top = b.y + b.dy === H - t ? outer : inside;
+    // Arriba: sobre la tapa, tapa todo menos media holgura; sin tapa, queda media holgura por debajo del borde.
+    const top = b.y + b.dy === innerTopY ? (topMode === 'none' ? -half : outer) : inside;
     return { x: b.x - left, y: b.y - bottom, w: b.dx + left + right, h: b.dy + bottom + top };
   };
   const frontZ = (mount: Front['mount']) => (mount === 'inset' ? D - tf : D);

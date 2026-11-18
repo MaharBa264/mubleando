@@ -41,8 +41,15 @@ Hecho (17-11-2026):
 - Barra de herramientas sobre el 3D para el hueco elegido; cotas en 3D; dibujo del frente en la lista y en la galería; duplicar muebles.
 - Materiales y métodos de partida argentinos (melamina 18, fibrofácil 3, tapacanto 0,45 y 2) y descuento de tapacanto solo desde un espesor.
 
+También hecho: cambiar los paneles después de hecho el mueble (cómo se unen tapa, base y fondo; travesaños; quitar tapa o fondo; altura exacta y retranqueo propio de un estante; aplicar material y tapacanto a todas las piezas de un tipo).
+
 Siguiente:
 
+- **Formas irregulares**: que una pieza pueda tener cualquier contorno (no solo rectángulos), en el 3D, la lista de corte y el STL. En este orden:
+  1. Recortes y calados: recorte rectangular en un costado (caño, zócalo), esquinas redondeadas, pasacables.
+  2. Techo o costado inclinado: muebles bajo escalera o en altillos.
+  3. Esquinero en ochava: frente o costado a 45°.
+  4. Esquinero en L para cocinas en L, con puerta en ángulo.
 - **Herrajes y tolerancias**: biblioteca de bisagras (cazoleta 35 mm, codos 0 / 9 / 18, con y sin cierre suave) y correderas (telescópicas de bolas, ocultas bajo el cajón, cajón metálico, de rodillo) con sus medidas reales, que el motor use para las holguras, los largos de guía y los descuentos de cada pieza. Cada herraje con sus avisos (por ejemplo, un cajón más corto que la corredera más corta).
 - **Ambiente**: plano de la cocina o habitación con paredes, colocar y mover módulos en 2D, verlos juntos en 3D y despiece del ambiente.
 - Divisiones libres y proporcionales, cajones interiores, puertas correderas, cornisa y remates.

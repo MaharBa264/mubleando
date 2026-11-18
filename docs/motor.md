@@ -261,12 +261,31 @@ Ejemplo (bajo de 600 × 720 × 560, tres cajones iguales superpuestos, método e
 | Trasera y contrafrente | 504 × 184,5 |
 | Fondo (HDF 3 en ranura de 8) | 484 × 520 |
 
+### Construcción
+
+`design.construction` (opcional) cambia cómo se arma la caja. Lo que falta es lo habitual.
+
+| Campo | Valores | Efecto (bajo de 600 × 860 × 560, melamina 18) |
+| --- | --- | --- |
+| `top` | `between` (por defecto) | tapa 564, costados 860 |
+| | `over` | tapa 600 (tapacanto también en A1 y A2), costados 842 |
+| | `rails` | travesaños `top.rail.front` y `top.rail.back` de 564 × `railWidth` (100 por defecto); el delantero con tapacanto en L1 |
+| | `none` | sin tapa; fondo en ranura de 849 (solo entra en la ranura de la base); interior de 842; las puertas superpuestas terminan 1,5 mm por debajo del borde |
+| `bottom` | `between` (por defecto) / `under` | base de 600 en el piso; costados desde 18 (842). Con zócalo de 100: base a 100, costados desde 118 y zócalo de 600 |
+| `back` | `method` (por defecto) / `none` | sin fondo; el interior empieza en z = 0 |
+| `railWidth` | Len | ancho de cada travesaño |
+
+Con `top: 'over'` y `bottom: 'under'` a la vez, los costados miden 824. `setConstruction(design, cambios)` quita del diseño los valores habituales.
+
 ### Cambios por pieza
 
 `design.overrides` guarda, por la clave de la pieza, cambios hechos a mano:
 
 - **Material**: solo se aplica si es un tablero con el mismo espesor; si no, se ignora y sale el aviso `override_ignored` (cambiar el espesor cambiaría la geometría de todo el mueble).
 - **Cantos**: por lado (`L1`, `L2`, `W1`, `W2`). `null` quita el canto. La medida de corte se recalcula.
+- **Retranqueo** (`frontSetback`, solo estantes y divisores): sustituye al del método para esa pieza.
+
+`setShelfHeight(design, zoneId, index, y, espesor, alturasActuales)` pone un estante a una altura exacta: fija los niveles de debajo con su altura actual y el nivel justo debajo con la que haga falta.
 
 Las piezas con cambios llevan `overridden: true`. Como las claves son estables, los cambios sobreviven a los recálculos; si la pieza deja de existir (por ejemplo, se quita el estante), el cambio queda guardado sin efecto.
 
@@ -319,6 +338,8 @@ Todas devuelven un diseño **nuevo** y no modifican el original. Eso hace que de
 | `setDrawerSize(design, zoneId, i, size \| null)` | Fija la altura del frente del cajón `i` (0 = el de arriba) o la vuelve automática. |
 | `setPlinth(design, plinth \| undefined)` | Pone, cambia o quita el zócalo. |
 | `setOverride(design, partKey, override \| undefined)` | Guarda o borra el cambio a mano de una pieza. |
+| `setConstruction(design, cambios)` | Tapa, base, fondo y travesaños. |
+| `setShelfHeight(design, zoneId, i, y, espesor, actuales)` | Estante a una altura exacta. |
 | `findZone`, `findParent`, `updateZone` | Utilidades para recorrer el árbol. |
 
 `setDivisions` quita los cajones del hueco que se divide (una puerta sí puede tapar un hueco dividido).

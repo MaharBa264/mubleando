@@ -13,7 +13,7 @@ Estructura del cajón (laterales fondo trasera frente),cajones,must,yes,yes,"S07
 Biblioteca de materiales de panel (espesor fibra precio),materiales,must,yes,yes,"S11; crear, editar, borrar (protegido si se usa)"
 Cantos por lado con material y espesor,materiales,must,yes,yes,S12; por método y por pieza; descuentan medida
 Regla de canteado por tipo de panel,métodos,must,yes,partial,"S10; canto frontal en estructura y cajones, cuatro lados en frentes; por pieza a mano"
-Panel prioritario (quién pisa a quién en uniones),motor,must,yes,partial,"S16; decide medidas de laterales vs techo/suelo; fijo: costados enteros, tapa y base entre costados"
+Panel prioritario (quién pisa a quién en uniones),motor,must,yes,yes,S16; tapa entre / encima / travesaños / sin tapa; base entre / debajo; sin fondo
 Método de fabricación guardado y reutilizable,métodos,must,yes,yes,"S10; crear, editar, duplicar y borrar"
 Visor 3D en navegador con perspectiva y ortogonal,3d,must,yes,yes,"Three.js; S03; perspectiva, ortogonal, alámbrico"
 Selección táctil de zonas y paneles en móvil,3d,must,no,yes,mejora: PolyBoard no tiene móvil
@@ -71,3 +71,5 @@ Subir a la nube los datos guardados en el navegador,datos,should,no,yes,mejora; 
 Barra de herramientas sobre el 3D para el hueco elegido,ui,must,no,yes,"mejora: estante, divisor, puertas y cajones sin buscar en el panel"
 Materiales y métodos de partida de Argentina,materiales,must,no,yes,"melamina 18, fibrofácil 3, tapacanto 0,45 y 2; descontar tapacanto solo desde un espesor"
 Duplicar mueble,mueble,should,yes,yes,en la lista del proyecto
+Medidas de una pieza suelta (altura exacta y retranqueo de estante),piezas,must,yes,yes,S04
+Aplicar material y tapacanto a todas las piezas de un tipo,piezas,should,no,yes,mejora

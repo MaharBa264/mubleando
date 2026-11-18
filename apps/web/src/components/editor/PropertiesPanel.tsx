@@ -13,8 +13,11 @@ import {
   setDrawerSize,
   setFront,
   setOverride,
+  setConstruction,
   setPlinth,
+  setShelfHeight,
   setSize,
+  type Construction,
   type Design,
   type Edges,
   type Front,
@@ -152,6 +155,8 @@ function CabinetProps() {
         )}
       </Section>
 
+      <ConstructionSection />
+
       <Section title="Fabricación">
         <SelectField label="Método" value={methodId} onChange={(e) => setMeta({ methodId: e.target.value })}>
           {methods.map((m) => (
@@ -175,6 +180,36 @@ function CabinetProps() {
       </Section>
       <Warnings />
     </>
+  );
+}
+
+/** Cómo se arman tapa, base y fondo. */
+function ConstructionSection() {
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
+  const c = design.construction ?? {};
+  const set = (patch: Partial<Construction>) => apply((d) => setConstruction(d, patch));
+  return (
+    <Section title="Construcción">
+      <SelectField label="Tapa" value={c.top ?? 'between'} onChange={(e) => set({ top: e.target.value as Construction['top'] })}>
+        <option value="between">Entre los costados</option>
+        <option value="over">Encima de los costados</option>
+        <option value="rails">Dos travesaños (bajo mesada)</option>
+        <option value="none">Sin tapa</option>
+      </SelectField>
+      {c.top === 'rails' && (
+        <MmField compact label="Ancho de cada travesaño" value={c.railWidth ?? mm(100)} min={mm(30)} max={design.size.d / 2} onCommit={(v) => v !== null && set({ railWidth: v })} />
+      )}
+      <SelectField label="Base" value={c.bottom ?? 'between'} onChange={(e) => set({ bottom: e.target.value as Construction['bottom'] })}>
+        <option value="between">Entre los costados</option>
+        <option value="under">Debajo de los costados</option>
+      </SelectField>
+      <SelectField label="Fondo" value={c.back ?? 'method'} onChange={(e) => set({ back: e.target.value as Construction['back'] })}>
+        <option value="method">El del método de fabricación</option>
+        <option value="none">Sin fondo</option>
+      </SelectField>
+      <p className="text-xs text-muted">Cambia qué piezas van enteras y cuáles entre otras: las medidas de corte se recalculan solas.</p>
+    </Section>
   );
 }
 
@@ -443,6 +478,24 @@ function PartProps({ partKey }: { partKey: string }) {
   ];
   const isFront = part.role === 'door' || part.role === 'drawer-front';
   const isDrawerBox = part.assembly?.kind === 'drawer' && !isFront;
+  const isDivision = part.role === 'shelf' || part.role === 'divider';
+  const sameRole = result.parts.filter((p) => p.role === part.role);
+  // Estante o divisor: hueco que divide y posición (la clave es zone:<id>/div<i>).
+  const divIndex = isDivision ? Number(/\/div(\d+)$/.exec(part.key)?.[1] ?? -1) : -1;
+  const parentZone = part.zoneId ? result.zones.find((z) => z.id === part.zoneId) : undefined;
+  const levels = part.zoneId ? result.zones.filter((z) => z.parentId === part.zoneId).sort((a, b) => a.index - b.index) : [];
+
+  /** Copia el material y los tapacantos de esta pieza a todas las de su mismo tipo. */
+  const applyToAll = () =>
+    apply((d) => {
+      let next = d;
+      for (const p of sameRole) {
+        if (p.key === part.key) continue;
+        const prev = d.overrides?.[p.key];
+        next = setOverride(next, p.key, { ...prev, materialId: part.materialId, edges: { ...part.edges } });
+      }
+      return next;
+    });
 
   return (
     <>
@@ -460,6 +513,42 @@ function PartProps({ partKey }: { partKey: string }) {
         <dt className="text-muted">Veta</dt>
         <dd>{part.grain === 'length' ? 'A lo largo' : 'Sin veta'}</dd>
       </dl>
+
+      {isDivision && parentZone && (
+        <Section title="Medidas de esta pieza">
+          {part.role === 'shelf' && divIndex >= 0 && (
+            <MmField
+              compact
+              label="Altura (desde el piso del hueco hasta la cara de abajo)"
+              value={part.box.y - parentZone.box.y}
+              min={mm(1)}
+              max={parentZone.box.dy - part.thickness}
+              hint="Los niveles de abajo quedan fijos con su medida actual."
+              onCommit={(v) => v !== null && apply((d) => setShelfHeight(d, part.zoneId!, divIndex, v, part.thickness, levels.map((z) => z.box.dy)))}
+            />
+          )}
+          <MmField
+            compact
+            label="Retranqueo del frente (vacío = el del método)"
+            value={override?.frontSetback ?? null}
+            allowEmpty
+            min={0}
+            max={parentZone.box.dz - mm(50)}
+            placeholder={`método · ${fmtMm(parentZone.box.dz - part.box.dz)}`}
+            onCommit={(v) => apply((d) => setOverride(d, part.key, { ...override, frontSetback: v ?? undefined }))}
+          />
+        </Section>
+      )}
+
+      {(part.key === 'top' || part.role === 'back') && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => apply((d) => setConstruction(d, part.role === 'back' ? { back: 'none' } : { top: 'none' }))}
+        >
+          Quitar {part.role === 'back' ? 'el fondo' : 'la tapa'} de este mueble
+        </Button>
+      )}
 
       <Section title="Material">
         <SelectField
@@ -495,6 +584,12 @@ function PartProps({ partKey }: { partKey: string }) {
         </div>
         <p className="text-xs text-muted">Al cambiar un canto se recalcula la medida de corte.</p>
       </Section>
+
+      {sameRole.length > 1 && (
+        <Button size="sm" variant="ghost" onClick={applyToAll}>
+          Usar este tablero y estos tapacantos en las {sameRole.length} piezas de tipo «{ROLE_LABEL[part.role].toLowerCase()}»
+        </Button>
+      )}
 
       {part.overridden && (
         <Alert tone="info" title="Esta pieza tiene cambios a mano">

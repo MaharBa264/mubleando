@@ -62,6 +62,28 @@ export interface PartOverride {
   materialId?: string;
   /** Cantos por lado. `null` = sin canto en ese lado; ausente = el del método. */
   edges?: Partial<Edges>;
+  /** Solo estantes y divisores: retranqueo respecto al frente, en lugar del del método. */
+  frontSetback?: Len;
+}
+
+/**
+ * Cómo se arma la caja. Todo es opcional: lo que falta es lo habitual (tapa y base entre
+ * costados, con el fondo del método).
+ */
+export interface Construction {
+  /**
+   * - 'between': entre los costados (los costados van enteros).
+   * - 'over': encima de los costados, de lado a lado (los costados son más cortos).
+   * - 'rails': dos travesaños (delantero y trasero) en lugar de tapa, típico de bajo mesada.
+   * - 'none': sin tapa.
+   */
+  top?: 'between' | 'over' | 'rails' | 'none';
+  /** 'between': entre los costados · 'under': debajo de los costados, de lado a lado. */
+  bottom?: 'between' | 'under';
+  /** 'method': el fondo que diga el método · 'none': sin fondo. */
+  back?: 'method' | 'none';
+  /** Ancho (fondo) de cada travesaño. Por defecto 100 mm. */
+  railWidth?: Len;
 }
 
 export interface Design {
@@ -73,6 +95,8 @@ export interface Design {
   plinth?: Plinth;
   /** Cambios por pieza: clave de la pieza → cambio. */
   overrides?: Record<string, PartOverride>;
+  /** Cómo se unen tapa, base y fondo. Ausente = lo habitual. */
+  construction?: Construction;
 }
 
 const lenSchema = z.number().int();
@@ -120,8 +144,17 @@ export const designSchema: z.ZodType<Design> = z.object({
       z.object({
         materialId: z.string().optional(),
         edges: z.object({ L1: edgeRefSchema, L2: edgeRefSchema, W1: edgeRefSchema, W2: edgeRefSchema }).partial().optional(),
+        frontSetback: lenSchema.nonnegative().optional(),
       }),
     )
+    .optional(),
+  construction: z
+    .object({
+      top: z.enum(['between', 'over', 'rails', 'none']).optional(),
+      bottom: z.enum(['between', 'under']).optional(),
+      back: z.enum(['method', 'none']).optional(),
+      railWidth: lenSchema.positive().optional(),
+    })
     .optional(),
 });
 

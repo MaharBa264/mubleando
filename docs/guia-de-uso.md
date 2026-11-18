@@ -72,6 +72,21 @@ En la barra de arriba: volver al proyecto, el nombre del mueble (se edita ahí m
 
 Selecciona **Mueble completo**. En propiedades cambias ancho, alto y fondo, el zócalo, el método de fabricación y cuántas unidades de este mueble lleva el proyecto (por ejemplo, 3 bajos iguales). Todas las piezas se recalculan al momento.
 
+### Construcción: cómo se unen tapa, base y fondo
+
+En **Mueble completo → Construcción**:
+
+| Opción | Qué cambia |
+| --- | --- |
+| **Tapa** entre los costados | Lo habitual: costados enteros, tapa más corta. |
+| **Tapa** encima de los costados | La tapa va de lado a lado (con tapacanto también en las puntas) y los costados son más cortos. |
+| **Tapa** con dos travesaños | En lugar de tapa, un travesaño delantero y uno trasero (100 mm por defecto, se puede cambiar). Típico de bajo mesada. |
+| **Tapa**: sin tapa | No hay tapa; el fondo llega hasta arriba. |
+| **Base** debajo de los costados | La base va de lado a lado y los costados apoyan encima. Con zócalo, el zócalo también va de lado a lado. |
+| **Fondo**: sin fondo | Quita el fondo; el interior llega hasta atrás. |
+
+Todas las medidas de corte se recalculan solas.
+
 ### Zócalo
 
 En **Mueble completo**, marca **Con zócalo**. La base del mueble sube a la altura del zócalo (100 mm por defecto) y se añade un tablero delante, retranqueado (50 mm por defecto) para dejar sitio a los pies. Los costados siguen llegando al suelo. Cambia la altura y el retranqueo en los dos campos que aparecen.
@@ -122,6 +137,13 @@ Selecciona una pieza (en el 3D o en el árbol) para ver su espesor, medida acaba
 
 - **Material**: otro tablero **del mismo espesor** (por ejemplo, un costado visto en roble en un mueble blanco).
 - **Cantos**: el canto de cada lado. L1 es el delantero; L2 el otro largo; A1 y A2 los extremos. La medida de corte se recalcula al momento.
+
+Además, según la pieza:
+
+- **Estante**: **Altura**, la distancia desde el piso del hueco hasta la cara de abajo del estante, para ponerlo a una medida exacta (por ejemplo, a 350 mm). Los niveles de abajo quedan fijos con su medida actual.
+- **Estante o divisor**: **Retranqueo del frente** propio. Vacío = el del método.
+- **Tapa o fondo**: **Quitar** la pieza de este mueble (equivale a «Sin tapa» o «Sin fondo» en Construcción).
+- **Cualquier pieza**: **Usar este tablero y estos tapacantos en todas las piezas del mismo tipo**, por ejemplo, para poner tapacanto de 2 mm a todas las puertas de una vez.
 
 Las piezas cambiadas muestran el aviso «Esta pieza tiene cambios a mano», con un enlace para volver a lo que dice el método. Desde una puerta o una pieza de cajón, **Editar el frente** lleva al hueco para cambiar puertas o cajones.
 

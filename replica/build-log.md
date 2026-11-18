@@ -114,3 +114,10 @@ No comprobado: nada contra un proyecto real de Supabase (no existe todavía; lo 
 | S10/S11 | Bibliotecas: agregar los de partida que falten; tapacanto desde X mm en el método | hecho | — | — |
 
 Comprobado: 147 pruebas (9 del método argentino y 33 de plantillas, nuevas); `npm run test:nube` 9 de 9 contra Supabase; en el navegador (modo local) galería con 10 plantillas y dibujos, crear «Bajo con cajón y puerta» (puerta 580 y frente 174, con 3 mm entre ellos, como el cálculo a mano), barra de herramientas (+ Estante, 2 puertas), sin errores de consola.
+
+## Cambiar paneles después de hecho el mueble (2026-11-17)
+
+- Motor: `design.construction` (tapa entre / encima / travesaños / sin tapa; base entre / debajo; sin fondo; ancho de travesaño), retranqueo propio de estantes y divisores, `setShelfHeight`.
+- Editor: sección Construcción en el mueble; en la pieza, altura exacta y retranqueo del estante, quitar tapa o fondo, y aplicar tablero y tapacantos a todas las piezas del mismo tipo.
+- Fallo encontrado por las pruebas: `setOverride` descartaba un cambio que solo tenía retranqueo, por considerarlo vacío. Corregido.
+- Comprobado: 102 pruebas del motor (13 nuevas, con cifras a mano); en el navegador, travesaños (564 × 100), tapa encima y base debajo con zócalo (costados de 724), estante a 200 mm con retranqueo de 50 (564 × 492), tapacanto de 2 mm copiado a los dos estantes (cada uno 2 mm menos de corte).
