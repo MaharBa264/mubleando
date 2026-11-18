@@ -120,6 +120,12 @@ function toRoom(r: RoomRow): Room {
 
 // ───────────────────────── errores ─────────────────────────
 
+const MISSING_ROOMS =
+  'Falta crear la tabla de ambientes en Supabase: pegá en el SQL Editor la migración supabase/migrations/20261118000000_ambientes.sql (ver docs/nube.md).';
+
+/** La tabla no existe todavía (PostgREST: PGRST205; Postgres: 42P01). */
+const isMissingTable = (e: PostgrestError) => e.code === 'PGRST205' || e.code === '42P01';
+
 /** Convierte un error de Supabase en uno con un mensaje que se entienda. */
 function fail(e: PostgrestError | Error | null | undefined, context: string): never {
   const msg = e?.message ?? '';
@@ -235,6 +241,8 @@ export const cloudData: DataLayer = {
 
   async listRooms(projectId) {
     const { data, error } = await supabase().from('rooms').select(ROOM_COLUMNS).eq('project_id', projectId).order('created_at');
+    // Si todavía no se aplicó la migración de ambientes en Supabase, el proyecto se sigue viendo (sin ambientes).
+    if (error && isMissingTable(error)) return [];
     if (error) fail(error, 'cargar los ambientes');
     return (data as RoomRow[]).flatMap((r) => {
       try {
@@ -257,6 +265,7 @@ export const cloudData: DataLayer = {
       .select(ROOM_COLUMNS)
       .single();
     if (error?.code === '23503') throw new NotFoundError('ese proyecto');
+    if (error && isMissingTable(error)) throw new Error(MISSING_ROOMS);
     if (error) fail(error, 'crear el ambiente');
     return toRoom(data as RoomRow);
   },

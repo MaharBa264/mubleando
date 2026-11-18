@@ -22,6 +22,7 @@ Código: [`packages/engine/src`](../packages/engine/src).
 | `edit.ts` | Funciones para modificar un diseño sin mutarlo (dividir, fijar medidas, igualar…). |
 | `cutlist.ts` | Filas de la lista de corte (agrupadas o pieza a pieza) y totales de material y costo. |
 | `presets.ts` | Materiales y métodos de partida (Argentina) y el juego de referencia de las pruebas. |
+| `room.ts` | Ambientes: planta, paredes, medidas de obra, aberturas, muebles colocados, arrimar a pared y avisos (ver [ambientes.md](ambientes.md)). |
 | `templates.ts` | Plantillas de muebles (bajo con puertas, cajonera, alacena, columna, placard…). |
 
 ## 1. Unidades

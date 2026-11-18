@@ -52,8 +52,8 @@ Forma libre y editor de contorno 2D,piezas,could,yes,no,S18
 Cajeados y mecanizado de esquinas,piezas,could,yes,no,S20
 Importar DXF,piezas,could,yes,no,S31
 Estructuras de panel compuestas,piezas,could,yes,no,S19
-Proyecto de estancia con muros y suelo,proyecto,could,yes,no,S21
-Mover / girar / agrupar muebles,proyecto,could,yes,no,S21
+Proyecto de estancia con muros y suelo,proyecto,could,yes,yes,"S21; planta con paredes fuera de escuadra, aberturas, 3D"
+Mover / girar / agrupar muebles,proyecto,could,yes,partial,S21; mover y girar en planta con imán a la pared; agrupar pendiente
 Catálogo de modelos de mueble,catálogo,could,yes,partial,S22; 10 plantillas en el motor con dibujo; falta catálogo propio del usuario
 Render con luces y texturas,3d,could,yes,no,S03
 Exportar DXF 3D / 3DS / GLB,salidas,could,yes,no,S30
@@ -73,3 +73,5 @@ Materiales y métodos de partida de Argentina,materiales,must,no,yes,"melamina 1
 Duplicar mueble,mueble,should,yes,yes,en la lista del proyecto
 Medidas de una pieza suelta (altura exacta y retranqueo de estante),piezas,must,yes,yes,S04
 Aplicar material y tapacanto a todas las piezas de un tipo,piezas,should,no,yes,mejora
+Ambiente fuera de escuadra con medidas de obra y error de cierre,proyecto,must,no,yes,mejora
+"Avisos de choques, aberturas tapadas y relleno en esquinas fuera de escuadra",proyecto,should,no,yes,mejora

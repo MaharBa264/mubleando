@@ -11,6 +11,7 @@ Next.js 16 con App Router. Todas las páginas son de cliente (`'use client'`): e
 | `/proyectos/[id]/despiece` | Despiece del proyecto entero | `src/app/proyectos/[id]/despiece/page.tsx` |
 | `/muebles/[id]` | Editor del mueble | `src/app/muebles/[id]/page.tsx` → `components/editor/Editor.tsx` |
 | `/muebles/[id]/despiece` | Despiece de un mueble | `src/app/muebles/[id]/despiece/page.tsx` |
+| `/ambientes/[id]` | Editor de un ambiente: planta o 3D, paredes, aberturas, muebles colocados y avisos | `src/app/ambientes/[id]/page.tsx` → `components/room/RoomEditor.tsx` |
 | `/bibliotecas` | Tableros, cantos y métodos de fabricación, editables | `src/app/bibliotecas/page.tsx` |
 | `/entrar` | Entrar, crear cuenta, recuperar la contraseña (solo con nube) | `src/app/entrar/page.tsx` |
 | `/restablecer` | Contraseña nueva desde el enlace del correo | `src/app/restablecer/page.tsx` |
@@ -35,6 +36,7 @@ Diálogos:
 | `components/AppShell.tsx` | Cabecera, navegación y el contenedor `Page`. |
 | `components/CabinetSketch.tsx` | Dibujo del frente de un mueble en SVG a partir de las piezas del motor (de atrás hacia delante, con tiradores). Miniaturas de la galería y de la lista del proyecto. |
 | `components/editor/QuickTools.tsx` | Barra de herramientas sobre el 3D para el hueco elegido: + / − estante, + / − divisor, puerta, 2 puertas, cajones, sin frente. |
+| `components/room/` | Ambientes: `RoomEditor` (guardado, atajos, vista), `PlanView` (planta en SVG: arrastrar muebles con imán a la pared y esquinas de 10 en 10 mm), `RoomPanel` (paredes, aberturas, muebles, avisos), `RoomViewer3D` (piso, paredes con huecos, muebles), `RoomSketch` (miniatura), `NewRoomDialog`, `roomStore` (estado con deshacer). |
 | `components/CutListView.tsx` | La lista de corte: agrupada o pieza a pieza, tarjetas en el móvil y tabla en el ordenador, totales, imprimir y CSV. |
 | `components/editor/` | El editor (ver abajo). |
 | `components/viewer/CabinetViewer.tsx` | El visor 3D. |

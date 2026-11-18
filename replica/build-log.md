@@ -121,3 +121,13 @@ Comprobado: 147 pruebas (9 del método argentino y 33 de plantillas, nuevas); `n
 - Editor: sección Construcción en el mueble; en la pieza, altura exacta y retranqueo del estante, quitar tapa o fondo, y aplicar tablero y tapacantos a todas las piezas del mismo tipo.
 - Fallo encontrado por las pruebas: `setOverride` descartaba un cambio que solo tenía retranqueo, por considerarlo vacío. Corregido.
 - Comprobado: 102 pruebas del motor (13 nuevas, con cifras a mano); en el navegador, travesaños (564 × 100), tapa encima y base debajo con zócalo (costados de 724), estante a 200 mm con retranqueo de 50 (564 × 492), tapacanto de 2 mm copiado a los dos estantes (cada uno 2 mm menos de corte).
+
+## Ambientes, primera versión (2026-11-18)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `room.ts` | hecho | adaptar el mueble a la esquina (relleno en el despiece) | definir la convención: esquinas por la cara interior, y que al cambiar un largo se conserven las demás medidas «como en obra», con la última pared cerrando |
+| datos | tabla `rooms` + `save_room`; local formato v4 | hecho; **migración pendiente de aplicar en Supabase** | — | — |
+| S21 | Proyecto: lista de ambientes; editor de ambiente (planta, paredes, aberturas, muebles, avisos, 3D) | hecho; **3D sin ver en pantalla** (panel del navegador oculto) | casa con varios ambientes; arrastrar en 3D | arrastrar con el puntero en SVG convirtiendo coordenadas de pantalla a planta |
+
+Comprobado: 24 pruebas de geometría (fuera de escuadra con relleno de 11,2 mm a mano, L, cierre, arrimar a pared, aberturas, trozos de pared) y 6 de la tabla de ambientes en PGlite; en el navegador (modo local), cocina de ejemplo sin avisos, esquina a 92° con avisos de columna metida en la pared y alacena con relleno de 0 a 11,2 mm, colocar un mueble en un hueco libre, «Contar 2» en el despiece, arrastrar un mueble y el imán a la pared de abajo (giro de 180°, aviso de puerta tapada), vista 3D sin errores.

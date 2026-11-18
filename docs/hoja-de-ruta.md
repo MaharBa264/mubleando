@@ -33,6 +33,22 @@ Pendiente de la fase 2, para más adelante:
 - Cajones interiores (detrás de una puerta) y cajones con frente doble.
 - Tolerancias de encaje propias para los cajones impresos en 3D.
 
+## Ambientes (primera versión, 18-11-2026)
+
+- Planta con paredes medidas en obra (largos y ángulos, error de cierre), fuera de escuadra, L y ochavas; esquinas arrastrables.
+- Puertas, ventanas y aberturas sin hoja.
+- Colocar muebles del proyecto (varias veces el mismo), arrastrar con imán a la pared, girar, colgar a una altura.
+- Avisos: fuera del ambiente, muebles que se pisan, puertas y ventanas tapadas, relleno cónico en esquinas fuera de escuadra.
+- Vista 3D del ambiente.
+
+Siguiente para ambientes:
+
+- Que el mueble se adapte a la esquina fuera de escuadra: relleno o costado en cuña agregado al despiece.
+- Despiece y presupuesto por ambiente.
+- Paredes de distinto espesor y alto, columnas y vigas.
+- Una casa: varios ambientes que comparten paredes.
+- Arrastrar muebles también en el 3D.
+
 ## Constructor de muebles (en curso)
 
 Hecho (17-11-2026):

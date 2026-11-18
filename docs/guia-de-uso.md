@@ -12,6 +12,10 @@ La pantalla de inicio (**Proyectos**) lista tus proyectos: una cocina, un armari
 
 La primera vez que abres la app aparece la "Cocina de ejemplo", con un bajo de fregadero y una despensa, para probar sin empezar de cero.
 
+## Ambientes
+
+Además de muebles sueltos, un proyecto puede tener **ambientes**: la planta de una cocina o habitación, con las paredes medidas en obra (también fuera de escuadra), puertas y ventanas, y los muebles colocados. La app avisa si un mueble choca con otro o con la pared, si tapa una puerta o una ventana, y qué relleno hace falta en una esquina fuera de escuadra. Todo, paso a paso, en [Ambientes](ambientes.md).
+
 ## 2. Crear un mueble
 
 Dentro de un proyecto, **Nuevo mueble**:
