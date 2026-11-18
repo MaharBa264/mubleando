@@ -126,6 +126,29 @@ Al reducir, los tableros finos se vuelven demasiado finos para imprimirse: una t
 - **Pieza a pieza**: todas salen tumbadas, sin soportes. Se pegan con cianoacrilato (pegamento instantáneo). Monta igual que el mueble real: costados, base y tapa, trasera, estantes.
 - Los cajones impresos aparte entran en su hueco porque el diseño ya les deja holgura: el hueco de las guías a cada lado (13 mm reales por defecto, 1,3 mm a escala 1:10) y los espacios libres de arriba y abajo. A escalas muy pequeñas esas holguras se vuelven milimétricas; si no entran, lija un poco o imprime el cajón con una expansión horizontal negativa.
 
+### De juguete: que funcione
+
+**Qué exportar → De juguete (funciona)**: un juguete a escala que se mueve de verdad, sin bisagras ni correderas compradas.
+
+| Archivo | Qué es | Cómo se imprime |
+| --- | --- | --- |
+| `…-juguete.stl` | El mueble entero, de una pieza, **con las puertas de bisagra ya unidas** | De pie, con la base sobre la cama, sin soportes dentro de las bisagras. Al terminar, se mueven las puertas con suavidad para soltarlas. |
+| `…-cajon-N.stl` | Cada cajón, de una pieza (frente, laterales, trasera y fondo) | Con el frente hacia abajo. Entra en su hueco con la holgura de las correderas a escala. |
+| `…-corrediza-N.stl` | Cada hoja corrediza | Tumbada. Se encastra levantándola en el riel de arriba y bajándola en el de abajo. |
+
+Cómo es la **bisagra impresa en su lugar**:
+
+- Un perno vertical en el costado del mueble, con **nudillos alternados**: los de los extremos y el del medio son del mueble (unidos al canto del costado con una pestaña); los otros dos son tubos de la puerta, alrededor del perno.
+- Holgura elegida (0,4 mm por defecto) entre el perno y los tubos, y entre la puerta y el mueble. Al menos 0,6 mm entre nudillos, porque la base de cada nudillo se imprime en el aire.
+- La puerta queda un poco por delante del mueble para poder girar. Las puertas de dos hojas llevan una bisagra en cada costado.
+- Solo las puertas que llegan a un **costado exterior** llevan bisagra impresa. Las que giran sobre un divisor salen en un archivo aparte, con aviso, para pegarlas o ponerles una bisagra comprada.
+
+Cómo son los **rieles de las corredizas**: tiras de 0,8 mm a lo largo del hueco, delante y detrás de cada hoja, de 1,2 mm de alto abajo y 2,4 mm arriba. La hoja es más baja que el hueco para poder levantarla en el riel de arriba y bajarla en el de abajo.
+
+Opciones: escala, holgura (0,3 / 0,4 / 0,5 mm) y espesor mínimo de pared (al menos 0,8 mm; por defecto 1,2 mm en el juguete). Si una bisagra queda pegada, volvé a imprimir con más holgura.
+
+Código: [`packages/exporters/src/toy.ts`](../packages/exporters/src/toy.ts) (`exportToy`). Las pruebas comprueban que cilindros y tubos quedan cerrados y con las caras hacia fuera (su volumen coincide con el calculado), qué archivos salen en cada caso y el alto de las hojas corredizas.
+
 ### Uso desde el código
 
 ```ts

@@ -69,7 +69,13 @@ En **Muebles** están todos los muebles del proyecto:
 
 ### Vista 3D
 
-Piso, paredes con los huecos de puertas y ventanas, y los muebles colocados con sus frentes. Se gira con el ratón o con el dedo. **Paredes transparentes** deja ver el interior desde fuera. Tocar un mueble lo elige.
+Piso, paredes con los huecos de puertas y ventanas, y los muebles colocados con sus frentes. Se gira con el ratón o con el dedo. Tocar un mueble lo elige.
+
+Las paredes tienen tres modos:
+
+- **Automático** (por defecto): las paredes que quedan entre la cámara y el interior se vuelven transparentes mientras girás, como en una casa de muñecas. Una pared tapa la vista cuando la cámara está del lado de fuera de su cara interior.
+- **Transparentes**: todas.
+- **Sólidas**: ninguna.
 
 ## Cómo funciona por dentro
 

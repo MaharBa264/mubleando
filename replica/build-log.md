@@ -133,3 +133,15 @@ Comprobado: 147 pruebas (9 del método argentino y 33 de plantillas, nuevas); `n
 Comprobado: 24 pruebas de geometría (fuera de escuadra con relleno de 11,2 mm a mano, L, cierre, arrimar a pared, aberturas, trozos de pared) y 6 de la tabla de ambientes en PGlite; en el navegador (modo local), cocina de ejemplo sin avisos, esquina a 92° con avisos de columna metida en la pared y alacena con relleno de 0 a 11,2 mm, colocar un mueble en un hueco libre, «Contar 2» en el despiece, arrastrar un mueble y el imán a la pared de abajo (giro de 180°, aviso de puerta tapada), vista 3D sin errores.
 
 - 2026-11-18: el usuario aplicó la migración de ambientes en Supabase. `npm run test:nube` pasa 12 de 12 (3 nuevas de ambientes: crear y leer idéntico, conflicto de versión, otra cuenta no lo ve ni lo cambia; el borrado de cuenta también borra sus ambientes).
+
+## Herrajes, corredizas, juguete y paredes automáticas (2026-11-18)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `hardware.ts`; `compute(…, herrajes)` con lista de herrajes | hecho | taladros, reglas de posición | cada marca usa sus propias constantes: biblioteca editable con valores típicos y fuentes citadas |
+| S06 | Puertas corredizas | hecho | — | — |
+| S14 | Bibliotecas → Herrajes; método y mueble eligen herrajes; despiece con herrajes | hecho; **migración pendiente de aplicar en Supabase** | — | — |
+| S29b | STL de juguete | hecho; **sin imprimir todavía** | — | la bisagra en su lugar: nudillos alternados con holgura, eje por delante del mueble para que la puerta gire sin chocar, y 0,6 mm entre nudillos porque su base se imprime en el aire |
+| S21 | Paredes automáticas en el 3D del ambiente | hecho; **sin ver en pantalla** | — | — |
+
+Comprobado: 142 pruebas del motor (16 de herrajes con cifras a mano), 24 de exportaciones (9 del juguete: volumen exacto de cilindros y tubos, archivos por caso, alto de hojas corredizas), 48 de base de datos (4 de herrajes, incluida la migración que pone herrajes por defecto a los métodos argentinos); en el navegador (modo local), migración a formato 5, editar el precio de una corredera (`2.500`), herrajes en el despiece (6 pares, $ 15.000) y corrediza en un bajo de 800 (hojas de 704 × 392, juego con rieles de 764).

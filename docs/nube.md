@@ -33,6 +33,7 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
    - `20261116000001_borrar_cuenta_con_muebles.sql`: ajuste de la clave foránea de los métodos.
    - `20261117000000_disparador_con_permisos_del_dueno.sql`: arreglo para poder borrar cuentas que tengan muebles.
    - `20261117000001_precios_en_pesos.sql`: deja sin precio los materiales de partida que seguían con su precio en euros.
+   - `20261118000001_herrajes.sql`: tabla de herrajes; los métodos argentinos de partida pasan a usar herrajes por defecto. Mientras no esté, la app funciona sin herrajes.
    - `20261118000000_ambientes.sql`: tabla de ambientes (planta y muebles colocados). Mientras no esté, los proyectos se ven sin ambientes y crear uno avisa de que falta.
 
 Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.

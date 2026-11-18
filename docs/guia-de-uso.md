@@ -76,6 +76,10 @@ En la barra de arriba: volver al proyecto, el nombre del mueble (se edita ahí m
 
 Selecciona **Mueble completo**. En propiedades cambias ancho, alto y fondo, el zócalo, el método de fabricación y cuántas unidades de este mueble lleva el proyecto (por ejemplo, 3 bajos iguales). Todas las piezas se recalculan al momento.
 
+### Herrajes
+
+En **Mueble completo → Herrajes** se eligen las bisagras, las correderas y el sistema corredizo de este mueble (o «Del método»). Cambian las medidas de las piezas (por ejemplo, el ancho y el fondo de los cajones) y debajo se ve la lista de lo que lleva. Todo, en [Herrajes](herrajes.md).
+
 ### Construcción: cómo se unen tapa, base y fondo
 
 En **Mueble completo → Construcción**:
@@ -117,6 +121,10 @@ Cada hueco hijo se puede volver a dividir: por ejemplo, un divisor y luego estan
 4. Elige **Una hoja** o **Dos hojas** y, si es de una, el lado de las **bisagras**.
 
 Las medidas salen solas a partir de la holgura del método (3 mm por defecto): las puertas superpuestas dejan 1,5 mm al borde del mueble y 3 mm entre puertas vecinas.
+
+### Puertas corredizas
+
+En **Frente**, elegí **Corrediza** (o el botón **Corrediza** de la barra del 3D) y luego **dos** o **tres hojas**. Las hojas van dentro del hueco, en dos rieles; sus medidas salen del sistema corredizo elegido (ver [Herrajes](herrajes.md)). Si dentro hay estantes poco retranqueados, la app avisa de que chocan con las hojas.
 
 ### Cajones
 

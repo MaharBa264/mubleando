@@ -6,6 +6,7 @@
 | [Guía de uso](guia-de-uso.md) | quien vaya a diseñar muebles | de crear un proyecto a mandar la lista de corte a la maderera o imprimir el mueble en 3D |
 | [El motor de cálculo](motor.md) | quien quiera entender o cambiar cómo salen las medidas | unidades, el documento del diseño, el método de fabricación, cada pieza y su fórmula, avisos, funciones de edición |
 | [Ambientes](ambientes.md) | quien vaya a dibujar una cocina o una habitación | planta, medidas de obra fuera de escuadra, aberturas, colocar muebles, avisos y cómo funciona por dentro |
+| [Herrajes](herrajes.md) | quien elija bisagras, correderas y corredizas | biblioteca, cómo cambia cada herraje las medidas, ejemplos y fuentes |
 | [Exportaciones](exportaciones.md) | quien use los archivos que salen de la app | CSV (columnas, decimales, cómo pedir el corte a una maderera) y STL (modos, escalas, espesor mínimo, cajones, ejes) |
 | [La aplicación web](app-web.md) | quien toque la interfaz | pantallas y rutas, editor, visor 3D, capa de datos, guardado y conflictos, PWA |
 | [Guardado en la nube](nube.md) | quien vaya a activar las cuentas | crear el proyecto de Supabase, variables, tablas, reglas de acceso, pruebas y limitaciones |

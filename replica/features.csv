@@ -23,16 +23,16 @@ Lista de corte individual y agrupada,salidas,must,yes,yes,S24; mueble y proyecto
 Exportar lista de corte a CSV,salidas,must,yes,yes,S30 (ASCII); coma o punto decimal
 Lista de materiales y coste,salidas,must,yes,yes,"S26; m², metros de canto y coste de material"
 Guardar y abrir proyectos en la nube,datos,must,no,yes,mejora: Supabase con cuentas y reglas de acceso por fila; probado contra el proyecto real (npm run test:nube)
-Puerta corredera,puertas,should,yes,no,S06
+Puerta corredera,puertas,should,yes,yes,"S06; 2 y 3 hojas en dos rieles, con sistema corredizo editable"
 Cajón múltiple / encastrado / superpuesto,cajones,should,yes,yes,S07
 Igualar tamaño de puertas y cajones,cajones,should,yes,yes,S07; igualar alturas
 Divisiones libres y paneles nulos,divisiones,should,yes,no,S05
 Dobles fondos,divisiones,should,yes,no,S05
 Estilos de material (combinaciones nombradas),materiales,should,yes,no,S13
-Biblioteca de herrajes con taladros,herrajes,should,yes,no,S14; datos públicos de fabricantes
+Biblioteca de herrajes con taladros,herrajes,should,yes,partial,"S14; bisagras, correderas y corredizas con medidas que corrigen las piezas; taladros pendientes"
 Reglas de posicionado de herrajes por longitud,herrajes,should,yes,no,S15
 Relaciones de herrajes entre tipos de panel,herrajes,should,yes,no,S16
-Lista de herrajes con precio,salidas,should,yes,no,S26
+Lista de herrajes con precio,salidas,should,yes,yes,"S26; en el despiece, con costo"
 Exportar DXF 2D por pieza con capas,cnc,could,yes,no,S29; formato abierto; útil solo si se usa un servicio de corte CNC
 Post-procesador para la CNC del usuario (uno),cnc,could,yes,no,S28; el usuario no tiene CNC: el corte se encarga a una maderera
 Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
@@ -75,3 +75,5 @@ Medidas de una pieza suelta (altura exacta y retranqueo de estante),piezas,must,
 Aplicar material y tapacanto a todas las piezas de un tipo,piezas,should,no,yes,mejora
 Ambiente fuera de escuadra con medidas de obra y error de cierre,proyecto,must,no,yes,mejora
 "Avisos de choques, aberturas tapadas y relleno en esquinas fuera de escuadra",proyecto,should,no,yes,mejora
+STL de juguete con bisagras impresas en su lugar,salidas,should,no,yes,mejora: impresión 3D que funciona
+Paredes del ambiente transparentes según la cámara,3d,should,no,yes,mejora

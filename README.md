@@ -11,6 +11,9 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Función | Estado |
 | --- | --- |
 | Proyectos con varios muebles | Hecho |
+| Biblioteca de herrajes (bisagras, correderas, corredizas) que corrige las medidas y suma la lista de compra | Hecho |
+| Puertas corredizas de 2 y 3 hojas | Hecho |
+| STL de juguete: mueble de una pieza con bisagras impresas que giran, cajones y corredizas que encastran | Hecho |
 | Ambientes: planta con paredes fuera de escuadra, puertas y ventanas, muebles colocados, vista 3D y avisos de choques y rellenos | Hecho |
 | Mueble rectangular por medidas (ancho, alto, fondo) | Hecho |
 | Visor 3D (perspectiva, ortogonal, alámbrico), con ratón y con el dedo | Hecho |
@@ -73,6 +76,7 @@ Toda la documentación está en español, en la carpeta [`docs/`](docs/README.md
 - [El motor de cálculo](docs/motor.md): cómo se calculan las piezas, las convenciones de construcción y un ejemplo con todas las cifras.
 - [Exportaciones](docs/exportaciones.md): CSV para la maderera y STL para impresión 3D (escalas, espesor mínimo, cajones).
 - [La aplicación web](docs/app-web.md): pantallas, editor, guardado de datos, modo sin conexión.
+- [Herrajes](docs/herrajes.md): bisagras, correderas y sistemas corredizos, y cómo cambian las medidas.
 - [Ambientes](docs/ambientes.md): planta, paredes fuera de escuadra, aberturas, colocar muebles y avisos.
 - [Publicar](docs/publicar.md): ponerla en internet con Cloudflare Workers, gratis.
 - [Guardado en la nube](docs/nube.md): configurar Supabase paso a paso, cuentas, tablas y reglas de acceso.

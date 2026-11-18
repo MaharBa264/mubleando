@@ -145,7 +145,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
             </Link>
           </div>
         </div>
-        <StlExportDialog open={stlOpen} onClose={() => setStlOpen(false)} parts={result.parts} name={name} />
+        <StlExportDialog open={stlOpen} onClose={() => setStlOpen(false)} parts={result.parts} zones={result.zones} size={design.size} name={name} />
         {save.kind === 'conflict' && (
           <div className="px-3 pt-2">
             <Alert tone="danger" title="Otro dispositivo o pestaña guardó este mueble mientras lo editabas">

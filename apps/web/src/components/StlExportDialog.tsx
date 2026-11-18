@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import type { Part } from '@mw/engine';
-import { exportStl, slug, zip, type DrawerMode } from '@mw/exporters';
+import type { Design, Part, ZoneOut } from '@mw/engine';
+import { exportStl, exportToy, slug, zip, type DrawerMode } from '@mw/exporters';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { SelectField } from '@/components/ui/fields';
@@ -26,21 +26,45 @@ const MIN_THICKNESS = [
   { value: 1.2, label: '1,2 mm (más robusto)' },
 ];
 
-type Mode = 'assembled' | 'pieces';
+type Mode = 'assembled' | 'pieces' | 'toy';
+
+const CLEARANCES = [
+  { value: 0.3, label: '0,3 mm (impresora muy precisa)' },
+  { value: 0.4, label: '0,4 mm (recomendado)' },
+  { value: 0.5, label: '0,5 mm (más suelta)' },
+];
 
 /** Exportar el mueble a STL para imprimirlo en 3D: completo o pieza a pieza, y qué hacer con los cajones. */
-export function StlExportDialog({ open, onClose, parts, name }: { open: boolean; onClose: () => void; parts: Part[]; name: string }) {
+export function StlExportDialog({
+  open,
+  onClose,
+  parts,
+  zones,
+  size,
+  name,
+}: {
+  open: boolean;
+  onClose: () => void;
+  parts: Part[];
+  zones: ZoneOut[];
+  size: Design['size'];
+  name: string;
+}) {
   const [mode, setMode] = useState<Mode>('assembled');
   const [scale, setScale] = useState(0.1);
   const [minT, setMinT] = useState(0.8);
   const [drawers, setDrawers] = useState<DrawerMode>('integrated');
+  const [clearance, setClearance] = useState(0.4);
   const hasDrawers = parts.some((p) => p.assembly?.kind === 'drawer');
 
   // Se calcula al vuelo (son unos pocos cientos de triángulos) para enseñar el tamaño y los avisos antes de descargar.
-  const preview = useMemo(
-    () => exportStl(parts, { mode, scale, minThicknessMm: minT, drawers: hasDrawers ? drawers : 'integrated', name: name || 'mueble' }),
-    [parts, mode, scale, minT, drawers, hasDrawers, name],
-  );
+  const preview = useMemo(() => {
+    if (mode === 'toy') {
+      const t = exportToy(parts, zones, size, { name: name || 'mueble', scale, clearance, minWall: Math.max(minT, 0.8) });
+      return { ...t, printedSize: null };
+    }
+    return exportStl(parts, { mode, scale, minThicknessMm: minT, drawers: hasDrawers ? drawers : 'integrated', name: name || 'mueble' });
+  }, [parts, zones, size, mode, scale, minT, drawers, hasDrawers, name, clearance]);
 
   const download = () => {
     const { files, readme } = preview;
@@ -78,6 +102,11 @@ export function StlExportDialog({ open, onClose, parts, name }: { open: boolean;
           options={[
             { value: 'assembled', label: 'Mueble completo', hint: 'Montado, en un solo archivo, como se ve en el visor.' },
             {
+              value: 'toy',
+              label: 'De juguete (funciona)',
+              hint: 'Mueble y puertas de una vez, con bisagras impresas que giran; cajones y hojas corredizas aparte, para encastrar.',
+            },
+            {
               value: 'pieces',
               label: 'Pieza a pieza',
               hint: 'Cada pieza tumbada en su archivo. Las iguales se imprimen una vez y el nombre dice cuántas hacen falta.',
@@ -100,6 +129,15 @@ export function StlExportDialog({ open, onClose, parts, name }: { open: boolean;
           />
         )}
 
+        {mode === 'toy' && (
+          <SelectField label="Holgura de lo que se mueve" value={clearance} onChange={(e) => setClearance(Number(e.target.value))}>
+            {CLEARANCES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </SelectField>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <SelectField label="Escala" value={scale} onChange={(e) => setScale(Number(e.target.value))}>
             {SCALES.map((s) => (

@@ -33,6 +33,15 @@ Pendiente de la fase 2, para más adelante:
 - Cajones interiores (detrás de una puerta) y cajones con frente doble.
 - Tolerancias de encaje propias para los cajones impresos en 3D.
 
+## Herrajes, corredizas y juguete (18-11-2026)
+
+- Biblioteca editable de herrajes: bisagras de cazoleta (codo 0, 9, 18), correderas (bolas, rodillo, oculta, cajón metálico) y sistemas corredizos (2 y 3 hojas), con sus medidas; se eligen por método o por mueble y corrigen las piezas; lista de herrajes con costo en el despiece.
+- Puertas corredizas.
+- STL de juguete con bisagras impresas en su lugar, cajones de una pieza y corredizas con rieles.
+- En el 3D del ambiente, las paredes que tapan la vista se transparentan solas.
+
+Pendiente: taladros de bisagras y correderas (para planos y CNC), reglas de posición de las bisagras, herrajes para estantes y uniones (soportes, excéntricas), y que la bisagra de codo 9 calcule el frente semisuperpuesto.
+
 ## Ambientes (primera versión, 18-11-2026)
 
 - Planta con paredes medidas en obra (largos y ángulos, error de cierre), fuera de escuadra, L y ochavas; esquinas arrastrables.
