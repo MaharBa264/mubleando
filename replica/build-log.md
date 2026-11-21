@@ -163,3 +163,6 @@ Antes el motor solo avisaba y dejaba los estantes con el retranqueo del método,
 | admin | Administración: mails autorizados y cuentas | hecho; **migración pendiente de aplicar en Supabase** | — | cómo nombrar al primer administrador sin poner un mail en el repositorio público: la cuenta más antigua, y en un proyecto nuevo la primera que se registra |
 
 Comprobado: 56 pruebas de base de datos (8 nuevas: alta rechazada fuera de la lista, también sin mail; solo el administrador lee y edita; mails en minúsculas; las funciones de la pantalla fallan para los demás; sin administradores el registro vuelve a abrirse), 8 de la web (3 nuevas: separar mails pegados). La prueba contra Supabase suma 2 comprobaciones de registro.
+
+Migración del registro aplicada en Supabase (21-11-2026): la prueba contra el proyecto real pasa 15 de 15; el único administrador es la cuenta del dueño; la lista quedó vacía y las cuentas de prueba, borradas.
+
