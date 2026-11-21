@@ -10,6 +10,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | **Hecho** (21-11-2026). |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | **Hecho** (21-11-2026), salvo los retazos. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
+| 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | Junta en un solo archivo el plano de cortes y las etiquetas (#4), y suma las vistas del mueble. |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
@@ -250,4 +251,31 @@ Dos cosas distintas, con herrajes distintos.
 
 - Se puede arrastrar una ventana por su pared con el ratón y con el dedo, y la distancia del panel se actualiza.
 - Pruebas: la abertura no sale de la pared ni se encima con otra; en una pared fuera de escuadra sigue la pared.
+
+---
+
+## 10. Documento PDF del mueble: cortes, etiquetas y vistas
+
+**Para qué.** Un solo archivo para llevar a la maderera o al taller, o mandar al cliente, en vez de imprimir pantallas.
+
+**Propuesta.**
+
+- Botón **PDF** en el despiece (del mueble y del proyecto) que abre un diálogo para elegir qué incluir, cada parte por separado:
+  - **Lista de corte** (la agrupada, con cantos y medidas de corte);
+  - **Plano de cortes**: una placa por página o dos, con las piezas numeradas;
+  - **Etiquetas**: en el formato de hoja elegido (ver #4);
+  - **Vista del mueble armado** (opcional): en isométrica, con las puertas y cajones **cerrados**, **abiertos** o las dos;
+  - **Vista explotada** (opcional): las piezas separadas en la dirección en que se arman, con su número de la lista, para entender cómo va cada una.
+- Portada con el nombre del mueble o proyecto, medidas, método, fecha y el costo estimado.
+- Las vistas se dibujan como **vectores** (no capturas de pantalla), a partir de las piezas que calcula el motor: se ven nítidas a cualquier tamaño y no dependen del 3D del navegador.
+- En el proyecto, una vista por mueble.
+
+**A decidir al hacerlo.** Si la vista explotada lleva flechas de armado o solo las piezas separadas con su número.
+
+**Hecho cuando.**
+
+- El PDF sale con las partes elegidas y en el orden de arriba, en A4.
+- La vista isométrica coincide con el 3D (mismas piezas, mismas proporciones) con frentes cerrados y abiertos.
+- En la vista explotada, ninguna pieza tapa por completo a otra y cada una lleva su número.
+- Pruebas: cantidad de páginas según lo elegido, y la proyección isométrica de un mueble simple con cifras calculadas a mano.
 
