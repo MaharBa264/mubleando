@@ -2,15 +2,15 @@
 
 Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *issue* en GitHub, donde se discute y se marca cuando está hecha. Cuando una propuesta se termina, pasa a la [Hoja de ruta](hoja-de-ruta.md) y a la documentación de su tema.
 
-| # | Propuesta | Tamaño | Por qué en este lugar |
-| --- | --- | --- | --- |
-| 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | chico | Es un error de medidas: lo que se corta hoy no se puede armar. |
-| 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | chico | Hoy cualquiera puede crearse una cuenta en el proyecto de Supabase. |
-| 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
-| 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
-| 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
-| 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
-| 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | mediano | Necesita la huella real del mueble, patas incluidas. |
+| # | Propuesta | Issue | Tamaño | Por qué en este lugar |
+| --- | --- | --- | --- | --- |
+| 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | Es un error de medidas: lo que se corta hoy no se puede armar. |
+| 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | Hoy cualquiera puede crearse una cuenta en el proyecto de Supabase. |
+| 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
+| 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
+| 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
+| 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
+| 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
 
 ---
 
