@@ -1,11 +1,13 @@
 # Propuestas
 
-Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *issue* en GitHub, donde se discute y se marca cuando está hecha. Cuando una propuesta se termina, pasa a la [Hoja de ruta](hoja-de-ruta.md) y a la documentación de su tema.
+Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el número es el del *issue*. Cada una tiene su *issue* en GitHub, donde se discute y se marca cuando está hecha. Cuando una propuesta se termina, pasa a la [Hoja de ruta](hoja-de-ruta.md) y a la documentación de su tema.
 
 | # | Propuesta | Issue | Tamaño | Por qué en este lugar |
 | --- | --- | --- | --- | --- |
 | 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | **Hecho** (21-11-2026). |
 | 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | Hoy cualquiera puede crearse una cuenta en el proyecto de Supabase. |
+| 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | Hoy cuesta usar la app sin saber dónde tocar; cada función nueva lo empeora. |
+| 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | Los muebles y las esquinas se arrastran; las aberturas, no. |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
@@ -193,3 +195,51 @@ Dos cosas distintas, con herrajes distintos.
 
 - Pruebas del motor: dos muebles girados que se tocan apenas no chocan, si se superponen 1 mm sí; una alacena a 1400 de altura sobre un bajo de 860 no choca; un mueble contra una pared fuera de escuadra se pega con el ángulo correcto.
 - En pantalla, arrastrar un mueble contra la pared lo deja pegado y alineado.
+
+---
+
+## 8. Ayuda: explicación en el inicio y tooltips
+
+**Qué pasa hoy.** Quien no conoce la app no sabe qué se puede hacer ni dónde tocar. Algunos botones tienen un texto al pasar el ratón (el `title` del navegador), pero tarda en aparecer, no se ve con el teclado y en el celular no aparece nunca.
+
+**Propuesta.**
+
+- **En la página principal, al entrar**, un bloque breve «Qué podés hacer»:
+  - tres o cuatro pasos con un dibujo cada uno: crear un mueble (desde una plantilla o en blanco), dividirlo y ponerle frentes, ver el despiece con el costo, y armar un ambiente;
+  - un enlace a la guía de uso completa;
+  - se puede cerrar («Ya lo sé») y volver a abrir desde un botón **Ayuda** fijo en la barra.
+- El texto vive en un solo archivo, para que crezca con cada función nueva sin tocar las pantallas.
+- **Tooltips propios** en todos los botones e iconos de herramientas (barra del 3D, árbol, propiedades, planta del ambiente, bibliotecas):
+  - aparecen rápido al pasar el ratón y también al llegar con el teclado (Tab);
+  - en pantallas táctiles, con una pulsación larga;
+  - dicen qué hace el botón y, si existe, su atajo de teclado (por ejemplo, «Deshacer · Ctrl+Z»);
+  - si el botón está desactivado, dicen por qué (por ejemplo, «Elegí primero un hueco»).
+- **Pantallas vacías que explican**: un editor sin nada elegido dice «Tocá una parte del mueble para ver sus medidas»; una planta sin muebles dice cómo agregar uno.
+- Más adelante: un recorrido guiado la primera vez que se abre el editor de muebles y el de ambientes.
+
+**Hecho cuando.**
+
+- Un usuario nuevo ve la explicación al entrar, la puede cerrar y la recupera desde **Ayuda**.
+- No queda botón de solo icono sin tooltip (se comprueba con una prueba que recorre las pantallas).
+- El tooltip se ve con el ratón, con el teclado y con pulsación larga en el celular, y lo lee un lector de pantalla.
+
+---
+
+## 9. Arrastrar puertas y ventanas en la planta del ambiente
+
+**Qué pasa hoy.** En la vista cenital del ambiente se arrastran con el ratón los muebles y las esquinas de las paredes, pero **las puertas y ventanas no**: solo se mueven cambiando su distancia en el panel. No es un error de uso: falta la función.
+
+**Propuesta.**
+
+- Arrastrar una abertura la desliza **a lo largo de su pared**, sin salirse de ella. La distancia al extremo de la pared se ve mientras se arrastra.
+- No puede pasar más allá de los extremos de la pared ni encimarse con otra abertura de la misma pared. Si se intenta, queda pegada al límite.
+- Opcional: arrastrarla cerca de otra pared la pasa a esa pared.
+- Se deshace con Ctrl+Z, como el resto.
+- Con el teclado: elegida la abertura, las flechas la mueven de a 10 mm, y de a 100 mm con Mayús.
+- Se ve el cursor de mover al pasar sobre la abertura, con su tooltip.
+
+**Hecho cuando.**
+
+- Se puede arrastrar una ventana por su pared con el ratón y con el dedo, y la distancia del panel se actualiza.
+- Pruebas: la abertura no sale de la pared ni se encima con otra; en una pared fuera de escuadra sigue la pared.
+
