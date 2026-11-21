@@ -99,7 +99,8 @@ const toMaterial = (r: MaterialRow): Material => ({
   ...(r.tempered ? { tempered: true } : {}),
 });
 // Las columnas de la placa solo se mandan si el tablero tiene medida propia: así se puede seguir
-// guardando sin la migración de la medida de placa.
+// guardando sin la migración de la medida de placa. Al guardar varios juntos, las que una fila no
+// trae toman el valor por defecto de la base (`defaultToNull: false`), no un nulo.
 const fromMaterial = (m: Material, userId: string) => ({
   user_id: userId,
   id: m.id,
@@ -217,10 +218,10 @@ async function ensureLibrary() {
   const { count, error } = await sb.from('methods').select('id', { count: 'exact', head: true });
   if (error) fail(error, 'leer los métodos');
   if (!count) {
-    let m = await sb.from('materials').upsert(PRESET_MATERIALS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    let m = await sb.from('materials').upsert(PRESET_MATERIALS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true , defaultToNull: false });
     // Sin la migración de vidrios, la base no acepta el tipo 'glass': se crean los demás.
     if (m.error && (m.error.code === '23514' || m.error.code === 'PGRST204'))
-      m = await sb.from('materials').upsert(PRESET_MATERIALS.filter((x) => x.kind !== 'glass').map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      m = await sb.from('materials').upsert(PRESET_MATERIALS.filter((x) => x.kind !== 'glass').map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true , defaultToNull: false });
     if (m.error) fail(m.error, 'crear los materiales de partida');
     const r = await sb.from('methods').upsert(PRESET_METHODS.map((x) => fromMethod(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (r.error) fail(r.error, 'crear los métodos de partida');
@@ -228,7 +229,7 @@ async function ensureLibrary() {
     // Cuentas que ya tenían biblioteca: los vidrios de partida, una vez (si no tienen ninguno).
     const has = await sb.from('materials').select('id', { count: 'exact', head: true }).eq('kind', 'glass');
     if (!has.error && !has.count) {
-      const g = await sb.from('materials').upsert(PRESET_GLASS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      const g = await sb.from('materials').upsert(PRESET_GLASS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true , defaultToNull: false });
       if (g.error && g.error.code !== '23514' && g.error.code !== 'PGRST204') fail(g.error, 'crear los vidrios de partida');
     }
   }
@@ -465,7 +466,7 @@ export async function importLocalData(): Promise<ImportSummary> {
   const sb = supabase();
   const opts = { ignoreDuplicates: true } as const;
 
-  const mats = await sb.from('materials').upsert(s.materials.map((m) => fromMaterial(m, uid)), { ...opts, onConflict: 'user_id,id' });
+  const mats = await sb.from('materials').upsert(s.materials.map((m) => fromMaterial(m, uid)), { ...opts, onConflict: 'user_id,id', defaultToNull: false });
   if (mats.error) fail(mats.error, 'subir los materiales');
   const meths = await sb.from('methods').upsert(s.methods.map((m) => fromMethod(m, uid)), { ...opts, onConflict: 'user_id,id' });
   if (meths.error) fail(meths.error, 'subir los métodos');

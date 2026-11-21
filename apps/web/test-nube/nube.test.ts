@@ -153,7 +153,7 @@ describe('cuenta B no ve nada de A', () => {
     await expect(
       data.createCabinet({ projectId, name: 'Intruso', methodId: 'ar-18-ranura', design: newDesign({ w: mm(600), h: mm(720), d: mm(560) }) }),
     ).rejects.toBeInstanceOf(NotFoundError);
-    expect(await data.listMaterials()).toHaveLength(9); // sus propias bibliotecas de partida
+    expect(await data.listMaterials()).toHaveLength(13); // sus propias bibliotecas de partida
   });
 
   it('lo de A sigue intacto', async () => {
@@ -251,7 +251,7 @@ describe('borrar la cuenta', () => {
     expect(res.status).toBe(200);
     expect((await admin.auth.admin.getUserById(A.id)).data.user).toBeNull();
     for (const t of ['projects', 'cabinets', 'rooms', 'materials', 'methods', 'hardware']) expect(await rowsOf(t, A.id), t).toBe(0);
-    expect(await rowsOf('materials', B.id)).toBe(9);
+    expect(await rowsOf('materials', B.id)).toBe(13);
   });
 });
 

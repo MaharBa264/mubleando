@@ -233,3 +233,5 @@ Comprobado: 175 pruebas del motor (15 de patas con cifras a mano), 56 de exporta
 | S24 | Despiece → Vidriería; hoja en el PDF | hecho | — | — |
 
 Comprobado: 192 pruebas del motor (17 de vidrios con cifras a mano), 60 de exportaciones (4 de vidrios), 63 de base de datos (2 de vidrios); PDF de muestra revisado a ojo (alacena con una puerta de marco y una templada, abiertas y cerradas, y la hoja de la vidriería con las perforaciones); en el navegador (modo local), un bajo de dos puertas de vidrio templado y su lista para la vidriería.
+
+Migración de vidrios aplicada en Supabase (22-11-2026): la prueba contra el proyecto real encontró que, al crear los materiales de partida de una cuenta nueva, las filas sin «templado» mandaban un nulo a una columna que no lo acepta; se corrigió con `defaultToNull: false` en las cargas de varios materiales. Después, 15 de 15 (cuenta nueva con 13 materiales y 18 herrajes).
