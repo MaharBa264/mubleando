@@ -13,6 +13,7 @@
 | [Guardado en la nube](nube.md) | quien vaya a activar las cuentas | crear el proyecto de Supabase, variables, tablas, reglas de acceso, pruebas y limitaciones |
 | [Publicar](publicar.md) | quien vaya a ponerla en internet | Cloudflare Workers paso a paso, variables y secretos, dominio propio, problemas frecuentes |
 | [Hoja de ruta](hoja-de-ruta.md) | todos | fases, qué está hecho y qué falta |
+| [Propuestas](propuestas.md) | todos | lo que viene, en orden, con su issue en GitHub |
 | [Cómo contribuir](contribuir.md) | quien vaya a cambiar código | ramas, mensajes de commit, pruebas, estilo, normas de origen |
 
 ## Glosario
