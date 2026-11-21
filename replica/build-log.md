@@ -222,3 +222,14 @@ Comprobado: 47 pruebas de exportaciones (13 de vistas y documento); PDF de muest
 | S14 | Bibliotecas → Herrajes → Pata | hecho | — | sembrar las patas en las cuentas que ya tenían herrajes, una sola vez |
 
 Comprobado: 175 pruebas del motor (15 de patas con cifras a mano), 56 de exportaciones (9 de patas: volúmenes exactos, triángulos en STL y juguete, vistas), 61 de base de datos (2 de patas); prueba contra Supabase 15 de 15 con la migración aplicada (cuenta nueva con 15 herrajes); en el navegador (modo local), un bajo de 800 con 4 patas de 150 y la caja de 710.
+
+## Puertas con vidrio, issue #6 (2026-11-22)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | Puertas con marco y vidrio; puertas de vidrio templado con perforaciones; `glassRows` | hecho | perfil de aluminio, corredizas de vidrio | que una puerta de varias piezas gire entera (en el 3D, las vistas y el juguete): cada pieza lleva el rectángulo de su puerta |
+| S06 | Frente → Vidrio | hecho | — | — |
+| S11 | Bibliotecas → Vidrios | hecho; **migración pendiente de aplicar en Supabase** | — | — |
+| S24 | Despiece → Vidriería; hoja en el PDF | hecho | — | — |
+
+Comprobado: 192 pruebas del motor (17 de vidrios con cifras a mano), 60 de exportaciones (4 de vidrios), 63 de base de datos (2 de vidrios); PDF de muestra revisado a ojo (alacena con una puerta de marco y una templada, abiertas y cerradas, y la hoja de la vidriería con las perforaciones); en el navegador (modo local), un bajo de dos puertas de vidrio templado y su lista para la vidriería.

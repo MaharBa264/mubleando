@@ -159,7 +159,22 @@ const fmt = (v: number) => (Math.round(v * 100) / 100).toString().replace('.', '
  * Exporta el mueble como juguete imprimible. `parts` y `zones` salen de `compute()`; `size` son las
  * medidas exteriores del mueble.
  */
-export function exportToy(parts: Part[], zones: ZoneOut[], size: { w: number; h: number; d: number }, opts: ToyOptions): ToyExport {
+export function exportToy(partsIn: Part[], zones: ZoneOut[], size: { w: number; h: number; d: number }, opts: ToyOptions): ToyExport {
+  // Puertas de varias piezas (marco y vidrio, o vidrio entero): una sola puerta maciza del tamaño de la puerta.
+  const merged = new Map<string, Part>();
+  const parts: Part[] = [];
+  for (const p of partsIn) {
+    if (!p.doorBox) {
+      parts.push(p);
+      continue;
+    }
+    const k = `${p.doorBox.x},${p.doorBox.y},${p.doorBox.z}`;
+    if (!merged.has(k)) {
+      const door: Part = { ...p, role: 'door', key: `${p.zoneId}/puerta-${merged.size}`, box: p.doorBox, doorBox: undefined, holes: undefined };
+      merged.set(k, door);
+      parts.push(door);
+    }
+  }
   const scale = opts.scale ?? 0.1;
   const minWall = opts.minWall ?? 1.2;
   const c = opts.clearance ?? 0.4;

@@ -10,6 +10,8 @@ import {
   PRESET_METHODS,
   type Design,
   hardwareSchema,
+  PRESET_GLASS,
+  PRESET_GLASS_HINGE_IDS,
   PRESET_HARDWARE,
   roomPlanSchema,
   type Hardware,
@@ -58,6 +60,8 @@ interface MaterialRow {
   /** Medida de la placa (migración 20261121000001; puede no existir todavía). */
   sheet_length?: number | null;
   sheet_width?: number | null;
+  /** Vidrios (migración 20261122000000). */
+  tempered?: boolean | null;
 }
 interface MethodRow {
   id: string;
@@ -92,6 +96,7 @@ const toMaterial = (r: MaterialRow): Material => ({
   priceCents: r.price_cents,
   color: r.color,
   ...(r.sheet_length && r.sheet_width ? { sheet: { length: r.sheet_length, width: r.sheet_width } } : {}),
+  ...(r.tempered ? { tempered: true } : {}),
 });
 // Las columnas de la placa solo se mandan si el tablero tiene medida propia: así se puede seguir
 // guardando sin la migración de la medida de placa.
@@ -105,6 +110,8 @@ const fromMaterial = (m: Material, userId: string) => ({
   price_cents: m.priceCents,
   color: m.color,
   ...(m.sheet ? { sheet_length: m.sheet.length, sheet_width: m.sheet.width } : {}),
+  // Solo los vidrios mandan «templado» (así los demás se guardan aunque falte la migración de vidrios).
+  ...(m.kind === 'glass' ? { tempered: !!m.tempered } : {}),
 });
 
 const toMethod = (r: MethodRow): Method => normalizeMethod({ ...r.spec, id: r.id, name: r.name });
@@ -187,6 +194,13 @@ async function ensureHardware() {
       const r = await sb.from('hardware').upsert(legs.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
       if (r.error && r.error.code !== '23514') fail(r.error, 'crear las patas de partida');
     }
+    // Y las bisagras para vidrio, si no tienen ninguna.
+    const hinges = await sb.from('hardware').select('spec').eq('kind', 'hinge');
+    if (!hinges.error && !(hinges.data as { spec: { forGlass?: unknown } }[]).some((h) => h.spec?.forGlass)) {
+      const glass = PRESET_HARDWARE.filter((h) => PRESET_GLASS_HINGE_IDS.includes(h.id));
+      const r = await sb.from('hardware').upsert(glass.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      if (r.error) fail(r.error, 'crear las bisagras para vidrio');
+    }
   }
   hardwareChecked = uid;
 }
@@ -203,10 +217,20 @@ async function ensureLibrary() {
   const { count, error } = await sb.from('methods').select('id', { count: 'exact', head: true });
   if (error) fail(error, 'leer los métodos');
   if (!count) {
-    const m = await sb.from('materials').upsert(PRESET_MATERIALS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    let m = await sb.from('materials').upsert(PRESET_MATERIALS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    // Sin la migración de vidrios, la base no acepta el tipo 'glass': se crean los demás.
+    if (m.error && (m.error.code === '23514' || m.error.code === 'PGRST204'))
+      m = await sb.from('materials').upsert(PRESET_MATERIALS.filter((x) => x.kind !== 'glass').map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (m.error) fail(m.error, 'crear los materiales de partida');
     const r = await sb.from('methods').upsert(PRESET_METHODS.map((x) => fromMethod(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (r.error) fail(r.error, 'crear los métodos de partida');
+  } else {
+    // Cuentas que ya tenían biblioteca: los vidrios de partida, una vez (si no tienen ninguno).
+    const has = await sb.from('materials').select('id', { count: 'exact', head: true }).eq('kind', 'glass');
+    if (!has.error && !has.count) {
+      const g = await sb.from('materials').upsert(PRESET_GLASS.map((x) => fromMaterial(x, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      if (g.error && g.error.code !== '23514' && g.error.code !== 'PGRST204') fail(g.error, 'crear los vidrios de partida');
+    }
   }
   libraryChecked = uid;
 }

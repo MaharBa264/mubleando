@@ -27,6 +27,13 @@ export interface HingeSpec {
   softClose: boolean;
   /** Cuántas bisagras lleva una puerta según su alto: pares [alto hasta, cantidad], de menor a mayor. */
   countByHeight: [Len, number][];
+  /**
+   * Bisagras para puertas enteras de vidrio: espesores de vidrio admitidos y cómo se fija.
+   * - 'drilled': cazoleta en un agujero del vidrio (se perfora antes de templar).
+   * - 'glued': base pegada al vidrio (pegamento UV), sin perforar.
+   * - 'clamp': pinza que aprieta el canto del vidrio, sin perforar.
+   */
+  forGlass?: { minThickness: Len; maxThickness: Len; mount: 'drilled' | 'glued' | 'clamp' };
 }
 
 export interface SlideSpec {
@@ -146,6 +153,27 @@ export const PRESET_HARDWARE: Hardware[] = [
   { id: 'hw-bisagra-codo9', name: 'Bisagra cazoleta 35 · codo 9 (semisuperpuesta)', kind: 'hinge', priceCents: 0, spec: { crank: 'half', cupDiameter: mm(35), cupDistance: mm(4), softClose: false, countByHeight: HINGE_COUNT } },
   { id: 'hw-bisagra-codo18', name: 'Bisagra cazoleta 35 · codo 18 (encastrada)', kind: 'hinge', priceCents: 0, spec: { crank: 'inset', cupDiameter: mm(35), cupDistance: mm(4), softClose: false, countByHeight: HINGE_COUNT } },
   {
+    id: 'hw-bisagra-vidrio-26',
+    name: 'Bisagra para vidrio, cazoleta 26 perforada (vidrio de 4 a 6,5)',
+    kind: 'hinge',
+    priceCents: 0,
+    spec: { crank: 'full', cupDiameter: mm(26), cupDistance: mm(4), softClose: false, countByHeight: HINGE_COUNT, forGlass: { minThickness: mm(4), maxThickness: mm(6.5), mount: 'drilled' } },
+  },
+  {
+    id: 'hw-bisagra-vidrio-pegada',
+    name: 'Bisagra para vidrio pegada, sin perforar (vidrio de 4 a 6)',
+    kind: 'hinge',
+    priceCents: 0,
+    spec: { crank: 'full', cupDiameter: mm(26), cupDistance: mm(4), softClose: false, countByHeight: HINGE_COUNT, forGlass: { minThickness: mm(4), maxThickness: mm(6), mount: 'glued' } },
+  },
+  {
+    id: 'hw-bisagra-vidrio-pinza',
+    name: 'Bisagra de pinza para vidrio, sin perforar (vidrio de 5 a 8)',
+    kind: 'hinge',
+    priceCents: 0,
+    spec: { crank: 'full', cupDiameter: mm(26), cupDistance: mm(4), softClose: false, countByHeight: HINGE_COUNT, forGlass: { minThickness: mm(5), maxThickness: mm(8), mount: 'clamp' } },
+  },
+  {
     id: 'hw-corredera-bolas-45',
     name: 'Corredera telescópica de bolas 45 mm',
     kind: 'slide',
@@ -208,6 +236,19 @@ function PRESET_LEGS(): Hardware[] {
   ];
 }
 export const PRESET_LEG_IDS = PRESET_LEGS().map((h) => h.id);
+/** Bisagras para vidrio de partida (se agregan solas a las bibliotecas que no tienen ninguna). */
+export const PRESET_GLASS_HINGE_IDS = ['hw-bisagra-vidrio-26', 'hw-bisagra-vidrio-pegada', 'hw-bisagra-vidrio-pinza'];
+
+/**
+ * Centros de las perforaciones de las bisagras en una puerta de vidrio, desde abajo: a 100 mm de
+ * cada punta y las demás repartidas en el medio (si la puerta es baja, a un cuarto de cada punta).
+ */
+export function hingePositions(spec: HingeSpec, height: Len): Len[] {
+  const n = hingeCount(spec, height);
+  const end = Math.min(mm(100), Math.round(height / 4));
+  if (n <= 1) return [Math.round(height / 2)];
+  return Array.from({ length: n }, (_, i) => Math.round(end + ((height - 2 * end) * i) / (n - 1)));
+}
 
 /** Herrajes que usan por defecto los métodos de partida argentinos. */
 export const DEFAULT_HARDWARE_CHOICE: HardwareChoice = { hinge: 'hw-bisagra-codo0', slide: 'hw-corredera-bolas-45', sliding: 'hw-corredizo-2' };
@@ -229,6 +270,7 @@ export const hardwareSchema: z.ZodType<Hardware> = z.discriminatedUnion('kind', 
       cupDistance: nonNeg,
       softClose: z.boolean(),
       countByHeight: z.array(z.tuple([len.positive(), z.number().int().min(1).max(10)])).min(1),
+      forGlass: z.object({ minThickness: len.positive(), maxThickness: len.positive(), mount: z.enum(['drilled', 'glued', 'clamp']) }).optional(),
     }),
   }),
   z.object({

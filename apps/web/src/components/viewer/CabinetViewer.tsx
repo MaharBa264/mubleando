@@ -33,7 +33,7 @@ const DOOR_OPEN = (95 * Math.PI) / 180;
 /** Fracción del fondo que salen los cajones en la vista "abiertos". */
 const DRAWER_OUT = 0.6;
 
-const isFront = (p: Part) => p.role === 'door' || p.role === 'drawer-front';
+const isFront = (p: Part) => p.role === 'door' || p.role === 'drawer-front' || !!p.doorBox;
 
 /**
  * Dónde se dibuja cada pieza según la vista de frentes:
@@ -48,9 +48,11 @@ function placement(p: Part, mode: FrontsView, drawerDepth: Map<string, number>) 
     const shift = (p.box.dx / 2) * S * (p.track === 'front' ? -1 : 1);
     return { group: [shift, 0, 0] as [number, number, number], rot: 0, mesh: c };
   }
-  if (p.role === 'door') {
+  if (p.role === 'door' || p.doorBox) {
+    // Las puertas de marco y vidrio giran todas sus piezas sobre el canto de las bisagras de la puerta entera.
+    const b = p.doorBox ?? p.box;
     const left = p.hinge !== 'right';
-    const pivot: [number, number, number] = [(left ? p.box.x : p.box.x + p.box.dx) * S, c[1], p.box.z * S];
+    const pivot: [number, number, number] = [(left ? b.x : b.x + b.dx) * S, c[1], b.z * S];
     return { group: pivot, rot: left ? -DOOR_OPEN : DOOR_OPEN, mesh: [c[0] - pivot[0], 0, c[2] - pivot[2]] as [number, number, number] };
   }
   if (p.assembly?.kind === 'drawer') {
@@ -208,8 +210,8 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
                 emissive={isSel ? colors.sel : '#000000'}
                 emissiveIntensity={isSel ? 0.25 : 0}
                 wireframe={view.wire}
-                transparent={view.wire}
-                opacity={isHover && !isSel ? 0.85 : 1}
+                transparent={view.wire || p.role === 'glass'}
+                opacity={p.role === 'glass' ? 0.4 : isHover && !isSel ? 0.85 : 1}
                 roughness={0.8}
               />
               {!view.wire && <Edges color={isSel ? colors.sel : colors.line} threshold={15} />}

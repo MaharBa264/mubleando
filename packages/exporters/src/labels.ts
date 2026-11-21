@@ -80,6 +80,8 @@ export function labelsFromCutList(items: readonly CutItem[], materials: readonly
   }
   const out: LabelData[] = [];
   for (const row of groupedRows(items)) {
+    // Los vidrios van a la vidriería: no llevan etiqueta.
+    if (mats.get(row.materialId)?.kind === 'glass') continue;
     // Las unidades de esta fila, con su mueble (misma firma que usa la lista agrupada).
     const units: { cabinet: string; piece: string }[] = [];
     for (const it of items) {

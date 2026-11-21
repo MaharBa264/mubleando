@@ -94,6 +94,14 @@ export const LEGACY_EURO_PRICES: Readonly<Record<string, number>> = { 'mel-blanc
  * fibrofácil (MDF) de 3 mm y tapacantos de PVC de 0,45 y 2 mm. Vienen **sin precio**: cada taller
  * carga los suyos, en pesos, en Bibliotecas. El despiece avisa de los materiales sin precio.
  */
+/** Vidrios de partida (también se agregan solos a las bibliotecas que ya existían sin vidrios). */
+export const PRESET_GLASS: Material[] = [
+  { id: 'ar-vidrio-incoloro-4', name: 'Vidrio incoloro 4', kind: 'glass', thickness: mm(4), grain: 'none', priceCents: 0, color: 'var(--mat-glass)' },
+  { id: 'ar-vidrio-esmerilado-4', name: 'Vidrio esmerilado 4', kind: 'glass', thickness: mm(4), grain: 'none', priceCents: 0, color: 'var(--mat-glass)' },
+  { id: 'ar-vidrio-templado-5', name: 'Vidrio templado incoloro 5', kind: 'glass', thickness: mm(5), grain: 'none', priceCents: 0, color: 'var(--mat-glass)', tempered: true },
+  { id: 'ar-espejo-4', name: 'Espejo 4', kind: 'glass', thickness: mm(4), grain: 'none', priceCents: 0, color: 'var(--mat-glass)' },
+];
+
 export const PRESET_MATERIALS: Material[] = [
   { id: 'ar-mel-blanca-18', name: 'Melamina blanca 18', kind: 'panel', thickness: mm(18), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
   { id: 'ar-mel-madera-18', name: 'Melamina símil madera 18', kind: 'panel', thickness: mm(18), grain: 'length', priceCents: 0, color: 'var(--mat-oak)' },
@@ -104,6 +112,7 @@ export const PRESET_MATERIALS: Material[] = [
   { id: 'ar-tc-blanco-045', name: 'Tapacanto PVC blanco 0,45', kind: 'edge', thickness: mm(0.45), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
   { id: 'ar-tc-blanco-2', name: 'Tapacanto PVC blanco 2', kind: 'edge', thickness: mm(2), grain: 'none', priceCents: 0, color: 'var(--mat-white)' },
   { id: 'ar-tc-madera-045', name: 'Tapacanto PVC símil madera 0,45', kind: 'edge', thickness: mm(0.45), grain: 'none', priceCents: 0, color: 'var(--mat-oak)' },
+  ...PRESET_GLASS,
 ];
 
 const AR_DRAWER: Method['drawer'] = {

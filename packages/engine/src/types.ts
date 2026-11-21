@@ -30,7 +30,18 @@ export interface DoorFront {
   /** Lado de las bisagras si es de una hoja. */
   hinge: 'left' | 'right';
   mount: FrontMount;
+  /** Vidrio: una «ventana» con marco, o la puerta entera de vidrio templado. Ausente = puerta de tablero. */
+  glass?: DoorGlass;
 }
+
+/**
+ * - 'frame': marco de cuatro listones del material de la puerta, con el vidrio por detrás, apoyado
+ *   en el marco (contravidrio o rebaje). Vidrio = luz del marco + 2 × rebaje − 2 × holgura.
+ * - 'frameless': la puerta entera es de vidrio (templado), con bisagras para vidrio.
+ */
+export type DoorGlass =
+  | { type: 'frame'; glassId: string; frameWidth: Len; rebate: Len; clearance: Len }
+  | { type: 'frameless'; glassId: string; hingeId?: string };
 
 export interface DrawerFront {
   kind: 'drawers';
@@ -128,6 +139,12 @@ const frontSchema = z.discriminatedUnion('kind', [
     leaves: z.union([z.literal(1), z.literal(2)]),
     hinge: z.enum(['left', 'right']),
     mount: z.enum(['overlay', 'inset']),
+    glass: z
+      .discriminatedUnion('type', [
+        z.object({ type: z.literal('frame'), glassId: z.string().min(1), frameWidth: lenSchema.positive(), rebate: lenSchema.nonnegative(), clearance: lenSchema.nonnegative() }),
+        z.object({ type: z.literal('frameless'), glassId: z.string().min(1), hingeId: z.string().optional() }),
+      ])
+      .optional(),
   }),
   z.object({
     kind: z.literal('sliding'),
@@ -190,7 +207,7 @@ export const designSchema: z.ZodType<Design> = z.object({
 export interface Material {
   id: string;
   name: string;
-  kind: 'panel' | 'edge';
+  kind: 'panel' | 'edge' | 'glass';
   thickness: Len;
   /** 'length' = la veta va a lo largo de la pieza; no se puede girar al optimizar. */
   grain: 'none' | 'length';
@@ -198,6 +215,8 @@ export interface Material {
   priceCents: number;
   /** Color para el visor 3D, como token o valor CSS. */
   color: string;
+  /** Vidrios: templado (se puede usar en puertas enteras de vidrio; no se corta ni perfora después). */
+  tempered?: boolean;
   /** Medida de la placa que se compra (tableros). Sin ella, la de partida según el espesor (ver cutting.ts). */
   sheet?: { length: Len; width: Len };
 }
@@ -281,7 +300,8 @@ export type PartRole =
   | 'drawer-front'
   | 'drawer-side'
   | 'drawer-back'
-  | 'drawer-bottom';
+  | 'drawer-bottom'
+  | 'glass';
 
 /** Caja en coordenadas del mueble: x a la derecha, y hacia arriba, z hacia el frente. Origen en la esquina trasera inferior izquierda. */
 export interface Box {
@@ -331,6 +351,16 @@ export interface Part {
   hinge?: 'left' | 'right';
   /** Solo puertas corredizas: riel en el que va la hoja. */
   track?: 'front' | 'back';
+  /**
+   * Puertas armadas con varias piezas (marco y vidrio): el rectángulo de la puerta entera, para
+   * girarla sobre sus bisagras en el visor y dibujarla como una sola en el juguete.
+   */
+  doorBox?: Box;
+  /**
+   * Vidrios templados: perforaciones (bisagras), vistas desde el frente. x desde el borde izquierdo,
+   * y desde el borde de abajo, hasta el centro; d = diámetro.
+   */
+  holes?: { x: Len; y: Len; d: Len }[];
 }
 
 export interface PartAssembly {
@@ -381,12 +411,13 @@ export interface ComputeResult {
 export const materialSchema: z.ZodType<Material> = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(120),
-  kind: z.enum(['panel', 'edge']),
+  kind: z.enum(['panel', 'edge', 'glass']),
   thickness: lenSchema.positive(),
   grain: z.enum(['none', 'length']),
   priceCents: z.number().int().nonnegative(),
   color: z.string().min(1),
   sheet: z.object({ length: lenSchema.positive(), width: lenSchema.positive() }).optional(),
+  tempered: z.boolean().optional(),
 });
 
 export const methodSchema: z.ZodType<Method> = z.object({

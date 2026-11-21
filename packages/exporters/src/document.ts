@@ -4,7 +4,7 @@
  * Todo dibujado como vectores en A4.
  */
 import { jsPDF } from 'jspdf';
-import { cuttingPlan, groupedRows, toMm, type CutItem, type CuttingOptions, type LegOut, type Material, type Part } from '@mw/engine';
+import { cuttingPlan, glassRows, groupedRows, toMm, type CutItem, type CuttingOptions, type LegOut, type Material, type Part } from '@mw/engine';
 import { addLabelPages, LABEL_FORMATS, labelsFromCutList, type LabelFormat } from './labels';
 import { cabinetView, type CabinetView } from './views';
 
@@ -147,7 +147,7 @@ function coverPage(doc: jsPDF, o: DocOptions) {
 
 function cutListPages(doc: jsPDF, o: DocOptions) {
   const mats = new Map(o.materials.map((m) => [m.id, m]));
-  const rows = groupedRows(o.items);
+  const rows = groupedRows(o.items).filter((r) => mats.get(r.materialId)?.kind !== 'glass');
   doc.addPage('a4', 'portrait');
   let y = heading(doc, 'Lista de corte', 'Medidas de corte en mm, ya descontado el canto. Cantos: L1 delantero, L2 trasero, A1 y A2 los extremos.');
   const cols = [
@@ -203,6 +203,61 @@ function cutListPages(doc: jsPDF, o: DocOptions) {
     doc.setDrawColor(225);
     doc.setLineWidth(0.1);
     doc.line(PAGE.m, y - 3.4, PAGE.w - PAGE.m, y - 3.4);
+  }
+}
+
+/** Lista para la vidriería: medidas, espesor, tipo, cantos y, en los templados, las perforaciones acotadas. */
+function glassPages(doc: jsPDF, o: DocOptions) {
+  const rows = glassRows(o.items, o.materials);
+  if (!rows.length) return;
+  const mats = new Map(o.materials.map((m) => [m.id, m]));
+  doc.addPage('a4', 'portrait');
+  let y = heading(doc, 'Lista para la vidriería', 'Medidas en mm: alto × ancho, vistos de frente. Los templados no se cortan ni se perforan después de templar.');
+  for (const r of rows) {
+    const drill = r.holes.length > 0;
+    const need = drill ? 70 : 16;
+    if (y + need > PAGE.h - 20) {
+      doc.addPage('a4', 'portrait');
+      y = heading(doc, 'Lista para la vidriería (sigue)');
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20);
+    doc.text(`${r.ref} · ${r.qty} × ${num(toMm(r.length))} × ${num(toMm(r.width))} mm`, PAGE.m, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(80);
+    const what = [mats.get(r.materialId)?.name ?? r.materialId, `${num(toMm(r.thickness))} mm`, r.tempered ? 'templado' : null, r.polished ? 'cantos pulidos' : 'cantos sin pulir (van dentro del marco)', r.name].filter(Boolean).join(' · ');
+    doc.text(doc.splitTextToSize(what, PAGE.w - 2 * PAGE.m) as string[], PAGE.m, y + 4.5);
+    y += 10;
+    if (drill) {
+      // Dibujo del vidrio con las perforaciones acotadas desde abajo y desde el borde.
+      const H = 52;
+      const k = H / r.length;
+      const W = r.width * k;
+      const x0 = PAGE.m + 20;
+      const y0 = y + 2;
+      doc.setDrawColor(60);
+      doc.setLineWidth(0.25);
+      doc.setFillColor('#e7f1f5');
+      doc.rect(x0, y0, W, H, 'FD');
+      doc.setFontSize(7.5);
+      doc.setTextColor(40);
+      for (const h of r.holes) {
+        const cx = x0 + h.x * k;
+        const cy = y0 + H - h.y * k;
+        doc.setFillColor('#ffffff');
+        doc.circle(cx, cy, Math.max(0.8, (h.d / 2) * k), 'FD');
+        doc.text(`Ø ${num(toMm(h.d))} · a ${num(toMm(h.y))} desde abajo`, x0 + W + 4, cy + 1);
+      }
+      const h0 = r.holes[0]!;
+      doc.text(`Centro a ${num(toMm(Math.min(h0.x, r.width - h0.x)))} del borde ${h0.x < r.width / 2 ? 'izquierdo' : 'derecho'} (visto de frente)`, x0, y0 + H + 5);
+      y += H + 12;
+    }
+    doc.setDrawColor(225);
+    doc.setLineWidth(0.1);
+    doc.line(PAGE.m, y - 3, PAGE.w - PAGE.m, y - 3);
+    y += 3;
   }
 }
 
@@ -300,6 +355,7 @@ export function cabinetPdf(o: DocOptions): { bytes: ArrayBuffer; pages: number }
   coverPage(doc, o);
   if (o.include.cutList) cutListPages(doc, o);
   if (o.include.plan) planPages(doc, o);
+  if (o.include.cutList) glassPages(doc, o);
   if (o.include.closed || o.include.open || o.include.exploded) viewPages(doc, o);
   // El pie va antes de las etiquetas: esas hojas se imprimen en papel autoadhesivo y no llevan nada más.
   footer(doc, o.title);

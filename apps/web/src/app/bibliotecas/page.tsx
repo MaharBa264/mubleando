@@ -47,16 +47,16 @@ export default function LibrariesPage() {
     id: uid(),
     name: '',
     kind,
-    thickness: kind === 'panel' ? mm(19) : mm(1),
+    thickness: kind === 'panel' ? mm(19) : kind === 'glass' ? mm(4) : mm(1),
     grain: 'none',
     priceCents: 0,
-    color: 'var(--mat-white)',
+    color: kind === 'glass' ? 'var(--mat-glass)' : 'var(--mat-white)',
   });
 
   return (
     <Page title="Bibliotecas">
       <p className="-mt-3 mb-6 text-sm text-muted">
-        Tus tableros, cantos y métodos de fabricación. Los precios, en pesos, sirven para calcular el costo del material en el despiece.
+        Tus tableros, cantos, vidrios, herrajes y métodos de fabricación. Los precios, en pesos, sirven para calcular el costo del material en el despiece.
       </p>
       {state.status === 'loading' && <LoadingBlock />}
       {state.status === 'error' && <ErrorState error={state.error} onRetry={state.reload} />}
@@ -103,16 +103,16 @@ export default function LibrariesPage() {
             );
           })()}
 
-          {(['panel', 'edge'] as const).map((kind) => {
+          {(['panel', 'edge', 'glass'] as const).map((kind) => {
             const list = state.data.materials.filter((m) => m.kind === kind);
             return (
               <section key={kind} aria-labelledby={`h-${kind}`}>
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <h2 id={`h-${kind}`} className="text-lg font-semibold">
-                    {kind === 'panel' ? 'Tableros' : 'Cantos'}
+                    {kind === 'panel' ? 'Tableros' : kind === 'glass' ? 'Vidrios' : 'Cantos'}
                   </h2>
                   <Button size="sm" onClick={() => setEditing({ kind: 'material', value: newMaterial(kind) })}>
-                    {kind === 'panel' ? 'Nuevo tablero' : 'Nuevo canto'}
+                    {kind === 'panel' ? 'Nuevo tablero' : kind === 'glass' ? 'Nuevo vidrio' : 'Nuevo canto'}
                   </Button>
                 </div>
                 <ul className="divide-y divide-border rounded-card border border-border bg-surface shadow-1">
@@ -123,8 +123,9 @@ export default function LibrariesPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium break-words">{m.name}</span>
                         <span className="tabular block text-xs text-muted">
-                          {fmtMm(m.thickness)} mm{m.grain === 'length' ? ' · con veta' : ''} ·{' '}
-                          {m.priceCents > 0 ? `${fmtMoney(m.priceCents)} / ${kind === 'panel' ? 'm²' : 'm'}` : <span className="font-medium text-warning">sin precio</span>}
+                          {fmtMm(m.thickness)} mm{m.grain === 'length' ? ' · con veta' : ''}
+                          {m.tempered ? ' · templado' : ''} ·{' '}
+                          {m.priceCents > 0 ? `${fmtMoney(m.priceCents)} / ${kind === 'edge' ? 'm' : 'm²'}` : <span className="font-medium text-warning">sin precio</span>}
                         </span>
                       </span>
                       <span className="flex shrink-0 gap-1">

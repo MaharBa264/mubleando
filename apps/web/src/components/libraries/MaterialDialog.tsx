@@ -18,6 +18,7 @@ export const MATERIAL_COLORS: [string, string][] = [
   ['var(--mat-sage)', 'Verde salvia'],
   ['var(--mat-graphite)', 'Grafito'],
   ['var(--mat-black)', 'Negro'],
+  ['var(--mat-glass)', 'Vidrio'],
 ];
 
 /** Centavos → texto editable sin separador de miles: 2000050 → "20000,50"; 0 → "". */
@@ -44,6 +45,7 @@ export function MaterialDialog({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const panel = m.kind === 'panel';
+  const glass = m.kind === 'glass';
   const cents = parseCents(price);
 
   const save = async () => {
@@ -68,7 +70,7 @@ export function MaterialDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`${initial.name ? 'Editar' : 'Nuevo'} ${panel ? 'tablero' : 'canto'}`}
+      title={`${initial.name ? 'Editar' : 'Nuevo'} ${panel ? 'tablero' : glass ? 'vidrio' : 'canto'}`}
       footer={
         <>
           <Button onClick={onClose}>Cancelar</Button>
@@ -79,12 +81,12 @@ export function MaterialDialog({
       }
     >
       <div className="space-y-4">
-        <TextField label="Nombre" value={m.name} maxLength={120} placeholder={panel ? 'Melamina roble 19' : 'Canto PVC roble 1'} onChange={(e) => setM({ ...m, name: e.target.value })} />
+        <TextField label="Nombre" value={m.name} maxLength={120} placeholder={panel ? 'Melamina roble 19' : glass ? 'Vidrio esmerilado 4' : 'Canto PVC roble 1'} onChange={(e) => setM({ ...m, name: e.target.value })} />
         <div className="grid grid-cols-2 gap-3">
           <MmField label="Espesor" value={m.thickness} min={mm(0.1)} max={mm(100)} onCommit={(v) => v !== null && setM({ ...m, thickness: v })} />
           <div>
             <TextField
-              label={panel ? 'Precio por m² ($)' : 'Precio por metro ($)'}
+              label={panel || glass ? 'Precio por m² ($)' : 'Precio por metro ($)'}
               placeholder={panel ? 'Ej.: 25.000' : 'Ej.: 900'}
               inputMode="decimal"
               value={price}
@@ -111,6 +113,15 @@ export function MaterialDialog({
             </div>
             <p className="mt-1 text-xs text-muted">Para el plano de cortes. Vacío = la de partida ({fmtMm(defaultSheet(m.thickness).length)} × {fmtMm(defaultSheet(m.thickness).width)}). Con veta, la veta va a lo largo.</p>
           </div>
+        )}
+        {glass && (
+          <label className="flex items-start gap-2 text-sm">
+            <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--accent)]" checked={!!m.tempered} onChange={(e) => setM({ ...m, tempered: e.target.checked || undefined })} />
+            <span>
+              Templado
+              <span className="block text-xs text-muted">Hace falta para las puertas enteras de vidrio. Se pide a medida: no se corta ni se perfora después de templar.</span>
+            </span>
+          </label>
         )}
         <SelectField label="Color en el visor 3D" value={m.color} onChange={(e) => setM({ ...m, color: e.target.value })}>
           {MATERIAL_COLORS.map(([v, label]) => (

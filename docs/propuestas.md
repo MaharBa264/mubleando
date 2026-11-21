@@ -12,7 +12,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | **Hecho** (21-11-2026), salvo el código QR. |
 | 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | **Hecho** (21-11-2026). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | **Hecho** (21-11-2026); la huella en el ambiente va con la #7. |
-| 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
+| 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | **Hecho** (22-11-2026), salvo perfil de aluminio y corredizas de vidrio. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
 
 ---
@@ -140,6 +140,8 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 ---
 
 ## 6. Puertas con vidrio y puertas de vidrio
+
+> **Hecho** el 22-11-2026: marco y vidrio, vidrio templado con bisagras perforadas, pegadas o de pinza, biblioteca de vidrios y lista para la vidriería. Quedan el perfil de aluminio, las corredizas de vidrio y los tiradores perforados. Cómo funciona: [Puertas con vidrio](vidrios.md).
 
 Dos cosas distintas, con herrajes distintos.
 

@@ -135,6 +135,10 @@ Cada hueco hijo se puede volver a dividir: por ejemplo, un divisor y luego estan
 
 Las medidas salen solas a partir de la holgura del método (3 mm por defecto): las puertas superpuestas dejan 1,5 mm al borde del mueble y 3 mm entre puertas vecinas.
 
+### Puertas con vidrio
+
+En **Frente → Vidrio**: **Con marco** (cuatro listones y el vidrio por detrás) o **De vidrio** (la puerta entera de vidrio templado, con bisagras para vidrio). Los vidrios no van a la maderera: salen en **Despiece → Vidriería**, con las perforaciones de los templados. Todo en [Puertas con vidrio](vidrios.md).
+
 ### Puertas corredizas
 
 En **Frente**, elegí **Corrediza** (o el botón **Corrediza** de la barra del 3D) y luego **dos** o **tres hojas**. Las hojas van dentro del hueco, en dos rieles; sus medidas salen del sistema corredizo elegido (ver [Herrajes](herrajes.md)). Los estantes y divisores de detrás se retranquean solos lo que ocupan las hojas más 2 mm, y su fondo baja en el despiece. Si a un estante le pusiste a mano un retranqueo menor, se respeta y la app avisa de que choca, con su nombre. Lo mismo pasa detrás de un frente encastrado.

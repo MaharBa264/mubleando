@@ -35,7 +35,7 @@ export function StructureTree() {
             {labels.get(z.id)?.short}
             {z.front && (
               <span className="ml-1 text-xs font-normal text-muted">
-                · {z.front.kind === 'door' ? (z.front.leaves === 2 ? '2 puertas' : 'puerta') : z.front.kind === 'sliding' ? `corrediza de ${z.front.leaves}` : `${z.front.sizes.length} ${z.front.sizes.length === 1 ? 'cajón' : 'cajones'}`}
+                · {z.front.kind === 'door' ? `${z.front.leaves === 2 ? '2 puertas' : 'puerta'}${z.front.glass ? (z.front.glass.type === 'frame' ? ' con vidrio' : ' de vidrio') : ''}` : z.front.kind === 'sliding' ? `corrediza de ${z.front.leaves}` : `${z.front.sizes.length} ${z.front.sizes.length === 1 ? 'cajón' : 'cajones'}`}
               </span>
             )}
           </span>
@@ -49,7 +49,7 @@ export function StructureTree() {
   const groups: { title: string; parts: Part[] }[] = [
     { title: 'Caja', parts: result.parts.filter((p) => ['side', 'top', 'bottom', 'back', 'plinth'].includes(p.role)) },
     { title: 'Estantes y divisores', parts: result.parts.filter((p) => p.role === 'shelf' || p.role === 'divider') },
-    { title: 'Puertas', parts: result.parts.filter((p) => p.role === 'door') },
+    { title: 'Puertas', parts: result.parts.filter((p) => p.role === 'door' || p.role === 'glass') },
   ];
   // Un grupo por cajón, con su frente y su caja.
   const drawerGroups = new Map<string, Part[]>();

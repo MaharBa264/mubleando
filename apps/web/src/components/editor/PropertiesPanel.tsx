@@ -22,7 +22,10 @@ import {
   type HardwareChoice,
   type Design,
   type Edges,
+  type DoorGlass,
   type Front,
+  type Hardware,
+  type Material,
   type FrontMount,
   type PartRole,
 } from '@mw/engine';
@@ -62,6 +65,7 @@ export const ROLE_LABEL: Record<PartRole, string> = {
   'drawer-side': 'Lateral de cajón',
   'drawer-back': 'Trasera o contrafrente de cajón',
   'drawer-bottom': 'Fondo de cajón',
+  glass: 'Vidrio',
 };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -466,9 +470,69 @@ function ZoneProps({ id }: { id: string }) {
   );
 }
 
+/** Vidrio de una puerta: ninguno, con marco (una «ventana») o la puerta entera de vidrio templado. */
+function GlassOptions({ value, glasses, hinges, onChange }: { value: DoorGlass | undefined; glasses: Material[]; hinges: Hardware[]; onChange: (g: DoorGlass | undefined) => void }) {
+  const type = value?.type ?? 'none';
+  const firstGlass = (tempered: boolean) => (glasses.find((g) => !!g.tempered === tempered) ?? glasses[0])?.id;
+  const choose = (t: 'none' | 'frame' | 'frameless') => {
+    if (t === 'none') return onChange(undefined);
+    const glassId = firstGlass(t === 'frameless');
+    if (!glassId) return;
+    onChange(t === 'frame' ? { type: 'frame', glassId, frameWidth: mm(60), rebate: mm(8), clearance: mm(1.5) } : { type: 'frameless', glassId, hingeId: hinges[0]?.id });
+  };
+  return (
+    <>
+      <Segmented
+        label="Vidrio"
+        value={type}
+        onChange={choose}
+        options={[
+          ['none', 'Sin vidrio'],
+          ['frame', 'Con marco'],
+          ['frameless', 'De vidrio'],
+        ]}
+      />
+      {glasses.length === 0 && type === 'none' && <p className="text-xs text-muted">Para usar vidrio, cargá uno en Bibliotecas → Vidrios.</p>}
+      {value && (
+        <SelectField label="Vidrio" value={value.glassId} onChange={(e) => onChange({ ...value, glassId: e.target.value })}>
+          {glasses.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.name}
+              {g.tempered ? ' (templado)' : ''}
+            </option>
+          ))}
+          {!glasses.some((g) => g.id === value.glassId) && <option value={value.glassId}>(ya no está en la biblioteca)</option>}
+        </SelectField>
+      )}
+      {value?.type === 'frame' && (
+        <>
+          <MmField compact label="Ancho del marco" value={value.frameWidth} min={mm(30)} max={mm(200)} onCommit={(v) => v !== null && onChange({ ...value, frameWidth: v })} />
+          <div className="grid grid-cols-2 gap-2">
+            <MmField compact label="Rebaje (lo que el vidrio entra detrás del marco)" value={value.rebate} min={0} max={mm(30)} onCommit={(v) => v !== null && onChange({ ...value, rebate: v })} />
+            <MmField compact label="Holgura por lado" value={value.clearance} min={0} max={mm(5)} onCommit={(v) => v !== null && onChange({ ...value, clearance: v })} />
+          </div>
+          <p className="text-xs text-muted">Cuatro listones del material de la puerta y el vidrio por detrás. Vidrio = luz del marco + 2 × rebaje − 2 × holgura. En melamina, el vidrio va con contravidrio pegado por detrás.</p>
+        </>
+      )}
+      {value?.type === 'frameless' && (
+        <>
+          <SelectField label="Bisagras para vidrio" value={value.hingeId ?? ''} onChange={(e) => onChange({ ...value, hingeId: e.target.value || undefined })}>
+            {hinges.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+              </option>
+            ))}
+          </SelectField>
+          <p className="text-xs text-muted">Vidrio templado: no se corta ni se perfora después. La lista para la vidriería (en el despiece) lleva las medidas y las perforaciones acotadas.</p>
+        </>
+      )}
+    </>
+  );
+}
+
 /** S06 / S07 · Puerta o cajones del hueco. */
 function FrontSection({ zoneId }: { zoneId: string }) {
-  const { result, labels } = useEnv();
+  const { result, labels, materials, hardware } = useEnv();
   const design = useEditor((s) => s.design);
   const apply = useEditor((s) => s.apply);
   const select = useEditor((s) => s.select);
@@ -562,6 +626,15 @@ function FrontSection({ zoneId }: { zoneId: string }) {
               ]}
             />
           )}
+          <GlassOptions
+            value={front.glass}
+            glasses={materials.filter((m) => m.kind === 'glass')}
+            hinges={hardware.filter((h) => h.kind === 'hinge' && !!h.spec.forGlass)}
+            onChange={(glass) => {
+              const { glass: _g, ...rest } = front;
+              put(glass ? { ...rest, glass } : rest);
+            }}
+          />
         </>
       )}
 

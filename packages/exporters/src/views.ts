@@ -94,6 +94,7 @@ const COLORS: Partial<Record<Part['role'], string>> = {
   door: '#d9c8a9',
   'drawer-front': '#d9c8a9',
   back: '#c8c0b2',
+  glass: '#cfe2ea',
   plinth: '#bdb5a7',
 };
 const BASE = '#ece5d7';
@@ -129,6 +130,9 @@ function explodeMove(p: Part, size: { w: number; h: number; d: number }): Vec3 {
     case 'door':
     case 'drawer-front':
       return [0, 0, gap * 2.2];
+    case 'glass':
+      // Detrás del marco de su puerta (o, si es la puerta entera, como una puerta).
+      return [0, 0, p.doorBox && p.box.dx < p.doorBox.dx ? gap * 1.8 : gap * 2.2];
     default:
       // Piezas de los cajones: salen con el cajón y un poco separadas entre sí.
       if (p.assembly?.kind === 'drawer') return [0, 0, gap * 1.6];
@@ -147,9 +151,11 @@ function transformFor(p: Part, mode: FrontsMode | 'exploded', depths: Map<string
   if (mode === 'exploded') return { move: explodeMove(p, size) };
   if (mode === 'closed') return { move: [0, 0, 0] };
   if (p.role === 'door' && p.track) return { move: [(p.box.dx / 2) * (p.track === 'front' ? -1 : 1), 0, 0] };
-  if (p.role === 'door') {
+  if (p.role === 'door' || p.doorBox) {
+    // Gira sobre el canto de las bisagras de la puerta entera (las de marco y vidrio, todas juntas).
+    const b = p.doorBox ?? p.box;
     const left = p.hinge !== 'right';
-    return { pivot: [left ? p.box.x : p.box.x + p.box.dx, 0, p.box.z], angle: left ? -DOOR_OPEN : DOOR_OPEN, move: [0, 0, 0] };
+    return { pivot: [left ? b.x : b.x + b.dx, 0, b.z], angle: left ? -DOOR_OPEN : DOOR_OPEN, move: [0, 0, 0] };
   }
   if (p.assembly?.kind === 'drawer') return { move: [0, 0, (depths.get(p.assembly.id) ?? 0) * DRAWER_OUT] };
   return { move: [0, 0, 0] };

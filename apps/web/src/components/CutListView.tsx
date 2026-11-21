@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type LegOut, type Material } from '@mw/engine';
+import { glassRows, groupedRows, individualRows, totals, type CutItem, type HardwareItem, type LegOut, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { CuttingPlanView } from '@/components/CuttingPlanView';
 import { DocumentDialog } from '@/components/DocumentDialog';
@@ -37,7 +37,10 @@ export function CutListView({
   const [decimal, setDecimal] = useState<',' | '.'>(',');
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
-  const rows = useMemo(() => (mode === 'grouped' ? groupedRows(items) : individualRows(items)), [items, mode]);
+  // Los vidrios van aparte, a la vidriería: la lista de corte (y el CSV para la maderera) es de tablero.
+  const woodItems = useMemo(() => items.filter((i) => materials.find((m) => m.id === i.part.materialId)?.kind !== 'glass'), [items, materials]);
+  const glass = useMemo(() => glassRows(items, materials), [items, materials]);
+  const rows = useMemo(() => (mode === 'grouped' ? groupedRows(woodItems) : individualRows(woodItems)), [woodItems, mode]);
   const sum = useMemo(() => totals(items, materials), [items, materials]);
   // Herrajes iguales (mismo herraje y mismo detalle) en una línea.
   const hw = useMemo(() => {
@@ -248,6 +251,36 @@ export function CutListView({
               </Link>
               .
             </Alert>
+          </div>
+        )}
+        {glass.length > 0 && (
+          <div className="rounded-card border border-border bg-surface p-4 shadow-1 md:col-span-2">
+            <h3 className="mb-1 text-sm font-semibold">Vidriería</h3>
+            <p className="mb-3 text-xs text-muted">Alto × ancho en mm, vistos de frente. Los templados no se cortan ni se perforan después: se piden a medida, con las perforaciones.</p>
+            <ul className="space-y-2 text-sm">
+              {glass.map((g) => (
+                <li key={g.ref} className="tabular">
+                  <span className="font-medium">
+                    {g.ref} · {g.qty} × {fmtMm(g.length)} × {fmtMm(g.width)}
+                  </span>{' '}
+                  <span className="text-muted">
+                    · {matName(g.materialId)}
+                    {g.tempered ? ' · templado' : ''} · {g.polished ? 'cantos pulidos' : 'cantos sin pulir (van dentro del marco)'} · {g.name}
+                  </span>
+                  {g.holes.length > 0 && (
+                    <span className="block text-xs text-muted">
+                      Perforaciones Ø {fmtMm(g.holes[0]!.d)}: centro a {fmtMm(Math.min(g.holes[0]!.x, g.width - g.holes[0]!.x))} del borde {g.holes[0]!.x < g.width / 2 ? 'izquierdo' : 'derecho'}, a{' '}
+                      {g.holes.map((h) => fmtMm(h.y)).join(', ')} desde abajo.
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {sum.glass.some((x) => x.costCents > 0) && (
+              <p className="tabular mt-2 text-sm text-muted">
+                {fmtNum(sum.glass.reduce((t, x) => t + x.areaM2, 0), 2)} m² · {fmtMoney(sum.glass.reduce((t, x) => t + x.costCents, 0))}
+              </p>
+            )}
           </div>
         )}
         {hw.length > 0 && (

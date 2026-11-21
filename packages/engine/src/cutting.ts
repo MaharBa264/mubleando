@@ -186,6 +186,8 @@ export function cuttingPlan(items: readonly CutItem[], materials: readonly Mater
   const mats = new Map(materials.map((m) => [m.id, m]));
   const byMat = new Map<string, NestPiece[]>();
   for (const row of groupedRows(items)) {
+    // Los vidrios van a la vidriería: no se acomodan en placas.
+    if (mats.get(row.materialId)?.kind === 'glass') continue;
     const list = byMat.get(row.materialId) ?? [];
     for (let i = 0; i < row.qty; i++) {
       list.push({ id: `${row.ref}-${i + 1}`, label: row.ref, length: row.cutLength, width: row.cutWidth, grain: row.grain === 'length' });

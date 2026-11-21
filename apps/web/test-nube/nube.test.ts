@@ -91,7 +91,7 @@ describe('cuenta A', () => {
     const methods = await data.listMethods();
     const materials = await data.listMaterials();
     expect(methods.map((m) => m.id).sort()).toEqual(['ar-18-clavado', 'ar-18-ranura']);
-    expect(materials).toHaveLength(9);
+    expect(materials).toHaveLength(13); // 9 de tablero y canto, 4 vidrios
     expect(methods[0]!.drawer.depthStep).toBe(mm(50));
   });
 
@@ -165,10 +165,10 @@ describe('cuenta B no ve nada de A', () => {
 });
 
 describe('herrajes', () => {
-  it('cuenta nueva: recibe los 15 herrajes de partida (con las 5 patas); se pueden guardar y no se borra uno en uso', async () => {
+  it('cuenta nueva: recibe los 18 herrajes de partida (con las 5 patas y las 3 bisagras para vidrio); se pueden guardar y no se borra uno en uso', async () => {
     current = A.client;
     const hw = await data.listHardware();
-    expect(hw).toHaveLength(15);
+    expect(hw).toHaveLength(18);
     const ball = hw.find((h) => h.id === 'hw-corredera-bolas-45')!;
     await data.saveHardware({ ...ball, priceCents: 250000 });
     expect((await data.listHardware()).find((h) => h.id === ball.id)?.priceCents).toBe(250000);

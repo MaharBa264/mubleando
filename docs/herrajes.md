@@ -27,6 +27,8 @@ Qué hace el motor:
 - Cuenta las bisagras de cada puerta según su alto y las suma a la lista de herrajes.
 - Avisa si el codo no corresponde al montaje: una puerta encastrada con bisagra de codo 0, o una superpuesta con una de codo 18.
 
+**Bisagras para vidrio** (puertas enteras de vidrio templado): tienen además los espesores de vidrio que admiten y cómo se fijan (perforada, pegada o de pinza). Ver [Puertas con vidrio](vidrios.md#puerta-de-vidrio-templado).
+
 ## Correderas de cajón
 
 El fondo del cajón es el **largo de corredera más grande que entra** en el mueble (fondo libre del hueco menos el espacio libre de detrás del método). Si no entra ninguna, el motor avisa y no hace la caja. Cada cajón suma un par a la lista, con su largo.

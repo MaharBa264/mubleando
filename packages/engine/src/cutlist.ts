@@ -77,6 +77,8 @@ function toRow(ref: string, g: CutItem[]): CutRow {
 
 export interface Totals {
   panels: { materialId: string; name: string; pieces: number; areaM2: number; costCents: number }[];
+  /** Vidrios: van a la vidriería, aparte de la maderera. */
+  glass: { materialId: string; name: string; pieces: number; areaM2: number; costCents: number }[];
   edges: { materialId: string; name: string; lengthMl: number; costCents: number }[];
   totalCents: number;
 }
@@ -99,19 +101,76 @@ export function totals(items: readonly CutItem[], materials: readonly Material[]
     add(p.edges.W2, p.width);
   }
 
-  const panels = [...area].map(([id, { a, n }]) => ({
+  const isGlass = (id: string) => mats.get(id)?.kind === 'glass';
+  const toRowM = ([id, { a, n }]: [string, { a: number; n: number }]) => ({
     materialId: id,
     name: mats.get(id)?.name ?? id,
     pieces: n,
     areaM2: toM2(a),
     costCents: Math.round((a * (mats.get(id)?.priceCents ?? 0)) / 1e10),
-  }));
+  });
+  const panels = [...area].filter(([id]) => !isGlass(id)).map(toRowM);
+  const glass = [...area].filter(([id]) => isGlass(id)).map(toRowM);
   const edges = [...edge].map(([id, len]) => ({
     materialId: id,
     name: mats.get(id)?.name ?? id,
     lengthMl: toMl(len),
     costCents: Math.round((len * (mats.get(id)?.priceCents ?? 0)) / 100_000),
   }));
-  const totalCents = [...panels, ...edges].reduce((s, r) => s + r.costCents, 0);
-  return { panels, edges, totalCents };
+  const totalCents = [...panels, ...glass, ...edges].reduce((s, r) => s + r.costCents, 0);
+  return { panels, glass, edges, totalCents };
+}
+
+export interface GlassRow {
+  /** V1, V2… */
+  ref: string;
+  name: string;
+  sources: string[];
+  materialId: string;
+  thickness: Len;
+  /** Alto × ancho del vidrio, vistos de frente. */
+  length: Len;
+  width: Len;
+  qty: number;
+  tempered: boolean;
+  /** Perforaciones (vistas de frente, desde abajo a la izquierda). */
+  holes: NonNullable<CutItem['part']['holes']>;
+  /** Los templados de puertas enteras llevan los cantos pulidos (quedan a la vista). */
+  polished: boolean;
+}
+
+/** Lista para la vidriería: los vidrios iguales (material, medidas y perforaciones) en una fila. */
+export function glassRows(items: readonly CutItem[], materials: readonly Material[]): GlassRow[] {
+  const mats = new Map(materials.map((m) => [m.id, m]));
+  const groups = new Map<string, GlassRow>();
+  for (const it of items) {
+    const p = it.part;
+    const m = mats.get(p.materialId);
+    if (m?.kind !== 'glass') continue;
+    const holes = p.holes ?? [];
+    const sig = [p.materialId, p.length, p.width, holes.map((h) => `${h.x},${h.y},${h.d}`).join(';')].join('|');
+    const g = groups.get(sig);
+    if (g) {
+      g.qty += it.qty ?? 1;
+      if (!g.name.split(' / ').includes(p.name)) g.name += ` / ${p.name}`;
+      if (it.source && !g.sources.includes(it.source)) g.sources.push(it.source);
+    } else {
+      groups.set(sig, {
+        ref: '',
+        name: p.name,
+        sources: it.source ? [it.source] : [],
+        materialId: p.materialId,
+        thickness: p.thickness,
+        length: p.length,
+        width: p.width,
+        qty: it.qty ?? 1,
+        tempered: !!m.tempered,
+        holes,
+        polished: !p.doorBox || p.role === 'glass' && p.box.dx === p.doorBox.dx,
+      });
+    }
+  }
+  const rows = [...groups.values()].sort((a, b) => a.materialId.localeCompare(b.materialId) || b.length - a.length || b.width - a.width);
+  rows.forEach((r, i) => (r.ref = `V${i + 1}`));
+  return rows;
 }

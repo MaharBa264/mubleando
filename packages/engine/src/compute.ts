@@ -1,6 +1,6 @@
 import type { Box, ComputeResult, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
 import { placeLegs } from './legs';
-import { hingeCount, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
+import { hingeCount, hingePositions, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
 import { normalizeMethod } from './presets';
 import { distribute, mm, toMm, type Len } from './units';
 
@@ -40,6 +40,8 @@ interface NewPart {
   assembly?: PartAssembly;
   hinge?: Part['hinge'];
   track?: Part['track'];
+  doorBox?: Box;
+  holes?: Part['holes'];
 }
 
 /** Rectángulo en el plano del frente (x, y). */
@@ -481,6 +483,8 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
   const frontZ = (mount: FrontMount) => (mount === 'inset' ? D - tf : D);
 
   let doorCount = 0;
+  /** Piezas de puertas de varias partes (marco, vidrio): clave, nombre, número de puerta y lado, para nombrarlas al final. */
+  const doorNames: [string, string, number, string][] = [];
   let drawerCount = 0;
 
   for (const { zone, front, box } of fronted) {
@@ -529,27 +533,131 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
 
     if (front.kind === 'door') {
       const widths = front.leaves === 2 ? distribute(r.w - gap, 2) : [r.w];
+      const glass = front.glass;
+      const glassMat = glass ? mats.get(glass.glassId) : undefined;
+      if (glass && (!glassMat || glassMat.kind !== 'glass')) {
+        warnings.push({ code: 'material_missing', message: 'El vidrio elegido para la puerta no está en la biblioteca: se usa uno de 4 mm.', zoneId: zone.id });
+      }
+      const gt = glassMat?.kind === 'glass' ? glassMat.thickness : mm(4);
+      // Bisagras de la puerta entera de vidrio: la elegida, o la primera para vidrio.
+      const glassHinge =
+        glass?.type === 'frameless'
+          ? ((hardwareLib.find((h) => h.id === glass.hingeId && h.kind === 'hinge') ??
+              PRESET_HARDWARE.find((h) => h.id === glass.hingeId && h.kind === 'hinge') ??
+              hardwareLib.find((h) => h.kind === 'hinge' && h.spec.forGlass) ??
+              PRESET_HARDWARE.find((h) => h.kind === 'hinge' && h.spec.forGlass)) as Extract<Hardware, { kind: 'hinge' }>)
+          : undefined;
       let x = r.x;
       widths.forEach((w, i) => {
         doorCount++;
+        const num = doorCount;
         const side = front.leaves === 2 ? (i === 0 ? ' (izquierda)' : ' (derecha)') : '';
-        addPart({
-          key: `zone:${zone.id}/door${i}`,
-          role: 'door',
-          name: `Puerta ${doorCount}${side}`,
-          materialId: fm.materialId,
-          thickness: tf,
-          length: r.h,
-          width: w,
-          box: { x, y: r.y, z, dx: w, dy: r.h, dz: tf },
-          zoneId: zone.id,
-          edges: { ...frontEdges },
-          hinge: front.leaves === 2 ? (i === 0 ? 'left' : 'right') : front.hinge,
-        });
-        if (hinge) addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+        const hingeSide: 'left' | 'right' = front.leaves === 2 ? (i === 0 ? 'left' : 'right') : front.hinge;
+        const doorBox: Box = { x, y: r.y, z, dx: w, dy: r.h, dz: tf };
+        const base = { zoneId: zone.id, hinge: hingeSide };
+        const fw = glass?.type === 'frame' ? glass.frameWidth : 0;
+
+        if (glass?.type === 'frame' && 2 * fw < Math.min(w, r.h) - mm(20)) {
+          // Marco: parantes de todo el alto y travesaños entre ellos; el vidrio, por detrás.
+          const k = `zone:${zone.id}/door${i}`;
+          const stileEdges: Edges = { ...frontEdges };
+          const railEdges: Edges = { ...NO_EDGES, L1: fEdge, L2: fEdge };
+          const frame: [string, string, Box, Len, Len, Edges][] = [
+            [`${k}/stile-l`, 'Parante izquierdo', { x, y: r.y, z, dx: fw, dy: r.h, dz: tf }, r.h, fw, stileEdges],
+            [`${k}/stile-r`, 'Parante derecho', { x: x + w - fw, y: r.y, z, dx: fw, dy: r.h, dz: tf }, r.h, fw, stileEdges],
+            [`${k}/rail-b`, 'Travesaño de abajo', { x: x + fw, y: r.y, z, dx: w - 2 * fw, dy: fw, dz: tf }, w - 2 * fw, fw, railEdges],
+            [`${k}/rail-t`, 'Travesaño de arriba', { x: x + fw, y: r.y + r.h - fw, z, dx: w - 2 * fw, dy: fw, dz: tf }, w - 2 * fw, fw, railEdges],
+          ];
+          for (const [key, name, box, length, width, edges] of frame) {
+            doorNames.push([key, name, num, side]);
+            addPart({ key, role: 'door', name, materialId: fm.materialId, thickness: tf, length, width, box, edges, doorBox, ...base });
+          }
+          const off = fw - glass.rebate + glass.clearance;
+          const gw = w - 2 * off;
+          const gh = r.h - 2 * off;
+          doorNames.push([`${k}/glass`, 'Vidrio', num, side]);
+          addPart({
+            key: `${k}/glass`,
+            role: 'glass',
+            name: 'Vidrio',
+            materialId: glass.glassId,
+            thickness: gt,
+            length: gh,
+            width: gw,
+            box: { x: x + off, y: r.y + off, z: z - gt, dx: gw, dy: gh, dz: gt },
+            edges: { ...NO_EDGES },
+            grain: 'none',
+            doorBox,
+            ...base,
+          });
+          if (hinge) {
+            addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+            if (fw < hinge.spec.cupDistance + hinge.spec.cupDiameter) {
+              warnings.push({
+                code: 'hardware_mismatch',
+                message: `El parante mide ${toMm(fw)} mm y la cazoleta de la bisagra necesita ${toMm(hinge.spec.cupDistance + hinge.spec.cupDiameter)} mm desde el borde.`,
+                zoneId: zone.id,
+              });
+            }
+          }
+        } else if (glass?.type === 'frameless') {
+          // Puerta entera de vidrio templado.
+          const g = glassHinge?.spec;
+          const holes =
+            g?.forGlass?.mount === 'drilled'
+              ? hingePositions(g, r.h).map((y) => ({ x: hingeSide === 'left' ? g.cupDistance + g.cupDiameter / 2 : w - g.cupDistance - g.cupDiameter / 2, y, d: g.cupDiameter }))
+              : undefined;
+          const key = `zone:${zone.id}/door${i}`;
+          doorNames.push([key, 'Puerta de vidrio', num, side]);
+          addPart({
+            key,
+            role: 'glass',
+            name: 'Puerta de vidrio',
+            materialId: glass.glassId,
+            thickness: gt,
+            length: r.h,
+            width: w,
+            box: { ...doorBox, dz: gt },
+            edges: { ...NO_EDGES },
+            grain: 'none',
+            doorBox: { ...doorBox, dz: gt },
+            holes,
+            ...base,
+          });
+          if (glassHinge) addItem(glassHinge, hingeCount(glassHinge.spec, r.h), 'unidad');
+        } else {
+          if (glass?.type === 'frame') {
+            warnings.push({ code: 'zone_too_small', message: `El marco de ${toMm(fw)} mm no deja lugar para el vidrio: la puerta va entera de tablero.`, zoneId: zone.id });
+          }
+          addPart({
+            key: `zone:${zone.id}/door${i}`,
+            role: 'door',
+            name: `Puerta ${num}${side}`,
+            materialId: fm.materialId,
+            thickness: tf,
+            length: r.h,
+            width: w,
+            box: doorBox,
+            edges: { ...frontEdges },
+            ...base,
+          });
+          if (hinge) addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+        }
         x += w + gap;
       });
-      if (hinge) {
+      if (glass?.type === 'frameless') {
+        const g = glassHinge?.spec.forGlass;
+        if (glassMat?.kind === 'glass' && !glassMat.tempered) {
+          warnings.push({ code: 'hardware_mismatch', message: `«${glassMat.name}» no es templado: una puerta entera de vidrio tiene que ser de vidrio templado.`, zoneId: zone.id });
+        }
+        if (g && (gt < g.minThickness || gt > g.maxThickness)) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `El vidrio mide ${toMm(gt)} mm y la bisagra «${glassHinge!.name}» es para vidrio de ${toMm(g.minThickness)} a ${toMm(g.maxThickness)} mm.`,
+            zoneId: zone.id,
+          });
+        }
+      } else if (hinge) {
         const crank = hinge.spec.crank;
         if ((front.mount === 'inset') !== (crank === 'inset')) {
           warnings.push({
@@ -736,8 +844,13 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
 
   // Con una sola puerta, "Puerta" a secas.
   if (doorCount === 1) {
-    const d = parts.find((p) => p.role === 'door');
+    const d = parts.find((p) => p.role === 'door' && !p.doorBox);
     if (d) d.name = 'Puerta';
+  }
+  // Marco y vidrio: «Parante izquierdo puerta 2 (izquierda)», o «… de la puerta» si hay una sola.
+  for (const [key, name, num, side] of doorNames) {
+    const p = parts.find((x) => x.key === key);
+    if (p) p.name = doorCount === 1 ? (name === 'Puerta de vidrio' ? name : `${name} de la puerta`) : `${name} ${name === 'Puerta de vidrio' ? '' : 'puerta '}${num}${side}`.replace('  ', ' ');
   }
 
   // El mismo aviso (por ejemplo un material que falta) puede salir una vez por cajón: solo se muestra una.
