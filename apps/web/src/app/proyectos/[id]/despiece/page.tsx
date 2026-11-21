@@ -68,7 +68,7 @@ export default function ProjectCutListPage() {
       <p className="-mt-4 mb-6 text-sm text-muted">
         {cabinets.length} {cabinets.length === 1 ? 'mueble' : 'muebles'}
       </p>
-      <CutListView items={items} materials={materials} hardware={hwItems} fileName={slug(project.name)} warnings={warnings} />
+      <CutListView title={project.name} items={items} materials={materials} hardware={hwItems} fileName={slug(project.name)} warnings={warnings} />
     </Page>
   );
 }

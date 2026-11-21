@@ -61,6 +61,34 @@ Función: `cutListCsv(rows, materials, { separator = ';', decimal = ',', bom = t
 
 ---
 
+## Etiquetas para las piezas (PDF)
+
+En el despiece, botón **Etiquetas**. Un PDF para imprimir en hojas A4 autoadhesivas y pegar cada etiqueta en su pieza.
+
+**Qué lleva cada etiqueta** (una por unidad: si una pieza va 4 veces, salen 4):
+
+- el mueble (en un proyecto, el de esa pieza) y, a la derecha, el número de la lista agrupada (G1, G2…);
+- el nombre de la pieza;
+- la medida de corte, grande: largo × ancho × espesor;
+- el material;
+- abajo a la izquierda, un dibujo de la pieza con **trazo grueso en los lados que llevan canto** (el de abajo es el canto delantero, L1) y, si tiene veta, una flecha en su dirección;
+- abajo a la derecha, de qué placa del [plano de cortes](plano-de-cortes.md) sale: «Placa 2 de 4».
+
+Los textos largos se achican y, si aun así no entran, se cortan con «…».
+
+**Opciones:**
+
+| Opción | Para qué |
+| --- | --- |
+| Hoja de etiquetas | 24 por hoja (70 × 37), 21 (63,5 × 38,1, tipo L7160), 14 (99,1 × 38,1, tipo L7163), 8 (105 × 74) o **medidas propias** (columnas, filas, medida de la etiqueta, márgenes y separaciones). Avisa si no entran en la hoja. |
+| Empezar en la etiqueta | Para usar una hoja empezada: la primera etiqueta va en esa posición (contando de izquierda a derecha y de arriba abajo). |
+| Dibujar el borde | Para probar primero en papel común, ponerlo sobre la hoja de etiquetas a contraluz y ver si coincide. |
+| Piezas | Todas, o solo algunas (por número de la lista). |
+
+El formato elegido queda guardado en ese navegador. Al imprimir, elegí **tamaño real** (100 %, sin «ajustar a la página»).
+
+Código: [`packages/exporters/src/labels.ts`](../packages/exporters/src/labels.ts) (`labelsFromCutList`, `labelSlots`, `labelsPdf`, con [jsPDF](https://github.com/parallax/jsPDF)). Pruebas: formatos que entran en A4, posiciones con márgenes y separación, empezar en una hoja usada, una etiqueta por unidad con su mueble, su pieza y su placa, y cantidad de hojas del PDF.
+
 ## 2. Modelo para impresión 3D (STL)
 
 ### Para qué sirve

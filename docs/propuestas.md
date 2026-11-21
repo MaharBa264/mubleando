@@ -9,7 +9,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | **Hecho** (21-11-2026), salvo el recorrido guiado. |
 | 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | **Hecho** (21-11-2026). |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | **Hecho** (21-11-2026), salvo los retazos. |
-| 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
+| 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | **Hecho** (21-11-2026), salvo el código QR. |
 | 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | Junta en un solo archivo el plano de cortes y las etiquetas (#4), y suma las vistas del mueble. |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
@@ -95,6 +95,8 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 ---
 
 ## 4. Etiquetas para pegar en las piezas
+
+> **Hecho** el 21-11-2026, salvo el código QR (opcional). Cómo funciona: [Exportaciones → Etiquetas](exportaciones.md#etiquetas-para-las-piezas-pdf).
 
 **Para qué.** Que cada pieza cortada tenga su etiqueta y no haya que adivinar qué es al armar.
 

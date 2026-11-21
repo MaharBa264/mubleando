@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@mw/engine": "*"
+    "@mw/engine": "*",
+    "jspdf": "4.2.1"
   }
 }

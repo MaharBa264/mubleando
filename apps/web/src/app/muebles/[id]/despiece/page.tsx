@@ -59,7 +59,7 @@ export default function CabinetCutListPage() {
         {fmtDims(cabinet.design.size.w, cabinet.design.size.h, cabinet.design.size.d)} mm · {method.name}
         {cabinet.quantity > 1 && ` · ${cabinet.quantity} unidades`}
       </p>
-      <CutListView items={items} materials={materials} hardware={hwItems} fileName={slug(cabinet.name)} warnings={r.warnings.map((w) => w.message)} />
+      <CutListView title={cabinet.name} items={items} materials={materials} hardware={hwItems} fileName={slug(cabinet.name)} warnings={r.warnings.map((w) => w.message)} />
     </Page>
   );
 }

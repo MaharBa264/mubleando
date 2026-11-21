@@ -14,6 +14,7 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Biblioteca de herrajes (bisagras, correderas, corredizas) que corrige las medidas y suma la lista de compra | Hecho |
 | Registro solo para mails autorizados, con pantalla de administración | Hecho |
 | Plano de cortes: placas enteras con cortes guillotina, veta, sierra y refilado, y su costo | Hecho |
+| Etiquetas en PDF para hojas A4 autoadhesivas, con cantos, veta y placa | Hecho |
 | Puertas corredizas de 2 y 3 hojas | Hecho |
 | STL de juguete: mueble de una pieza con bisagras impresas que giran, cajones y corredizas que encastran | Hecho |
 | Ambientes: planta con paredes fuera de escuadra, puertas y ventanas, muebles colocados, vista 3D y avisos de choques y rellenos | Hecho |

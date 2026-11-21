@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { CuttingPlanView } from '@/components/CuttingPlanView';
+import { LabelsDialog } from '@/components/LabelsDialog';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
 import { downloadBlob } from '@/lib/download';
@@ -16,6 +17,7 @@ export function CutListView({
   materials,
   hardware = [],
   fileName,
+  title = '',
   warnings = [],
 }: {
   items: CutItem[];
@@ -23,10 +25,13 @@ export function CutListView({
   /** Herrajes del mueble o del proyecto (ya multiplicados por la cantidad de cada mueble). */
   hardware?: HardwareItem[];
   fileName: string;
+  /** Nombre del mueble o proyecto (para las etiquetas). */
+  title?: string;
   warnings?: string[];
 }) {
   const [mode, setMode] = useState<'grouped' | 'individual'>('grouped');
   const [decimal, setDecimal] = useState<',' | '.'>(',');
+  const [labelsOpen, setLabelsOpen] = useState(false);
   const rows = useMemo(() => (mode === 'grouped' ? groupedRows(items) : individualRows(items)), [items, mode]);
   const sum = useMemo(() => totals(items, materials), [items, materials]);
   // Herrajes iguales (mismo herraje y mismo detalle) en una línea.
@@ -107,8 +112,11 @@ export function CutListView({
               <option value=".">punto (CNC / optimizador)</option>
             </select>
           </label>
-          <Button size="sm" onClick={() => window.print()}>
+          <Button size="sm" onClick={() => window.print()} title="Imprimir la lista y el plano de cortes, o guardarlos como PDF">
             Imprimir
+          </Button>
+          <Button size="sm" onClick={() => setLabelsOpen(true)} title="PDF con una etiqueta por pieza, para hojas A4 autoadhesivas">
+            Etiquetas
           </Button>
           <Button size="sm" variant="primary" onClick={download}>
             Descargar CSV
@@ -262,6 +270,7 @@ export function CutListView({
       </section>
 
       <CuttingPlanView items={items} materials={materials} />
+      {labelsOpen && <LabelsDialog open onClose={() => setLabelsOpen(false)} items={items} materials={materials} title={title} fileName={fileName} />}
     </div>
   );
 }

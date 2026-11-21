@@ -35,7 +35,7 @@ Relaciones de herrajes entre tipos de panel,herrajes,should,yes,no,S16
 Lista de herrajes con precio,salidas,should,yes,yes,"S26; en el despiece, con costo"
 Exportar DXF 2D por pieza con capas,cnc,could,yes,no,S29; formato abierto; útil solo si se usa un servicio de corte CNC
 Post-procesador para la CNC del usuario (uno),cnc,could,yes,no,S28; el usuario no tiene CNC: el corte se encarga a una maderera
-Etiquetas de piezas con código de barras,salidas,should,yes,no,S27
+Etiquetas de piezas con código de barras,salidas,should,yes,partial,"S27; PDF A4 con cantos, veta y placa; sin código de barras ni QR"
 Imprimir planos con cotas,salidas,should,yes,no,S32
 Vista explosionada y puertas abiertas/cerradas,3d,should,yes,partial,"S03; frentes cerrados, abiertos u ocultos; explosionada pendiente"
 Dimensiones permanentes en 3D,3d,should,yes,yes,S03; cotas generales y del hueco elegido; botón Cotas
