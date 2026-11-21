@@ -65,10 +65,10 @@ export function RoomEditor({
 
   // Piezas de cada mueble (para el 3D): se calculan una vez por mueble, no por cada vez que se coloca.
   const partsByCabinet = useMemo(() => {
-    const m = new Map<string, ReturnType<typeof compute>['parts']>();
+    const m = new Map<string, Pick<ReturnType<typeof compute>, 'parts' | 'legs'>>();
     for (const c of cabinets) {
       const method = methods.find((x) => x.id === c.methodId) ?? methods[0];
-      if (method) m.set(c.id, compute(c.design, method, materials, hardware).parts);
+      if (method) m.set(c.id, compute(c.design, method, materials, hardware));
     }
     return m;
   }, [cabinets, methods, materials, hardware]);
@@ -86,8 +86,8 @@ export function RoomEditor({
   const placed = useMemo(
     () =>
       plan.placements.flatMap((p) => {
-        const parts = partsByCabinet.get(p.cabinetId);
-        return parts ? [{ placementId: p.id, x: p.x, y: p.y, rotation: p.rotation, elevation: p.elevation, parts }] : [];
+        const r = partsByCabinet.get(p.cabinetId);
+        return r ? [{ placementId: p.id, x: p.x, y: p.y, rotation: p.rotation, elevation: p.elevation, parts: r.parts, legs: r.legs }] : [];
       }),
     [plan.placements, partsByCabinet],
   );

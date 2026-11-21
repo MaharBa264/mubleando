@@ -4,7 +4,8 @@ import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Edges, OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
 import { DoubleSide, Shape } from 'three';
-import { wallPieces, walls, type Material, type Part, type PlanPoint, type RoomPlan } from '@mw/engine';
+import { wallPieces, walls, type LegOut, type Material, type Part, type PlanPoint, type RoomPlan } from '@mw/engine';
+import { LegMesh } from '@/components/viewer/LegMesh';
 
 /** Centésimas de mm → metros de la escena. */
 const S = 1 / 100_000;
@@ -48,6 +49,8 @@ export interface PlacedCabinet {
   rotation: number;
   elevation: number;
   parts: Part[];
+  /** Patas del mueble (si lleva). */
+  legs?: LegOut[];
 }
 
 /** Cómo se ven las paredes: 'auto' = transparentes solo las que tapan la vista desde la cámara. */
@@ -111,6 +114,7 @@ function Scene({ plan, placed, materials, selectedId, wallsMode, onSelect }: Roo
       mat: (id: string) => m.get(id) ?? '#cccccc',
       wall: resolveColor('var(--surface-2)', '#e8e5df'),
       floor: resolveColor('var(--mat-sand)', '#d8c8a8'),
+      leg: resolveColor('var(--mat-walnut)', '#7a5a3a'),
       sel: resolveColor('var(--sel)', '#e07a1f'),
       line: resolveColor('var(--viewer-line)', '#5c574d'),
     };
@@ -141,9 +145,19 @@ function Scene({ plan, placed, materials, selectedId, wallsMode, onSelect }: Roo
             {c.parts.map((p) => (
               <mesh key={p.key} position={[(p.box.x + p.box.dx / 2) * S, (p.box.y + p.box.dy / 2) * S, (p.box.z + p.box.dz / 2) * S]}>
                 <boxGeometry args={[Math.max(p.box.dx, 1) * S, Math.max(p.box.dy, 1) * S, Math.max(p.box.dz, 1) * S]} />
-                <meshStandardMaterial color={isSel ? colors.sel : colors.mat(p.materialId)} emissive={isSel ? colors.sel : '#000000'} emissiveIntensity={isSel ? 0.2 : 0} roughness={0.8} />
+                <meshStandardMaterial
+                  color={isSel ? colors.sel : colors.mat(p.materialId)}
+                  emissive={isSel ? colors.sel : '#000000'}
+                  emissiveIntensity={isSel ? 0.2 : 0}
+                  transparent={p.role === 'glass'}
+                  opacity={p.role === 'glass' ? 0.4 : 1}
+                  roughness={0.8}
+                />
                 <Edges color={isSel ? colors.sel : colors.line} threshold={15} />
               </mesh>
+            ))}
+            {(c.legs ?? []).map((l, i) => (
+              <LegMesh key={`pata${i}`} leg={l} color={isSel ? colors.sel : colors.leg} line={colors.line} wire={false} />
             ))}
           </group>
         );
