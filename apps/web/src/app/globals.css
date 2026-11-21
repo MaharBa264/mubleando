@@ -1,30 +1,44 @@
 @import 'tailwindcss';
 
 /*
- * Tokens de diseño. Los componentes solo usan estas variables (vía las clases de Tailwind de @theme).
- * Provisionales hasta que se ejecute replica-design con la marca propia.
+ * Tokens de diseño · ver docs/diseno.md.
+ * Los componentes SOLO usan estas variables (vía las clases de Tailwind de @theme o var(--x)).
+ * Nunca escribir un color, una sombra o un radio a mano en un componente: si falta uno, se agrega acá.
+ *
+ * Dirección: "taller luminoso". Fondo hueso cálido como un estudio fotográfico, superficies blancas
+ * que flotan sobre la escena, y un único color de acción (azul cobalto) que también marca lo
+ * seleccionado en 3D. El mueble es el protagonista: la interfaz es neutra para no competir con él.
  */
 :root {
-  --bg: #f6f5f2;
+  /* superficies */
+  --bg: #f3f0eb;
   --surface: #ffffff;
-  --surface-2: #eeece7;
-  --border: #dcd8cf;
-  --border-strong: #b9b3a6;
-  --text: #1f1d1a;
-  --text-muted: #6b665c;
-  --accent: #1f6f5c;
-  --accent-hover: #185a4a;
-  --accent-soft: #dcefe9;
+  --surface-2: #ece8e1;
+  --border: #e1dcd3;
+  --border-strong: #c3bcb0;
+
+  /* texto */
+  --text: #1a1917;
+  --text-muted: #665f55;
+
+  /* acción y selección: un solo azul para todo lo que es "activo" */
+  --accent: #1a5fd6;
+  --accent-hover: #134cb3;
+  --accent-soft: #e4edfc;
   --accent-contrast: #ffffff;
-  --danger: #b3261e;
-  --danger-soft: #fbe9e7;
-  --warning: #8a5a00;
-  --warning-soft: #fff3d6;
-  --focus: #2b6cb0;
-  --sel: #e07a1f;
-  --zone: #1f6f5c;
-  --viewer-bg: #e9e7e1;
-  --viewer-line: #5c574d;
+
+  /* estados */
+  --danger: #b42a20;
+  --danger-soft: #fbe8e6;
+  --warning: #865300;
+  --warning-soft: #fbf0d9;
+  --focus: #1a5fd6;
+
+  /* escena 3D y planos */
+  --sel: #2f7bf5;
+  --zone: #2f7bf5;
+  --viewer-bg: #e9e5de;
+  --viewer-line: #6b655b;
 
   /* colores de material para el 3D */
   --mat-white: #f1f0ec;
@@ -36,37 +50,45 @@
   --mat-black: #2a2a2c;
   --mat-sand: #d8c8a8;
 
-  --radius-s: 6px;
-  --radius-m: 10px;
-  --shadow-1: 0 1px 2px rgb(0 0 0 / 0.06), 0 1px 3px rgb(0 0 0 / 0.08);
-  --shadow-2: 0 10px 30px rgb(0 0 0 / 0.18);
+  /* forma · clases: rounded-control (botones, campos), rounded-card (tarjetas, paneles flotantes), rounded-sheet (diálogos) */
+  --radius-s: 8px;
+  --radius-m: 14px;
+  --radius-l: 20px;
+
+  /* profundidad: sombras cálidas y difusas, nunca negras duras */
+  --shadow-1: 0 1px 2px rgb(40 32 20 / 0.05), 0 2px 6px rgb(40 32 20 / 0.05);
+  --shadow-float: 0 1px 2px rgb(40 32 20 / 0.06), 0 8px 24px rgb(40 32 20 / 0.1);
+  --shadow-2: 0 2px 6px rgb(40 32 20 / 0.08), 0 24px 56px rgb(40 32 20 / 0.2);
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #161514;
-    --surface: #1f1e1c;
-    --surface-2: #2a2926;
-    --border: #3a3834;
-    --border-strong: #55524b;
-    --text: #f0eee9;
-    --text-muted: #a8a397;
-    --accent: #4fb89a;
-    --accent-hover: #6cc9ae;
-    --accent-soft: #1c3a32;
-    --accent-contrast: #0d1f1a;
+    --bg: #131312;
+    --surface: #1c1b1a;
+    --surface-2: #272624;
+    --border: #33312e;
+    --border-strong: #4d4a45;
+    --text: #f2f0ec;
+    --text-muted: #a49e94;
+    --accent: #6aa5ff;
+    --accent-hover: #8cb9ff;
+    --accent-soft: #172a4c;
+    --accent-contrast: #08142b;
     --danger: #f2867e;
     --danger-soft: #3b1d1b;
-    --warning: #f0c36a;
+    --warning: #eec06a;
     --warning-soft: #3a2f16;
-    --focus: #7fb2f0;
-    --sel: #f29a4a;
-    --zone: #4fb89a;
-    --viewer-bg: #25231f;
+    --focus: #6aa5ff;
+    --sel: #4c94ff;
+    --zone: #4c94ff;
+    --viewer-bg: #201f1d;
     --viewer-line: #8d877b;
     --mat-white: #d9d7d1;
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
+    --shadow-2: 0 24px 56px rgb(0 0 0 / 0.55);
     color-scheme: dark;
   }
 }
@@ -90,11 +112,17 @@
   --color-focus: var(--focus);
   --color-sel: var(--sel);
   --color-viewer: var(--viewer-bg);
-  --radius-s: var(--radius-s);
-  --radius-m: var(--radius-m);
+  /* Nombres semánticos a propósito: rounded-s / rounded-l de Tailwind v4 son esquinas lógicas (inicio/fin) y chocan. */
+  --radius-control: var(--radius-s);
+  --radius-card: var(--radius-m);
+  --radius-sheet: var(--radius-l);
   --shadow-1: var(--shadow-1);
+  --shadow-float: var(--shadow-float);
   --shadow-2: var(--shadow-2);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Las variables --font-ui/--font-titles/--font-num las inyecta next/font en <html> (ver app/layout.tsx). */
+  --font-sans: var(--font-ui), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-titles), var(--font-ui), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-num), ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
 
 html,
@@ -103,17 +131,32 @@ body {
   color: var(--text);
 }
 
+/* Títulos de página con la tipografía de marca; el resto de la interfaz usa la de texto. */
+h1,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
 :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(20 16 10 / 0.42);
+  backdrop-filter: blur(2px);
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Medidas que se leen como dato técnico (cotas del 3D, chip de dimensiones). */
+.measure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 @media print {

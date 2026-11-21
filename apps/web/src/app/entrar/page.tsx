@@ -106,7 +106,7 @@ function SignIn() {
       <p className="mb-6 text-sm text-muted">Con tu cuenta, tus proyectos se guardan en la nube y los ves igual en el ordenador y en el móvil.</p>
 
       {tab !== 'olvido' && (
-        <div role="tablist" aria-label="Entrar o crear cuenta" className="mb-5 grid grid-cols-2 gap-1 rounded-s bg-surface-2 p-1">
+        <div role="tablist" aria-label="Entrar o crear cuenta" className="mb-5 grid grid-cols-2 gap-1 rounded-control bg-surface-2 p-1">
           {tabs.map(([k, label]) => (
             <button
               key={k}
@@ -117,7 +117,7 @@ function SignIn() {
                 setTab(k);
                 setError(null);
               }}
-              className={`rounded-s px-3 py-1.5 text-sm ${tab === k ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
+              className={`rounded-control px-3 py-1.5 text-sm ${tab === k ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
             >
               {label}
             </button>
@@ -125,7 +125,7 @@ function SignIn() {
         </div>
       )}
 
-      <form onSubmit={submit} className="space-y-4 rounded-m border border-border bg-surface p-5 shadow-1" noValidate>
+      <form onSubmit={submit} className="space-y-4 rounded-card border border-border bg-surface p-5 shadow-1" noValidate>
         <TextField label="Correo electrónico" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         {tab !== 'olvido' && (
           <TextField

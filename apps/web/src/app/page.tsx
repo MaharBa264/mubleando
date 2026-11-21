@@ -45,7 +45,7 @@ export default function ProjectsPage() {
       {projects.status === 'ready' && projects.data.length > 0 && (
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.data.map((p) => (
-            <li key={p.id} className="group relative rounded-m border border-border bg-surface p-4 shadow-1 hover:border-border-strong">
+            <li key={p.id} className="group relative rounded-card border border-border bg-surface p-4 shadow-1 hover:border-border-strong">
               <Link href={`/proyectos/${p.id}`} className="block after:absolute after:inset-0 after:content-['']">
                 <h2 className="truncate pr-8 font-semibold" title={p.name}>
                   {p.name}

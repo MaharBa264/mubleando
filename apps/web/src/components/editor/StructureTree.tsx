@@ -14,8 +14,8 @@ export function StructureTree() {
   const zoneBox = new Map(result.zones.map((z) => [z.id, z.box]));
 
   const item = (active: boolean) =>
-    `flex w-full items-center justify-between gap-2 rounded-s px-2 py-1.5 text-left text-sm ${
-      active ? 'bg-accent-soft font-medium text-accent' : 'hover:bg-surface-2'
+    `flex w-full items-center justify-between gap-2 rounded-control px-2 py-1.5 text-left text-sm ${
+      active ? 'bg-accent-soft font-medium text-accent' : 'text-text hover:bg-surface-2'
     }`;
 
   const renderZone = (z: Zone) => {
@@ -72,14 +72,14 @@ export function StructureTree() {
         </button>
       </div>
       <section>
-        <h2 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">Huecos</h2>
+        <h2 className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Huecos</h2>
         <ul>{renderZone(design.root)}</ul>
       </section>
       {groups.map(
         (g) =>
           g.parts.length > 0 && (
             <section key={g.title}>
-              <h2 className="mb-1 px-2 text-xs font-semibold uppercase tracking-wide text-muted">{g.title}</h2>
+              <h2 className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{g.title}</h2>
               <ul>
                 {g.parts.map((p) => {
                   const active = selection.kind === 'part' && selection.key === p.key;

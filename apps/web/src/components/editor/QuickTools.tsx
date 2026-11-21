@@ -17,9 +17,9 @@ export function QuickTools() {
 
   if (selection.kind === 'cabinet') {
     return (
-      <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-m bg-surface/95 px-3 py-2 text-xs shadow-1">
-        <span className="text-muted">Tocá un hueco del mueble para agregarle estantes, divisores, puertas o cajones.</span>
-        <button type="button" className="rounded-s bg-accent px-2 py-1 font-medium text-accent-contrast" onClick={() => select({ kind: 'zone', id: design.root.id })}>
+      <div className="pointer-events-auto flex max-w-md flex-wrap items-center gap-x-3 gap-y-2 rounded-card border border-border bg-surface/95 py-1.5 pl-3.5 pr-1.5 text-xs shadow-float backdrop-blur">
+        <span className="min-w-0 flex-1 text-muted">Tocá un hueco del mueble para agregarle estantes, divisores, puertas o cajones.</span>
+        <button type="button" className="h-8 shrink-0 rounded-control bg-accent px-3 font-medium text-accent-contrast transition-colors hover:bg-accent-hover" onClick={() => select({ kind: 'zone', id: design.root.id })}>
           Elegir el interior
         </button>
       </div>
@@ -39,12 +39,12 @@ export function QuickTools() {
   const putFront = (f: Front | undefined) => apply((d) => setFront(d, id, f));
 
   const btn = (active = false) =>
-    `rounded-s px-2 py-1 font-medium whitespace-nowrap disabled:opacity-40 ${active ? 'bg-accent text-accent-contrast' : 'bg-surface-2 hover:bg-border'}`;
+    `h-8 rounded-control px-2.5 font-medium whitespace-nowrap transition-colors disabled:opacity-40 disabled:hover:bg-transparent ${active ? 'bg-accent text-accent-contrast hover:bg-accent-hover' : 'text-text hover:bg-surface-2'}`;
 
   return (
-    <div className="pointer-events-auto flex max-w-full flex-wrap items-center gap-1 rounded-m bg-surface/95 p-1.5 text-xs shadow-1" role="toolbar" aria-label={`Herramientas para ${labels.get(id)?.full ?? 'el hueco'}`}>
-      <span className="px-1 font-semibold">{labels.get(id)?.short}</span>
-      <span className="mr-1 h-4 w-px bg-border" aria-hidden />
+    <div className="pointer-events-auto flex max-w-full flex-wrap items-center gap-0.5 rounded-card border border-border bg-surface/95 p-1 text-xs shadow-float backdrop-blur" role="toolbar" aria-label={`Herramientas para ${labels.get(id)?.full ?? 'el hueco'}`}>
+      <span className="flex h-8 items-center rounded-control bg-accent-soft px-2.5 font-semibold text-accent">{labels.get(id)?.short}</span>
+      <span className="mx-1 h-4 w-px bg-border" aria-hidden />
       <button
         type="button"
         className={btn()}

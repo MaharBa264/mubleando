@@ -226,7 +226,7 @@ const fmt = (len: number) => new Intl.NumberFormat('es-AR', { maximumFractionDig
 function DimLabel({ position, children }: { position: [number, number, number]; children: string }) {
   return (
     <Html position={position} center zIndexRange={[10, 0]} style={{ pointerEvents: 'none' }}>
-      <span className="tabular whitespace-nowrap rounded-s bg-surface/90 px-1.5 py-0.5 text-[11px] font-medium text-text shadow-1">{children}</span>
+      <span className="measure whitespace-nowrap rounded-full border border-border bg-surface/95 px-2 py-0.5 text-[11px] font-medium text-text shadow-float">{children}</span>
     </Html>
   );
 }

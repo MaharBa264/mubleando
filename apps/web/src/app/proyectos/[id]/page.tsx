@@ -77,7 +77,7 @@ export default function ProjectPage() {
             autoFocus
             defaultValue={project.name}
             maxLength={120}
-            className="w-full rounded-s border border-border bg-surface px-2 text-2xl font-semibold"
+            className="w-full rounded-control border border-border bg-surface px-2 text-2xl font-semibold"
             onBlur={async (e) => {
               await data.renameProject(project.id, e.target.value);
               setRenaming(false);
@@ -113,14 +113,14 @@ export default function ProjectPage() {
           </Button>
         </div>
         {rooms.length === 0 ? (
-          <p className="rounded-m border border-dashed border-border px-4 py-3 text-sm text-muted">
+          <p className="rounded-card border border-dashed border-border px-4 py-3 text-sm text-muted">
             Dibujá la planta de la cocina o la habitación (paredes, puertas, ventanas) y colocá los muebles del proyecto en ella.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rooms.map((r) => (
-              <li key={r.id} className="flex gap-3 rounded-m border border-border bg-surface p-3 shadow-1">
-                <Link href={`/ambientes/${r.id}`} className="shrink-0 rounded-s bg-surface-2 p-1" tabIndex={-1} aria-hidden>
+              <li key={r.id} className="flex gap-3 rounded-card border border-border bg-surface p-3 shadow-1">
+                <Link href={`/ambientes/${r.id}`} className="shrink-0 rounded-control bg-surface-2 p-1" tabIndex={-1} aria-hidden>
                   <RoomSketch plan={r.plan} sizes={sizes} className="h-20 w-24" />
                 </Link>
                 <div className="min-w-0 flex-1">
@@ -158,10 +158,10 @@ export default function ProjectPage() {
           Elegí una plantilla (bajo con puertas, cajonera, alacena, columna, placard…) y ajustá las medidas. Después podés cambiar todo en el editor.
         </EmptyState>
       ) : (
-        <ul className="divide-y divide-border overflow-hidden rounded-m border border-border bg-surface shadow-1">
+        <ul className="divide-y divide-border overflow-hidden rounded-card border border-border bg-surface shadow-1">
           {cabinets.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-surface-2">
-              <Link href={`/muebles/${c.id}`} className="shrink-0 rounded-s bg-surface-2 p-1" tabIndex={-1} aria-hidden>
+              <Link href={`/muebles/${c.id}`} className="shrink-0 rounded-control bg-surface-2 p-1" tabIndex={-1} aria-hidden>
                 {(() => {
                   const m = methods.find((x) => x.id === c.methodId) ?? methods[0];
                   return m ? <CabinetSketch design={c.design} method={m} materials={materials} className="h-14 w-14" /> : null;

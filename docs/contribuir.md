@@ -44,7 +44,7 @@ Y abre la app (`npm run dev`) para probar a mano lo que hayas tocado, también c
 - **Precios en centavos** (enteros).
 - **El motor es puro**: sin React, sin navegador, sin red, sin fechas ni números aleatorios. Si una función del motor necesita un identificador nuevo, lo recibe por parámetro (`IdGen`).
 - **Toda función del motor o de las exportaciones lleva pruebas.** Para las medidas, la prueba debe dar cifras concretas comprobadas a mano, no solo "que no falle".
-- **Colores y medidas de la interfaz** como variables CSS (`globals.css`), nunca sueltos en los componentes.
+- **Interfaz según el [sistema de diseño](diseno.md)**: colores, radios, sombras y tipografías salen de los tokens de `globals.css`, nunca sueltos en los componentes; se reutilizan los componentes de `components/ui/`. Una pantalla nueva se prueba en escritorio y móvil, claro y oscuro, antes de darla por terminada.
 - **Todo en español**: textos de la interfaz, comentarios, mensajes de error, documentación y nombres de archivo generados.
 - **Documentación al día**: cada función nueva actualiza su página en `docs/` (qué hace, cómo se usa, ejemplos y limitaciones) y su fila en `replica/features.csv`.
 

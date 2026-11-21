@@ -115,7 +115,7 @@ export default function LibrariesPage() {
                     {kind === 'panel' ? 'Nuevo tablero' : 'Nuevo canto'}
                   </Button>
                 </div>
-                <ul className="divide-y divide-border rounded-m border border-border bg-surface shadow-1">
+                <ul className="divide-y divide-border rounded-card border border-border bg-surface shadow-1">
                   {list.length === 0 && <li className="px-4 py-3 text-sm text-muted">Todavía no hay ninguno.</li>}
                   {list.map((m) => (
                     <li key={m.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
@@ -163,9 +163,9 @@ export default function LibrariesPage() {
               </div>
             </div>
             {state.data.hardware.length === 0 ? (
-              <p className="rounded-m border border-dashed border-border px-4 py-3 text-sm text-muted">Todavía no hay herrajes.</p>
+              <p className="rounded-card border border-dashed border-border px-4 py-3 text-sm text-muted">Todavía no hay herrajes.</p>
             ) : (
-              <ul className="divide-y divide-border rounded-m border border-border bg-surface shadow-1">
+              <ul className="divide-y divide-border rounded-card border border-border bg-surface shadow-1">
                 {state.data.hardware.map((h) => (
                   <li key={h.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                     <span className="min-w-0 flex-1">
@@ -289,7 +289,7 @@ function MethodCard({
 }) {
   const name = (id: string | null) => (id ? (materials.find((x) => x.id === id)?.name ?? '(borrado)') : 'sin canto');
   return (
-    <li className="flex flex-col rounded-m border border-border bg-surface p-4 text-sm shadow-1">
+    <li className="flex flex-col rounded-card border border-border bg-surface p-4 text-sm shadow-1">
       <h3 className="font-semibold">{m.name}</h3>
       <dl className="mt-2 grid flex-1 grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-muted">
         <dt>Estructura</dt>

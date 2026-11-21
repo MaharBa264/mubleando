@@ -36,7 +36,7 @@ import { useEditor, useEnv } from './context';
 export function PropertiesPanel() {
   const selection = useEditor((s) => s.selection);
   return (
-    <div className="space-y-5 p-4">
+    <div className="space-y-5 p-4 [&>section:not(:first-child)]:border-t [&>section:not(:first-child)]:border-border [&>section:not(:first-child)]:pt-5">
       {selection.kind === 'cabinet' && <CabinetProps />}
       {selection.kind === 'zone' && <ZoneProps key={selection.id} id={selection.id} />}
       {selection.kind === 'part' && <PartProps key={selection.key} partKey={selection.key} />}
@@ -62,7 +62,7 @@ export const ROLE_LABEL: Record<PartRole, string> = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</h2>
+      <h2 className="font-display text-[15px] font-semibold tracking-tight">{title}</h2>
       {children}
     </section>
   );
@@ -81,7 +81,7 @@ function Segmented<T extends string | number>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="grid gap-1 rounded-s bg-surface-2 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div role="radiogroup" aria-label={label} className="grid gap-0.5 rounded-[10px] bg-surface-2 p-[3px]" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map(([v, text]) => (
         <button
           key={String(v)}
@@ -89,7 +89,7 @@ function Segmented<T extends string | number>({
           role="radio"
           aria-checked={value === v}
           onClick={() => value !== v && onChange(v)}
-          className={`rounded-s px-2 py-1.5 text-sm ${value === v ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
+          className={`rounded-[7px] px-2 py-1.5 text-sm transition-colors ${value === v ? 'bg-surface font-medium text-text shadow-1' : 'text-muted hover:text-text'}`}
         >
           {text}
         </button>
