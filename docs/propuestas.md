@@ -9,7 +9,8 @@ Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *i
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
-| 6 | [Muebles que no se atraviesan en el ambiente](#6-muebles-que-no-se-atraviesan-en-el-ambiente) | mediano | Necesita la huella real del mueble, patas incluidas. |
+| 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
+| 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | mediano | Necesita la huella real del mueble, patas incluidas. |
 
 ---
 
@@ -125,7 +126,57 @@ Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *i
 
 ---
 
-## 6. Muebles que no se atraviesan en el ambiente
+## 6. Puertas con vidrio y puertas de vidrio
+
+Dos cosas distintas, con herrajes distintos.
+
+### A. Puerta con marco y vidrio (una «ventana» en la puerta)
+
+- La puerta se arma con un **marco**: dos parantes de todo el alto y dos travesaños entre ellos, del material de la puerta. Ancho del marco a elegir (de partida 60 mm), igual en los cuatro lados o distinto abajo.
+- El vidrio va **por detrás**, apoyado en un rebaje del marco y sujeto con contravidrio (junquillo) o con grampas, para poder cambiarlo si se rompe.
+- **Medida del vidrio** = luz del marco + 2 × rebaje − 2 × holgura. De partida, rebaje de 8 mm y holgura de 1,5 mm por lado (lo habitual es dejar entre 1,5 y 3 mm).
+  Ejemplo: puerta de 400 × 700 con marco de 60 → luz de 280 × 580 → vidrio de 293 × 593.
+- Las bisagras de cazoleta de siempre van en el parante. Se avisa si el parante es más angosto que la cazoleta más su distancia al borde.
+- Variante: puerta de **perfil de aluminio** con vidrio, como herraje de la biblioteca (perfil, descuentos para el vidrio, escuadras, precio por metro). En este caso no se corta madera para la puerta.
+- Con melamina, el rebaje no se puede hacer sin dejar el aglomerado a la vista. Para melamina se propone el contravidrio pegado por detrás o el perfil de aluminio. Con MDF para pintar, el rebaje fresado.
+
+### B. Puerta entera de vidrio templado («tipo Blindex»)
+
+- Vidrio **templado** de 4 a 6 mm (en muebles). El templado **no se puede cortar ni perforar después**: las medidas y los agujeros se mandan a la vidriería antes de templar. Por eso la app tiene que dar una lista con las perforaciones acotadas.
+- Tipos de bisagra, como herrajes nuevos de la biblioteca:
+  - **De cazoleta para vidrio**: agujero de 26 mm en el vidrio, para vidrio de 4 a 6,5 mm según la marca (por ejemplo, Blum, Hettich Intermat 9904, Grass). El solape cambia con el espesor del vidrio (en una ficha de Blum: 8, 7 y 6 mm para vidrio de 4, 5 y 6 mm). Va con la placa de montaje común en el costado.
+  - **Pegada, sin perforar**: la base se pega al vidrio con pegamento UV (por ejemplo, Salice Vetro, vidrio de 4 a 6 mm).
+  - **De pinza o presión, sin perforar**: aprieta el canto del vidrio. Rango típico de 5 a 8 mm.
+- Datos de cada bisagra: espesores admitidos, diámetro y distancia de la perforación (si la tiene), solape según el espesor, holgura entre puertas y con el mueble, y cantidad según el alto (como las bisagras actuales).
+- Tirador: perforado en el vidrio (con su cota), pegado o ninguno (apertura por presión).
+
+### Para las dos
+
+- **Biblioteca de vidrios**: tipo (incoloro, templado, esmerilado, bronce, espejo), espesor, si va con cantos pulidos y precio por m².
+- **Lista para la vidriería**, separada de la de la maderera: cada vidrio con medidas, espesor, tipo, cantos y, en los templados, el dibujo con las perforaciones acotadas desde los bordes. Su costo se suma al del mueble.
+- En el 3D, el vidrio se ve transparente. En el STL normal, como una placa fina. En el de juguete, el hueco queda abierto y la placa sale en un archivo aparte (para imprimirla en material transparente o cambiarla por acetato).
+- Más adelante: corredizas de vidrio (rieles de aluminio para vidrio).
+
+**A decidir al hacerlo.** Qué herrajes de vidrio se consiguen en Argentina y a qué precio, para cargar los de partida. Las cifras de arriba son de fichas técnicas europeas y se tienen que confirmar con la ficha de la bisagra comprada.
+
+**Hecho cuando.**
+
+- La puerta de 400 × 700 con marco de 60, rebaje de 8 y holgura de 1,5 da los cuatro listones del marco y un vidrio de 293 × 593.
+- Una puerta templada de 5 mm con bisagras de cazoleta da su medida con el solape de la ficha, y en la lista de la vidriería salen las perforaciones de 26 mm a la distancia del borde y a la altura de cada bisagra.
+- Se avisa si el espesor del vidrio no entra en el rango de la bisagra elegida.
+- Pruebas del motor con estas cifras calculadas a mano.
+
+**Fuentes consultadas.**
+
+- [Bisagras de vidrio de Blum: rango de 4,5 a 7 mm y cazoleta de 26 mm](https://www.wilbrad.com.au/blum-products/blum-hinges/blum-glass-hinges); [solapes de 8, 7 y 6 mm para vidrio de 4, 5 y 6 mm](https://www.blum.org.uk/pdf/GHS005B-cat.pdf).
+- [Hettich Intermat 9904, vidrio de 4 a 6,5 mm](https://shop.hettich.com/tm_PT/Hinges/Concealed-hinges/Intermat-fast-assembly-concealed-hinges/Hinges/Intermat-glass-door-hinge-%28Intermat-9904%29%2C-inset%2C-Opening-angle-95%C2%B0%2C-for-screwing-on-%28-%29/p/72968).
+- [Salice Vetro, bisagra pegada sin perforar](https://www.salice.com/media/Catalog/hinges/vetro/Salice_VETRO_spa.pdf).
+- [Grass, bisagra para vidrio de 4 a 6 mm](https://mediacenter.grass.eu/Produktkataloge/Hinges/EN/142/).
+- [Rebaje con contravidrio para poder cambiar el vidrio, y holguras](https://www.finewoodworking.com/1996/02/01/glazing-cabinet-doors).
+
+---
+
+## 7. Muebles que no se atraviesan en el ambiente
 
 **Propuesta.**
 
