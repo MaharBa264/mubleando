@@ -6,7 +6,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | --- | --- | --- | --- | --- |
 | 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | **Hecho** (21-11-2026). |
 | 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | **Hecho** (21-11-2026). |
-| 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | Hoy cuesta usar la app sin saber dónde tocar; cada función nueva lo empeora. |
+| 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | **Hecho** (21-11-2026), salvo el recorrido guiado. |
 | 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | Los muebles y las esquinas se arrastran; las aberturas, no. |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
@@ -201,6 +201,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 8. Ayuda: explicación en el inicio y tooltips
+
+> **Hecho** el 21-11-2026, salvo el recorrido guiado (queda para más adelante). Cómo funciona: [Guía de uso → Ayuda dentro de la app](guia-de-uso.md#ayuda-dentro-de-la-app).
 
 **Qué pasa hoy.** Quien no conoce la app no sabe qué se puede hacer ni dónde tocar. Algunos botones tienen un texto al pasar el ratón (el `title` del navegador), pero tarda en aparecer, no se ve con el teclado y en el celular no aparece nunca.
 

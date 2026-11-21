@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Page } from '@/components/AppShell';
+import { HelpIntro } from '@/components/HelpIntro';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { EmptyState, ErrorState, LoadingBlock } from '@/components/ui/feedback';
@@ -28,18 +29,19 @@ export default function ProjectsPage() {
         </Button>
       }
     >
+      <HelpIntro />
       {projects.status === 'loading' && <LoadingBlock label="Cargando proyectos…" />}
       {projects.status === 'error' && <ErrorState error={projects.error} onRetry={projects.reload} />}
       {projects.status === 'ready' && projects.data.length === 0 && (
         <EmptyState
-          title="Aún no tienes proyectos"
+          title="Todavía no tenés proyectos"
           action={
             <Button variant="primary" onClick={() => setCreating(true)}>
               Crear el primero
             </Button>
           }
         >
-          Un proyecto agrupa los muebles de un encargo: una cocina, un vestidor, una tienda…
+          Un proyecto agrupa los muebles de un trabajo: una cocina, un placard, un local. Adentro creás los muebles y los ambientes.
         </EmptyState>
       )}
       {projects.status === 'ready' && projects.data.length > 0 && (

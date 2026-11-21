@@ -2,6 +2,13 @@
 
 De un proyecto vacío a la lista de corte para la maderera, o al archivo para la impresora 3D.
 
+## Ayuda dentro de la app
+
+- **Qué podés hacer**: al entrar, la pantalla de inicio muestra los pasos principales (proyecto y mueble, dividirlo y ponerle frentes, despiece y costo, ambiente, bibliotecas), cada uno con «Dónde se toca». **Ya lo sé** la oculta en ese navegador.
+- **Ayuda** (arriba a la derecha, el signo de pregunta): la misma explicación, con todo a la vista, y el enlace a esta guía.
+- **Tooltips**: dejá el mouse sobre un botón, llegá a él con la tecla Tab o mantenelo apretado en el celular, y aparece qué hace y su atajo de teclado. En los botones desactivados dice por qué. Una pulsación larga solo muestra el tooltip: no activa el botón.
+- Los editores dicen qué tocar cuando no hay nada elegido.
+
 ## 1. Proyectos
 
 La pantalla de inicio (**Proyectos**) lista tus proyectos: una cocina, un armario, el encargo de un cliente. Cada proyecto agrupa varios muebles.

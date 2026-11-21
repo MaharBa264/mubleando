@@ -112,7 +112,9 @@ Las medidas en listas y tablas llevan `.tabular` para que los números se alinee
 ### `Button` / `ButtonLink` / `buttonClass()`
 
 - Variantes: `primary` (una por pantalla), `secondary` (blanco con borde), `ghost` (sin fondo, para acciones de fila y barras), `danger` (confirmar borrados).
-- Tamaños: `md` (40 px, por defecto), `sm` (32 px, barras y filas), `icon` (40 × 40) e `icon-sm` (32 × 32) para un solo icono. Un botón de icono **siempre** lleva `aria-label`.
+- Tamaños: `md` (40 px, por defecto), `sm` (32 px, barras y filas), `icon` (40 × 40) e `icon-sm` (32 × 32) para un solo icono. Un botón de icono **siempre** lleva `aria-label` (una prueba lo comprueba en todos los `<Button size="icon…">`).
+
+**Tooltips** (`components/ui/TooltipLayer.tsx`, montado una vez en `AppShell`): no hace falta envolver nada. Se muestran para cualquier elemento con `title` o `data-tip`, y para los botones y enlaces de solo icono, con su `aria-label`. Aparecen con el ratón (350 ms), con el foco del teclado y con pulsación larga en pantallas táctiles (y entonces el botón no se activa). El `title` se cambia por `data-tip` al pasar por encima, para que el navegador no muestre el suyo. Un atajo entre paréntesis al final, como `Deshacer (Ctrl+Z)`, se muestra aparte como tecla. Escribí el `title` como una explicación de lo que hace el botón, no como su nombre repetido. Los textos de la explicación del inicio y de /ayuda están en `lib/help.ts`.
 - Al pulsar baja 1 px (`active:translate-y-px`); deshabilitado queda al 45 % de opacidad.
 
 ### `Icon`

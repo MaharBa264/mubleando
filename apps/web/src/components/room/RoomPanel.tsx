@@ -351,6 +351,13 @@ function CabinetsTab({
         <PlacementForm store={store} plan={plan} placement={selected} cabinet={selCabinet} />
       )}
 
+      {!selected && cabinets.length > 0 && (
+        <p className="rounded-control bg-surface-2 px-3 py-2 text-xs text-muted">
+          {plan.placements.length === 0
+            ? 'Tocá Colocar en un mueble: aparece contra una pared y después lo arrastrás en la planta hasta su lugar.'
+            : 'Arrastrá un mueble en la planta para moverlo. Tocalo para girarlo, subirlo (alacenas) o arrimarlo a la pared.'}
+        </p>
+      )}
       <Section title="Muebles del proyecto">
         {cabinets.length === 0 && <p className="text-sm text-muted">El proyecto todavía no tiene muebles. Crealos desde la página del proyecto.</p>}
         <ul className="space-y-2">
@@ -363,7 +370,7 @@ function CabinetsTab({
                     <p className="truncate font-medium">{c.name}</p>
                     <p className="tabular text-xs text-muted">{fmtDims(c.design.size.w, c.design.size.h, c.design.size.d)} mm</p>
                   </div>
-                  <Button size="sm" onClick={() => place(c)}>
+                  <Button size="sm" onClick={() => place(c)} title="Agregar este mueble al ambiente, contra una pared">
                     Colocar
                   </Button>
                 </div>

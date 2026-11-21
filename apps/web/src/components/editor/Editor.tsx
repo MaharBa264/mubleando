@@ -194,13 +194,18 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               <QuickTools />
             </div>
             <div className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur" role="toolbar" aria-label="Vista">
-              <ToggleBtn icon={view.ortho ? 'square' : 'cube'} pressed={!view.ortho} onClick={() => store.getState().setView({ ortho: !view.ortho })}>
+              <ToggleBtn
+                icon={view.ortho ? 'square' : 'cube'}
+                pressed={!view.ortho}
+                onClick={() => store.getState().setView({ ortho: !view.ortho })}
+                title={view.ortho ? 'Vista ortogonal, sin perspectiva: para ver las medidas de frente. Tocá para pasar a perspectiva' : 'Vista en perspectiva. Tocá para pasar a ortogonal (sin perspectiva)'}
+              >
                 {view.ortho ? 'Ortogonal' : 'Perspectiva'}
               </ToggleBtn>
-              <ToggleBtn icon="wire" pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })}>
+              <ToggleBtn icon="wire" pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })} title="Ver solo los bordes de las piezas, para ver lo de adentro">
                 Alámbrico
               </ToggleBtn>
-              <ToggleBtn icon="ruler" pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })}>
+              <ToggleBtn icon="ruler" pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })} title="Mostrar u ocultar las medidas sobre el dibujo">
                 Cotas
               </ToggleBtn>
               {hasFronts && (
@@ -208,12 +213,12 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
                   icon="door"
                   pressed={view.fronts !== 'closed'}
                   onClick={() => store.getState().setView({ fronts: NEXT_FRONTS[view.fronts] })}
-                  title="Cambiar cómo se ven puertas y cajones"
+                  title="Cambiar cómo se ven puertas y cajones: cerrados, abiertos o sin frentes"
                 >
                   {FRONTS_LABEL[view.fronts]}
                 </ToggleBtn>
               )}
-              <ToggleBtn icon="focus" onClick={() => store.getState().resetCamera()}>
+              <ToggleBtn icon="focus" onClick={() => store.getState().resetCamera()} title="Volver a encuadrar el mueble entero. Girá con el mouse o un dedo; zoom con la rueda o dos dedos">
                 Centrar
               </ToggleBtn>
             </div>

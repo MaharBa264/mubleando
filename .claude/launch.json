@@ -4,8 +4,20 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3100
+    },
+    {
+      "name": "web-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "apps/web/scripts/dev-local.mjs",
+        "3101"
+      ],
+      "port": 3101
     }
   ]
 }

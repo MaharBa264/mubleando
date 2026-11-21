@@ -37,6 +37,11 @@ export function PropertiesPanel() {
   const selection = useEditor((s) => s.selection);
   return (
     <div className="space-y-5 p-4 [&>section:not(:first-child)]:border-t [&>section:not(:first-child)]:border-border [&>section:not(:first-child)]:pt-5">
+      {selection.kind === 'cabinet' && (
+        <p className="rounded-control bg-surface-2 px-3 py-2 text-xs text-muted">
+          Estas son las medidas del mueble completo. Tocá un hueco o una pieza en el dibujo, o en la lista de la izquierda, para ver y cambiar las suyas.
+        </p>
+      )}
       {selection.kind === 'cabinet' && <CabinetProps />}
       {selection.kind === 'zone' && <ZoneProps key={selection.id} id={selection.id} />}
       {selection.kind === 'part' && <PartProps key={selection.key} partKey={selection.key} />}

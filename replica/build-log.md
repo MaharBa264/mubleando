@@ -166,3 +166,12 @@ Comprobado: 56 pruebas de base de datos (8 nuevas: alta rechazada fuera de la li
 
 Migración del registro aplicada en Supabase (21-11-2026): la prueba contra el proyecto real pasa 15 de 15; el único administrador es la cuenta del dueño; la lista quedó vacía y las cuentas de prueba, borradas.
 
+
+## Ayuda y tooltips, issue #8 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| S01 | Inicio: «Qué podés hacer»; página /ayuda; botón Ayuda | hecho | recorrido guiado | — |
+| todas | Tooltips propios (ratón, teclado, pulsación larga) | hecho | — | que la pulsación larga no active el botón ni abra el menú del navegador |
+
+Comprobado: 15 pruebas de la web (7 nuevas: texto del tooltip, atajo aparte, posición dentro de la ventana, y que todo botón de solo icono tenga aria-label, title o data-tip); en el navegador (modo local), la explicación del inicio, el tooltip de Ayuda y el de Deshacer desactivado con su atajo. La pulsación larga no se probó en un celular real.

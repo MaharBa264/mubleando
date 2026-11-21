@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AuthGate, AuthProvider, useAuth } from '@/components/auth/AuthProvider';
+import { Icon } from '@/components/ui/Icon';
+import { TooltipLayer } from '@/components/ui/TooltipLayer';
 import { isAdmin } from '@/lib/admin';
 import { useAsync } from '@/lib/useAsync';
 
@@ -60,12 +62,24 @@ function Shell({ children }: { children: ReactNode }) {
               );
             })}
           </nav>
+          <Link
+            href="/ayuda"
+            aria-label="Ayuda"
+            title="Cómo se usa la app"
+            aria-current={path.startsWith('/ayuda') ? 'page' : undefined}
+            className={`ml-auto flex items-center gap-1.5 rounded-full p-1.5 text-sm hover:bg-surface-2 hover:text-text sm:px-3 ${path.startsWith('/ayuda') ? 'text-text' : 'text-muted'}`}
+          >
+            <Icon name="help" size={18} aria-hidden />
+            <span aria-hidden className="hidden sm:inline">
+              Ayuda
+            </span>
+          </Link>
           {(mode === 'local' || session) && (
             <Link
               href="/cuenta"
               aria-current={path.startsWith('/cuenta') ? 'page' : undefined}
               title={mode === 'cloud' ? email : 'Datos guardados en este navegador'}
-              className="ml-auto flex items-center gap-2 rounded-full py-1 pl-1 pr-1 text-sm text-muted hover:bg-surface-2 hover:text-text sm:pr-3"
+              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 text-sm text-muted hover:bg-surface-2 hover:text-text sm:pr-3"
             >
               <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent">
                 {mode === 'cloud' ? email.slice(0, 1) || '?' : '⌂'}
@@ -78,6 +92,7 @@ function Shell({ children }: { children: ReactNode }) {
       <main id="main" className="flex flex-1 flex-col">
         <AuthGate>{children}</AuthGate>
       </main>
+      <TooltipLayer />
     </div>
   );
 }
