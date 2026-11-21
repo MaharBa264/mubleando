@@ -11,7 +11,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | **Hecho** (21-11-2026), salvo los retazos. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | **Hecho** (21-11-2026), salvo el código QR. |
 | 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | **Hecho** (21-11-2026). |
-| 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
+| 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | **Hecho** (21-11-2026); la huella en el ambiente va con la #7. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
 
@@ -117,6 +117,8 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 
 ## 5. Patas, como herrajes de la biblioteca
 
+> **Hecho** el 21-11-2026. El cálculo de lo que sobresalen las patas inclinadas ya está en el motor (`legsOverhang`); usarlo en la huella del ambiente queda para la #7. Cómo funciona: [Herrajes → Patas](herrajes.md#patas).
+
 **Propuesta.**
 
 - Nuevo tipo de herraje en la biblioteca: **pata**. De partida:
@@ -188,6 +190,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 7. Muebles que no se atraviesan en el ambiente
+
+> Ya existe: el ambiente avisa si un mueble choca con otro o con la pared (en la lista de avisos). Lo nuevo de esta propuesta es pegarse al acercar, marcar en rojo mientras se mueve, bloquear opcionalmente, puertas que golpean al abrirse y la huella de las patas inclinadas (`legsOverhang`).
 
 **Propuesta.**
 

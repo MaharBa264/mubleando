@@ -77,3 +77,4 @@ Ambiente fuera de escuadra con medidas de obra y error de cierre,proyecto,must,n
 "Avisos de choques, aberturas tapadas y relleno en esquinas fuera de escuadra",proyecto,should,no,yes,mejora
 STL de juguete con bisagras impresas en su lugar,salidas,should,no,yes,mejora: impresión 3D que funciona
 Paredes del ambiente transparentes según la cámara,3d,should,no,yes,mejora
+"Patas como herrajes, con inclinación y regulables detrás del zócalo",construccion,should,no,yes,"mejora; 3D, STL, juguete y PDF"

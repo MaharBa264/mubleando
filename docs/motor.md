@@ -23,6 +23,7 @@ Código: [`packages/engine/src`](../packages/engine/src).
 | `cutlist.ts` | Filas de la lista de corte (agrupadas o pieza a pieza) y totales de material y costo. |
 | `presets.ts` | Materiales y métodos de partida (Argentina) y el juego de referencia de las pruebas. |
 | `cutting.ts` | Plano de cortes: acomoda las piezas en placas con cortes guillotina (ver [plano-de-cortes.md](plano-de-cortes.md)). |
+| `legs.ts` | Patas: cantidad, posición, inclinación y lo que sobresalen de la huella (ver [herrajes.md](herrajes.md#patas)). |
 | `hardware.ts` | Herrajes: bisagras, correderas y sistemas corredizos; de partida y validación (ver [herrajes.md](herrajes.md)). |
 | `room.ts` | Ambientes: planta, paredes, medidas de obra, aberturas, muebles colocados, arrimar a pared y avisos (ver [ambientes.md](ambientes.md)). |
 | `templates.ts` | Plantillas de muebles (bajo con puertas, cajonera, alacena, columna, placard…). |

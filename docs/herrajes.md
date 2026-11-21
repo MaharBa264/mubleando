@@ -69,10 +69,46 @@ Ejemplo, bajo de 1200 con 2 hojas: hueco de 1164 × 824 → hojas de 592 × 804,
 
 En la lista de herrajes: un juego por hueco, con el largo de los rieles.
 
+## Patas
+
+Se eligen en el mueble: **Mueble completo → Base → Con patas** (o, con zócalo, **Patas detrás del zócalo**).
+
+| Campo | Para qué |
+| --- | --- |
+| Estilo | Recta, cónica, estilo años 60 (inclinada, con placa de montaje) o regulable (la de plástico de cocina, para ir detrás de un zócalo). |
+| Sección | Cuadrada o redonda. |
+| Alto | Lo que sube el mueble. En las regulables, el alto de partida. |
+| Lado o diámetro arriba y abajo | Iguales = recta; abajo más chico = cónica. |
+| Inclinación | Grados hacia afuera (0 = a plomo). Las de las esquinas se abren en diagonal; las del medio, hacia adelante o hacia atrás. |
+| Retiro | Desde los bordes del mueble hasta el borde de la pata. |
+| Regula desde / hasta | Solo regulables: el rango de alto. |
+| Cantidad según el ancho | De partida: 4 hasta 1200 mm, 6 hasta 2400, 8 más. La mitad adelante y la mitad atrás, repartidas a lo ancho. |
+
+Patas de partida:
+
+| Pata | Medidas |
+| --- | --- |
+| Regulable plástica | redonda, 100 mm (regula de 95 a 150), Ø 50 arriba y 40 abajo, retiro 40 |
+| Recta cuadrada | 40 × 40, 150 mm, retiro 30 |
+| Recta redonda | Ø 40, 150 mm, retiro 30 |
+| Cónica | Ø 45 → 25, 150 mm, retiro 30 |
+| Estilo años 60 | Ø 45 → 22, 200 mm, inclinada 12°, retiro 50, con placa |
+
+Qué hace el motor:
+
+- **Sin zócalo**: arma la caja con el alto que queda y la sube el alto de la pata. Ejemplo: un bajo de 860 con patas de 150 tiene la caja de 710, de 150 a 860 del piso. Si se desmarca **El alto incluye las patas**, la caja mide 860 y el total, 1010.
+- **Con zócalo**: la caja no cambia; las patas van ocultas detrás del zócalo y miden lo que él. Avisa si el zócalo queda fuera de lo que regulan las patas.
+- Las patas van debajo de la caja (sin contar las puertas que sobresalen), con su borde al retiro elegido.
+- Suma las patas a la lista de herrajes, con su alto.
+- Calcula cuánto sobresalen las inclinadas de la huella del mueble. Ejemplo: 200 mm a 15° → el pie se corre 200 × tan 15° = 53,6 mm, en diagonal 37,9 mm por eje; con retiro 0 y Ø 45 → 22 sobresale 37,9 − 22,5 + 11 = 26,4 mm por lado. (Las de partida, a 12° con retiro 50, no sobresalen.)
+
+Dónde se ven: en el 3D del editor, en el STL (montado y pieza a pieza, con un archivo de pata para imprimir tantas veces como patas), en el STL de juguete (unidas a la base, de una pieza), en las vistas del documento PDF (no en la explotada) y en la lista de herrajes con su costo.
+
 ## Código
 
 - Motor: [`packages/engine/src/hardware.ts`](../packages/engine/src/hardware.ts) (tipos, herrajes de partida, validación, `hingeCount`, `pickLength`) y `compute(diseño, método, materiales, herrajes)`, que devuelve además `hardware`: la lista de herrajes. Pruebas en `test/herrajes.test.ts`, con cifras calculadas a mano.
-- Datos: tabla `hardware` en Supabase (migración `20261118000001_herrajes.sql`) y `hardware` en el navegador (formato versión 5). Las cuentas sin herrajes reciben los de partida la primera vez.
+- Patas: [`packages/engine/src/legs.ts`](../packages/engine/src/legs.ts) (`legCount`, `placeLegs`, `legsOverhang`); `compute` devuelve además `legs`. Malla para los STL: `packages/exporters/src/legmesh.ts`. Pruebas en `packages/engine/test/legs.test.ts` y `packages/exporters/test/legs.test.ts` (volúmenes exactos de patas rectas, inclinadas y cónicas).
+- Datos: tabla `hardware` en Supabase (migraciones `20261118000001_herrajes.sql` y `20261121000002_patas.sql`, que agrega el tipo `leg`) y `hardware` en el navegador (formato versión 6). Las cuentas sin herrajes reciben los de partida la primera vez; las que ya tenían y no tienen ninguna pata reciben las 5 patas de partida.
 - Pantallas: Bibliotecas → Herrajes (`components/libraries/HardwareDialog.tsx`); Método → Herrajes por defecto; Mueble completo → Herrajes; Despiece → Herrajes, con su costo.
 
 ## Fuentes

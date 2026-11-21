@@ -104,9 +104,13 @@ En **Mueble completo → Construcción**:
 
 Todas las medidas de corte se recalculan solas.
 
-### Zócalo
+### Base: en el piso, con zócalo o con patas
 
-En **Mueble completo**, marca **Con zócalo**. La base del mueble sube a la altura del zócalo (100 mm por defecto) y se añade un tablero delante, retranqueado (50 mm por defecto) para dejar sitio a los pies. Los costados siguen llegando al suelo. Cambia la altura y el retranqueo en los dos campos que aparecen.
+En **Mueble completo → Base**:
+
+- **En el piso**: la base apoya directamente.
+- **Con zócalo**: la base del mueble sube a la altura del zócalo (100 mm por defecto) y se añade un tablero delante, retranqueado (50 mm por defecto) para dejar sitio a los pies. Los costados siguen llegando al suelo. Cambia la altura y el retranqueo en los dos campos que aparecen. Opcional: **Patas detrás del zócalo** (las regulables de cocina), que se suman a la lista de herrajes.
+- **Con patas**: elegí la pata de la biblioteca. La caja sube lo que mide la pata; con **El alto incluye las patas** marcado, el alto total sigue siendo el del mueble. Todo sobre las patas en [Herrajes → Patas](herrajes.md#patas).
 
 Para escribir una medida: escribe y pulsa **Intro** o sal del campo. **Esc** deshace lo escrito. Si la medida no es válida, el campo se marca en rojo y explica por qué.
 

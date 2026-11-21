@@ -212,3 +212,13 @@ Comprobado: 34 pruebas de exportaciones (10 de etiquetas: formatos, posiciones, 
 | S24 | Despiece → PDF (portada, lista, plano, vistas, etiquetas) | hecho | flechas de armado en la explotada | el orden de dibujo: comparar cajas solo por su rectángulo en el papel creaba ciclos (tapa, costado y puerta) y el lateral del cajón aparecía delante del costado; se compara con el contorno real de cada pieza |
 
 Comprobado: 47 pruebas de exportaciones (13 de vistas y documento); PDF de muestra revisado a ojo (bajo con cajón y puertas: 9 páginas, vistas cerrada, abierta y explotada con todas las piezas numeradas en una parte visible); en el navegador (modo local), el documento del proyecto de ejemplo con todas las partes se genera sin errores (75 KB).
+
+## Patas, issue #5 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `legs.ts`; `compute` sube la caja el alto de la pata | hecho | huella en el ambiente (#7) | — |
+| S04 | Mueble completo → Base (piso, zócalo, patas) | hecho | — | — |
+| S14 | Bibliotecas → Herrajes → Pata | hecho | — | sembrar las patas en las cuentas que ya tenían herrajes, una sola vez |
+
+Comprobado: 175 pruebas del motor (15 de patas con cifras a mano), 56 de exportaciones (9 de patas: volúmenes exactos, triángulos en STL y juguete, vistas), 61 de base de datos (2 de patas); prueba contra Supabase 15 de 15 con la migración aplicada (cuenta nueva con 15 herrajes); en el navegador (modo local), un bajo de 800 con 4 patas de 150 y la caja de 710.

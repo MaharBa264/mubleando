@@ -16,6 +16,7 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Plano de cortes: placas enteras con cortes guillotina, veta, sierra y refilado, y su costo | Hecho |
 | Etiquetas en PDF para hojas A4 autoadhesivas, con cantos, veta y placa | Hecho |
 | Documento PDF: portada, lista, plano de cortes, vistas isométricas (cerrado, abierto, explotado) y etiquetas | Hecho |
+| Patas como herrajes (rectas, cónicas, años 60 inclinadas, regulables detrás del zócalo) | Hecho |
 | Puertas corredizas de 2 y 3 hojas | Hecho |
 | STL de juguete: mueble de una pieza con bisagras impresas que giran, cajones y corredizas que encastran | Hecho |
 | Ambientes: planta con paredes fuera de escuadra, puertas y ventanas, muebles colocados, vista 3D y avisos de choques y rellenos | Hecho |
