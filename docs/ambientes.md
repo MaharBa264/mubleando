@@ -58,7 +58,12 @@ Tocá una pared en la planta y agregá **Puerta**, **Ventana** o **Abertura sin 
 En **Muebles** están todos los muebles del proyecto:
 
 - **Colocar** lo pone contra la pared elegida (o la primera con lugar) en el primer hueco libre, sin pisar otros muebles ni tapar puertas. Los que parecen de colgar (poco fondo y menos de 1 m de alto) se colocan a 1,45 m del piso.
-- En la planta se **arrastran**. Si se sueltan a menos de 15 cm de una pared, **se arriman solos**: giran para dar la espalda a la pared y mirar al ambiente.
+- En la planta se **arrastran**. Al soltarlos:
+  - a menos de 15 cm de una pared, **se arriman solos**: giran para dar la espalda a la pared y mirar al ambiente;
+  - a menos de 15 cm del costado de otro mueble girado igual y a la misma altura, **se juntan** costado con costado y espalda con espalda (una alacena no se pega a un bajo).
+- Mientras se arrastra, lo que choca se ve **en rojo** al momento.
+- **Bloquear superposiciones** (arriba a la derecha de la planta): si está marcado, un mueble no se puede soltar donde choca con otro o atraviesa una pared, y vuelve al último lugar libre por el que pasó. Queda guardado en ese navegador.
+- En la planta, una línea punteada muestra **por dónde abre cada puerta** (un cuarto de círculo del ancho de la hoja).
 - Con un mueble elegido: posición, giro y altura desde el piso; **Arrimar a la pared más cercana**; **Girar 90°**; **Abrir el mueble**; **Quitar del ambiente**.
 - **Cantidad en el despiece**: si un mueble está colocado más veces de las que cuenta el despiece, aparece **Contar N** para igualarlas.
 
@@ -68,6 +73,8 @@ En **Muebles** están todos los muebles del proyecto:
 | --- | --- |
 | Se sale del ambiente o atraviesa una pared | Alguna esquina del mueble queda fuera de la planta. |
 | Se pisan | Dos muebles se superponen en planta y a la misma altura (una alacena sobre un bajo no se pisa con él). |
+| Las patas se pisan | Las patas inclinadas de un mueble sobresalen de su huella (en su alto) y tocan al de al lado. También cuentan para «se sale del ambiente»: contra la pared, las patas la atraviesan. |
+| **Una puerta golpea al abrirse** | Al abrir 90°, la puerta de un mueble llega a una pared o a otro mueble que está a la altura de la puerta. Ejemplo: bajo de 560 de fondo con una puerta de 597: barre hasta 560 + 597 = 1157 mm de la pared; en una planta de 1000 de fondo golpea la de enfrente. |
 | **Esquina fuera de escuadra** | El costado de un mueble está cerca de una pared que no va paralela. Dice la separación atrás y adelante: el **relleno cónico** que hace falta (por ejemplo, de 0 a 11,2 mm) o, si el mueble se mete en la pared, cuánto hay que separarlo o recortar el costado en cuña. |
 | Tapa una puerta | Un mueble contra una pared, delante de una puerta. |
 | Tapa una ventana | Contra la pared de una ventana y llega a la altura del antepecho. |
@@ -95,6 +102,10 @@ Código: [`packages/engine/src/room.ts`](../packages/engine/src/room.ts), prueba
 - **Mueble colocado** (`Placement`): esquina trasera izquierda (x, y), giro en grados y altura desde el piso. Con giro 0, el ancho va hacia +x y el frente mira hacia +y.
 - **Arrimar a la pared** (`snapToWall`): giro = el que hace que el frente apunte hacia el interior de la pared; posición = el punto de la pared más cercano a donde estaba, sin pasarse de los extremos.
 - **Fuera de escuadra**: para cada costado del mueble y cada pared casi paralela a él (menos de 15°) que esté a menos de 15 cm, se mide la distancia del punto trasero y del delantero a la recta de la pared. Si difieren 1 mm o más, o el mueble se mete en la pared, se avisa con las dos cifras.
+- **Choques** (`placementSolids`, `placementCollides`): cada mueble es una caja (su rectángulo en toda la altura) y, si tiene patas inclinadas, una franja de abajo con la huella agrandada (`legsOverhang`). Dos muebles chocan si alguna caja de uno se cruza con alguna del otro en la planta y en el alto.
+- **Pegar al vecino** (`snapToNeighbor`): en los ejes del otro mueble, si la espalda está a menos de 15 cm de su línea y un costado a menos de 15 cm del suyo, lo pone justo al lado.
+- **Puertas** (`doorSwing`): cuarto de círculo de radio igual al ancho de la hoja, con centro en la bisagra, en el frente; se compara con la planta y con los demás muebles a la altura de la puerta.
+- **Medidas para el ambiente** (`roomSize`): alto real (con las patas, si suman al alto), lo que sobresalen las patas y las puertas de bisagra de cada mueble, a partir de lo que calcula el motor.
 - **Deslizar una abertura** (`slideOpening`): la lleva a la distancia pedida, o al lugar libre más cercano de su pared si ahí no entra (sin salirse ni encimarse). `alongWall` proyecta un punto de la planta sobre la pared, para el arrastre.
 - **Trozos de pared para el 3D** (`wallPieces`): entre aberturas, pared entera; encima de cada abertura, el dintel; debajo de cada ventana, el antepecho.
 

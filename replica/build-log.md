@@ -235,3 +235,12 @@ Comprobado: 175 pruebas del motor (15 de patas con cifras a mano), 56 de exporta
 Comprobado: 192 pruebas del motor (17 de vidrios con cifras a mano), 60 de exportaciones (4 de vidrios), 63 de base de datos (2 de vidrios); PDF de muestra revisado a ojo (alacena con una puerta de marco y una templada, abiertas y cerradas, y la hoja de la vidriería con las perforaciones); en el navegador (modo local), un bajo de dos puertas de vidrio templado y su lista para la vidriería.
 
 Migración de vidrios aplicada en Supabase (22-11-2026): la prueba contra el proyecto real encontró que, al crear los materiales de partida de una cuenta nueva, las filas sin «templado» mandaban un nulo a una columna que no lo acepta; se corrigió con `defaultToNull: false` en las cargas de varios materiales. Después, 15 de 15 (cuenta nueva con 13 materiales y 18 herrajes).
+
+## Colisiones en el ambiente, issue #7 (2026-11-22)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| S21 | Planta: pegarse al vecino, bloquear superposiciones, puertas punteadas | hecho | — | — |
+| motor | Choques por volúmenes (caja y franja de patas), puertas que golpean, `roomSize` | hecho | — | — |
+
+Comprobado: 206 pruebas del motor (14 nuevas con cifras a mano: pegado de los dos lados y casos que no se pegan, choques con pared y alacena encima, patas inclinadas que se pisan a 0 y no a 60 mm, puertas contra la pared de enfrente y contra un mueble delante o colgado arriba); en el navegador (modo local), un bajo soltado a unos centímetros de su vecino vuelve justo a su lado y contra la pared, y las puertas se ven punteadas en la planta. El bloqueo se probó solo en las pruebas del motor.

@@ -13,7 +13,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | **Hecho** (21-11-2026). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | **Hecho** (21-11-2026); la huella en el ambiente va con la #7. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | **Hecho** (22-11-2026), salvo perfil de aluminio y corredizas de vidrio. |
-| 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
+| 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | **Hecho** (22-11-2026). |
 
 ---
 
@@ -192,6 +192,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 7. Muebles que no se atraviesan en el ambiente
+
+> **Hecho** el 22-11-2026: pegarse a la pared y al mueble de al lado, rojo en vivo, bloqueo opcional, puertas que golpean al abrirse y patas inclinadas. Cómo funciona: [Ambientes → Colocar muebles](ambientes.md#colocar-muebles).
 
 > Ya existe: el ambiente avisa si un mueble choca con otro o con la pared (en la lista de avisos). Lo nuevo de esta propuesta es pegarse al acercar, marcar en rojo mientras se mueve, bloquear opcionalmente, puertas que golpean al abrirse y la huella de las patas inclinadas (`legsOverhang`).
 

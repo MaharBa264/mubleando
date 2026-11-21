@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { analyzeRoom, compute, slideOpening, walls, type Hardware, type Material, type Method } from '@mw/engine';
+import { analyzeRoom, compute, roomSize, slideOpening, walls, type CabinetSize, type Hardware, type Material, type Method } from '@mw/engine';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { Icon } from '@/components/ui/Icon';
@@ -43,11 +43,25 @@ export function RoomEditor({
   const canRedo = useStore(store, (s) => s.future.length > 0);
   const [cabinets, setCabinets] = useState(initialCabinets);
   const [wallsMode, setWallsMode] = useState<WallsMode>('auto');
+  // Bloquear superposiciones al arrastrar (preferencia de este navegador).
+  const [block, setBlock] = useState(false);
+  useEffect(() => {
+    try {
+      setBlock(window.localStorage.getItem('mw-ambiente-bloquear') === '1');
+    } catch {
+      /* sin almacenamiento */
+    }
+  }, []);
+  const toggleBlock = (v: boolean) => {
+    setBlock(v);
+    try {
+      window.localStorage.setItem('mw-ambiente-bloquear', v ? '1' : '0');
+    } catch {
+      /* solo por esta vez */
+    }
+  };
 
-  const sizes = useMemo(() => Object.fromEntries(cabinets.map((c) => [c.id, c.design.size])), [cabinets]);
   const names = useMemo(() => Object.fromEntries(cabinets.map((c) => [c.id, c.name])), [cabinets]);
-  const warnings = useMemo(() => analyzeRoom(plan, sizes, names), [plan, sizes, names]);
-  const flagged = useMemo(() => new Set(warnings.filter((w) => w.code !== 'out_of_square').map((w) => w.placementId).filter(Boolean) as string[]), [warnings]);
 
   // Piezas de cada mueble (para el 3D): se calculan una vez por mueble, no por cada vez que se coloca.
   const partsByCabinet = useMemo(() => {
@@ -58,6 +72,17 @@ export function RoomEditor({
     }
     return m;
   }, [cabinets, methods, materials, hardware]);
+  // Medidas para el ambiente: alto real, patas que sobresalen y puertas que barren al abrirse.
+  const sizes = useMemo(() => {
+    const out: Record<string, CabinetSize> = {};
+    for (const c of cabinets) {
+      const method = methods.find((x) => x.id === c.methodId) ?? methods[0];
+      out[c.id] = method ? roomSize(c.design, compute(c.design, method, materials, hardware)) : c.design.size;
+    }
+    return out;
+  }, [cabinets, methods, materials, hardware]);
+  const warnings = useMemo(() => analyzeRoom(plan, sizes, names), [plan, sizes, names]);
+  const flagged = useMemo(() => new Set(warnings.filter((w) => w.code !== 'out_of_square').map((w) => w.placementId).filter(Boolean) as string[]), [warnings]);
   const placed = useMemo(
     () =>
       plan.placements.flatMap((p) => {
@@ -197,7 +222,16 @@ export function RoomEditor({
       <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[minmax(0,1fr)] lg:gap-3 lg:p-3">
         <section className="relative h-[55dvh] min-h-[320px] bg-viewer lg:order-1 lg:h-auto" aria-label={view === 'plan' ? 'Planta' : 'Vista 3D'}>
           {view === 'plan' ? (
-            <PlanView store={store} plan={plan} selection={selection} sizes={sizes} names={names} flagged={flagged} />
+            <>
+              <PlanView store={store} plan={plan} selection={selection} sizes={sizes} names={names} flagged={flagged} block={block} />
+              <label
+                className="absolute right-3 top-3 flex items-center gap-2 rounded-full border border-border bg-surface/95 px-3 py-1.5 text-xs shadow-float"
+                title="Si está marcado, un mueble no se puede soltar donde choca con otro o atraviesa una pared: vuelve al último lugar libre"
+              >
+                <input type="checkbox" className="h-3.5 w-3.5 accent-[var(--accent)]" checked={block} onChange={(e) => toggleBlock(e.target.checked)} />
+                Bloquear superposiciones
+              </label>
+            </>
           ) : (
             <>
               <RoomViewer3D
@@ -225,7 +259,7 @@ export function RoomEditor({
           )}
           {view === 'plan' && (
             <p className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-surface/95 px-3 py-1 text-[11px] text-muted shadow-float">
-              Medidas en mm por la cara interior. Ángulos fuera de escuadra en naranja.
+              Medidas en mm por la cara interior. Ángulos fuera de escuadra en naranja. En rojo, lo que choca; en punteado, por dónde abren las puertas.
             </p>
           )}
         </section>

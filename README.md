@@ -18,6 +18,7 @@ Funciona en el navegador del ordenador y del móvil, y se puede instalar como ap
 | Documento PDF: portada, lista, plano de cortes, vistas isométricas (cerrado, abierto, explotado) y etiquetas | Hecho |
 | Patas como herrajes (rectas, cónicas, años 60 inclinadas, regulables detrás del zócalo) | Hecho |
 | Puertas con marco y vidrio, y puertas de vidrio templado con lista para la vidriería | Hecho |
+| Ambiente: muebles que se pegan a la pared y entre sí, bloqueo de superposiciones, puertas que golpean al abrirse | Hecho |
 | Puertas corredizas de 2 y 3 hojas | Hecho |
 | STL de juguete: mueble de una pieza con bisagras impresas que giran, cajones y corredizas que encastran | Hecho |
 | Ambientes: planta con paredes fuera de escuadra, puertas y ventanas, muebles colocados, vista 3D y avisos de choques y rellenos | Hecho |

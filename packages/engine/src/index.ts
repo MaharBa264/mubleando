@@ -9,3 +9,4 @@ export * from './room';
 export * from './hardware';
 export * from './cutting';
 export * from './legs';
+export * from './roomsize';

@@ -3,12 +3,15 @@
 import { useMemo, useRef } from 'react';
 import {
   alongWall,
+  doorSwing,
   footprint,
   moveCorner,
   nearestWall,
   OPENING_NAME,
   outerCorners,
+  placementCollides,
   slideOpening,
+  snapToNeighbor,
   snapToWall,
   walls,
   type CabinetSize,
@@ -27,7 +30,7 @@ const fmt = (len: number, digits = 0) => new Intl.NumberFormat('es-AR', { maximu
 const pts = (ps: readonly PlanPoint[]) => ps.map((p) => `${p.x},${p.y}`).join(' ');
 
 type Drag =
-  | { kind: 'placement'; id: string; from: PlanPoint; x0: number; y0: number; before: RoomPlan; moved: boolean }
+  | { kind: 'placement'; id: string; from: PlanPoint; x0: number; y0: number; before: RoomPlan; moved: boolean; free: { x: number; y: number; rotation: number } }
   | { kind: 'corner'; index: number; before: RoomPlan; moved: boolean }
   | { kind: 'opening'; id: string; from: PlanPoint; offset0: number; before: RoomPlan; moved: boolean };
 
@@ -44,6 +47,7 @@ export function PlanView({
   sizes,
   names,
   flagged,
+  block = false,
 }: {
   store: RoomStore;
   plan: RoomPlan;
@@ -52,6 +56,8 @@ export function PlanView({
   names: Readonly<Record<string, string>>;
   /** Muebles colocados con algún aviso: se dibujan en rojo. */
   flagged: ReadonlySet<string>;
+  /** No dejar soltar un mueble donde choca: vuelve al último lugar libre. */
+  block?: boolean;
 }) {
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<Drag | null>(null);
@@ -87,7 +93,15 @@ export function PlanView({
     if (d.kind === 'placement') {
       const x = snap(d.x0 + q.x - d.from.x);
       const y = snap(d.y0 + q.y - d.from.y);
-      store.getState().preview((p) => ({ ...p, placements: p.placements.map((pl) => (pl.id === d.id ? { ...pl, x, y } : pl)) }));
+      store.getState().preview((p) => {
+        const next = { ...p, placements: p.placements.map((pl) => (pl.id === d.id ? { ...pl, x, y } : pl)) };
+        // Último lugar sin choques, para volver ahí si está activado «Bloquear superposiciones».
+        if (!placementCollides(next, d.id, sizes)) {
+          const pl = next.placements.find((z) => z.id === d.id)!;
+          d.free = { x: pl.x, y: pl.y, rotation: pl.rotation };
+        }
+        return next;
+      });
     } else if (d.kind === 'opening') {
       // Se desliza por su pared: solo cuenta lo que el puntero avanza en la dirección de la pared.
       store.getState().preview((p) => {
@@ -116,9 +130,14 @@ export function PlanView({
         const fp = footprint(pl, size);
         const back = { x: (fp[0].x + fp[1].x) / 2, y: (fp[0].y + fp[1].y) / 2 };
         const dist = (back.x - w.a.x) * w.inward.x + (back.y - w.a.y) * w.inward.y;
-        if (Math.abs(dist) > MAGNET) return p;
-        const snapped = snapToWall(p, pl, size, wi);
-        return { ...p, placements: p.placements.map((x) => (x.id === d.id ? snapped : x)) };
+        let moved = Math.abs(dist) > MAGNET ? pl : snapToWall(p, pl, size, wi);
+        // Imán con el mueble de al lado: costado con costado y espalda con espalda.
+        moved = snapToNeighbor(p, moved, sizes, MAGNET);
+        let next = { ...p, placements: p.placements.map((x) => (x.id === d.id ? moved : x)) };
+        if (block && placementCollides(next, d.id, sizes)) {
+          next = { ...p, placements: p.placements.map((x) => (x.id === d.id ? { ...x, ...d.free } : x)) };
+        }
+        return next;
       });
     }
     store.getState().commit(d.before);
@@ -130,7 +149,7 @@ export function PlanView({
     if (!pl) return;
     store.getState().select({ kind: 'placement', id });
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    drag.current = { kind: 'placement', id, from: toPlan(e), x0: pl.x, y0: pl.y, before: plan, moved: false };
+    drag.current = { kind: 'placement', id, from: toPlan(e), x0: pl.x, y0: pl.y, before: plan, moved: false, free: { x: pl.x, y: pl.y, rotation: pl.rotation } };
   };
 
   const startOpening = (e: React.PointerEvent, id: string) => {
@@ -293,6 +312,20 @@ export function PlanView({
                 strokeDasharray={hung ? '6 4' : undefined}
                 vectorEffect="non-scaling-stroke"
               />
+              {/* por dónde abren sus puertas (90°) */}
+              {(size.doors ?? []).map((door, i) => (
+                <polygon
+                  key={i}
+                  points={pts(doorSwing(pl, size, door))}
+                  fill="none"
+                  stroke={bad ? 'var(--danger)' : 'var(--text-muted)'}
+                  strokeOpacity={0.6}
+                  strokeDasharray="3 3"
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                  pointerEvents="none"
+                />
+              ))}
               {/* frente del mueble: línea más gruesa */}
               <line x1={fp[3].x} y1={fp[3].y} x2={fp[2].x} y2={fp[2].y} stroke={stroke} strokeWidth={active ? 4 : 3} vectorEffect="non-scaling-stroke" />
               <text x={c.x} y={c.y} fontSize={fontSize * 0.8} textAnchor="middle" dominantBaseline="middle" fill="var(--text)" pointerEvents="none">

@@ -337,6 +337,17 @@ export interface CabinetSize {
   w: Len;
   h: Len;
   d: Len;
+  /**
+   * Lo que sobresalen las patas de la huella, abajo (patas inclinadas), y su alto. Opcional: sin
+   * esto, el mueble ocupa su rectángulo en toda su altura.
+   */
+  overhang?: { left: Len; right: Len; back: Len; front: Len };
+  legHeight?: Len;
+  /**
+   * Puertas de bisagra, para saber si golpean algo al abrirse. x0 desde el costado izquierdo,
+   * width = ancho de la hoja; y0 y y1 desde abajo del mueble.
+   */
+  doors?: { x0: Len; width: Len; y0: Len; y1: Len; hinge: 'left' | 'right' }[];
 }
 
 /** Vectores del mueble en la planta: `u` a lo ancho (izquierda → derecha) y `f` hacia su frente. */
@@ -355,6 +366,99 @@ export function footprint(p: Placement, size: CabinetSize): [Pt, Pt, Pt, Pt] {
   const fr = add(br, mul(f, size.d));
   const fl = add(bl, mul(f, size.d));
   return [bl, br, fr, fl];
+}
+
+/** Un volumen del mueble para buscar choques: su contorno en la planta y su alto (desde el piso). */
+interface Solid {
+  poly: Pt[];
+  z0: Len;
+  z1: Len;
+}
+
+/**
+ * Volúmenes de un mueble colocado: la caja (su rectángulo en toda la altura) y, si tiene patas que
+ * sobresalen, la franja de abajo con la huella agrandada.
+ */
+export function placementSolids(p: Placement, size: CabinetSize): Solid[] {
+  const fp = footprint(p, size);
+  const out: Solid[] = [{ poly: fp, z0: p.elevation, z1: p.elevation + size.h }];
+  const o = size.overhang;
+  if (o && size.legHeight && (o.left > 0 || o.right > 0 || o.back > 0 || o.front > 0)) {
+    const { u, f } = placementAxes(p.rotation);
+    const bl = add(add({ x: p.x, y: p.y }, mul(u, -o.left)), mul(f, -o.back));
+    const W = size.w + o.left + o.right;
+    const D = size.d + o.back + o.front;
+    out.push({ poly: [bl, add(bl, mul(u, W)), add(add(bl, mul(u, W)), mul(f, D)), add(bl, mul(f, D))], z0: p.elevation, z1: p.elevation + size.legHeight });
+  }
+  return out;
+}
+
+/** Zona que barre una puerta al abrirse 90°: un cuarto de círculo (aproximado con 8 tramos) en la planta. */
+export function doorSwing(p: Placement, size: CabinetSize, door: NonNullable<CabinetSize['doors']>[number]): Pt[] {
+  const { u, f } = placementAxes(p.rotation);
+  const left = door.hinge === 'left';
+  const hingeX = left ? door.x0 : door.x0 + door.width;
+  const hp = add(add({ x: p.x, y: p.y }, mul(u, hingeX)), mul(f, size.d));
+  const toward = mul(u, left ? 1 : -1);
+  const pts: Pt[] = [hp];
+  for (let i = 0; i <= 8; i++) {
+    const a = (Math.PI / 2) * (i / 8);
+    pts.push(add(hp, add(mul(toward, Math.cos(a) * door.width), mul(f, Math.sin(a) * door.width))));
+  }
+  return pts;
+}
+
+const solidsOverlap = (A: Solid[], B: Solid[]) => A.some((a) => B.some((b) => a.z0 < b.z1 && b.z0 < a.z1 && convexOverlap(a.poly, b.poly)));
+
+/**
+ * ¿El mueble colocado `id` choca con otro (en la planta y a la misma altura) o se sale del
+ * ambiente? Para bloquear el arrastre si se pide.
+ */
+export function placementCollides(plan: RoomPlan, id: string, sizes: Readonly<Record<string, CabinetSize>>): boolean {
+  const me = plan.placements.find((x) => x.id === id);
+  const size = me && sizes[me.cabinetId];
+  if (!me || !size) return false;
+  const mine = placementSolids(me, size);
+  const ws = walls(plan);
+  if (mine.some((s) => s.poly.some((q) => !pointInPolygon(q, plan.corners) && ws.every((w) => distToSegment(q, w.a, w.b) > 50)))) return true;
+  return plan.placements.some((o) => {
+    if (o.id === id) return false;
+    const os = sizes[o.cabinetId];
+    return !!os && solidsOverlap(mine, placementSolids(o, os));
+  });
+}
+
+/**
+ * Pega un mueble al de al lado: si está girado igual que otro (a la misma altura), con la espalda
+ * casi en la misma línea y un costado a menos de `threshold` del costado del otro, lo junta costado
+ * con costado y alinea las espaldas. Devuelve el mueble movido, o el mismo si no hay a cuál pegarlo.
+ */
+export function snapToNeighbor(plan: RoomPlan, p: Placement, sizes: Readonly<Record<string, CabinetSize>>, threshold: Len = mm(150)): Placement {
+  const size = sizes[p.cabinetId];
+  if (!size) return p;
+  let best: { d: number; to: Placement } | null = null;
+  for (const o of plan.placements) {
+    if (o.id === p.id) continue;
+    const os = sizes[o.cabinetId];
+    if (!os) continue;
+    const diff = Math.abs(((((p.rotation - o.rotation) % 360) + 540) % 360) - 180);
+    if (diff > 1) continue;
+    if (!(p.elevation < o.elevation + os.h && o.elevation < p.elevation + size.h)) continue;
+    // Posición del mueble en los ejes del otro.
+    const { u, f } = placementAxes(o.rotation);
+    const rel = sub({ x: p.x, y: p.y }, { x: o.x, y: o.y });
+    const lx = dot(rel, u);
+    const ly = dot(rel, f);
+    if (Math.abs(ly) > threshold) continue;
+    for (const target of [os.w, -size.w]) {
+      const d = Math.abs(lx - target);
+      if (d <= threshold && (!best || d < best.d)) {
+        const at = add({ x: o.x, y: o.y }, mul(u, target));
+        best = { d, to: { ...p, rotation: o.rotation, x: Math.round(at.x), y: Math.round(at.y) } };
+      }
+    }
+  }
+  return best ? best.to : p;
 }
 
 /**
@@ -435,7 +539,7 @@ function convexOverlap(A: readonly Pt[], B: readonly Pt[]): boolean {
 // ───────────────────────── avisos ─────────────────────────
 
 export interface RoomWarning {
-  code: 'outside' | 'overlap' | 'out_of_square' | 'blocks_door' | 'blocks_window' | 'missing_cabinet' | 'self_intersection' | 'opening_too_wide';
+  code: 'outside' | 'overlap' | 'out_of_square' | 'blocks_door' | 'blocks_window' | 'missing_cabinet' | 'self_intersection' | 'opening_too_wide' | 'door_swing';
   message: string;
   placementId?: string;
   openingId?: string;
@@ -452,6 +556,7 @@ const fmtMm = (v: number) => new Intl.NumberFormat('es-AR', { maximumFractionDig
  * - esquinas fuera de escuadra: si el costado de un mueble queda cerca de una pared pero no
  *   paralelo, avisa la separación atrás y adelante (el relleno cónico que hace falta);
  * - muebles delante de una puerta o, si llegan a la altura del antepecho, de una ventana;
+ * - puertas de los muebles que, al abrirse, golpean una pared u otro mueble;
  * - aberturas que no caben en su pared y paredes que se cruzan.
  * `sizes` da las medidas de cada mueble del proyecto por id; `names`, su nombre para los mensajes.
  */
@@ -477,8 +582,8 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
   const poly = plan.corners;
   for (const { p, size, name } of placed) {
     const fp = footprint(p, size);
-    // Se admite medio milímetro de tolerancia hacia fuera (redondeos de un mueble arrimado).
-    const outside = fp.some((q) => !pointInPolygon(q, poly) && ws.every((w) => distToSegment(q, w.a, w.b) > 50));
+    // Se admite medio milímetro de tolerancia hacia fuera (redondeos de un mueble arrimado). Con las patas que sobresalen.
+    const outside = placementSolids(p, size).some((s) => s.poly.some((q) => !pointInPolygon(q, poly) && ws.every((w) => distToSegment(q, w.a, w.b) > 50)));
     if (outside) out.push({ code: 'outside', message: `${name} se sale del ambiente o atraviesa una pared.`, placementId: p.id });
 
     // Costados cerca de una pared: separación atrás y adelante.
@@ -535,6 +640,27 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
       const vertical = A.p.elevation < B.p.elevation + B.size.h && B.p.elevation < A.p.elevation + A.size.h;
       if (vertical && convexOverlap(footprint(A.p, A.size), footprint(B.p, B.size))) {
         out.push({ code: 'overlap', message: `${A.name} y ${B.name} se pisan.`, placementId: A.p.id });
+      } else if (solidsOverlap(placementSolids(A.p, A.size), placementSolids(B.p, B.size))) {
+        out.push({ code: 'overlap', message: `Las patas de ${A.name} o de ${B.name} se pisan con el otro mueble.`, placementId: A.p.id });
+      }
+    }
+  }
+
+  // Puertas que, al abrirse, golpean una pared u otro mueble (a la altura de la puerta).
+  for (const A of placed) {
+    for (const door of A.size.doors ?? []) {
+      const swing = doorSwing(A.p, A.size, door);
+      const z0 = A.p.elevation + door.y0;
+      const z1 = A.p.elevation + door.y1;
+      const wall = swing.some((q) => !pointInPolygon(q, poly) && ws.every((w) => distToSegment(q, w.a, w.b) > 50));
+      const other = placed.find((B) => B !== A && placementSolids(B.p, B.size).some((s) => s.z0 < z1 && z0 < s.z1 && convexOverlap(swing, s.poly)));
+      if (wall || other) {
+        out.push({
+          code: 'door_swing',
+          message: `Una puerta de ${A.name} golpea ${wall ? 'la pared' : `a ${other!.name}`} al abrirse.`,
+          placementId: A.p.id,
+        });
+        break; // un aviso por mueble
       }
     }
   }
