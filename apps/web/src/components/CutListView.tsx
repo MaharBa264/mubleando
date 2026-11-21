@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
+import { CuttingPlanView } from '@/components/CuttingPlanView';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
 import { downloadBlob } from '@/lib/download';
@@ -255,7 +256,12 @@ export function CutListView({
           </span>
           <span className="tabular text-xl font-semibold">{fmtMoney(sum.totalCents + hwCents)}</span>
         </div>
+        <p className="text-xs text-muted md:col-span-2">
+          El tablero se cuenta por m² de pieza. Las placas enteras que hay que comprar, con su costo, están en el plano de cortes de abajo.
+        </p>
       </section>
+
+      <CuttingPlanView items={items} materials={materials} />
     </div>
   );
 }

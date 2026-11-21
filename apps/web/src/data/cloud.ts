@@ -55,6 +55,9 @@ interface MaterialRow {
   grain: Material['grain'];
   price_cents: number;
   color: string;
+  /** Medida de la placa (migración 20261121000001; puede no existir todavía). */
+  sheet_length?: number | null;
+  sheet_width?: number | null;
 }
 interface MethodRow {
   id: string;
@@ -88,7 +91,10 @@ const toMaterial = (r: MaterialRow): Material => ({
   grain: r.grain,
   priceCents: r.price_cents,
   color: r.color,
+  ...(r.sheet_length && r.sheet_width ? { sheet: { length: r.sheet_length, width: r.sheet_width } } : {}),
 });
+// Las columnas de la placa solo se mandan si el tablero tiene medida propia: así se puede seguir
+// guardando sin la migración de la medida de placa.
 const fromMaterial = (m: Material, userId: string) => ({
   user_id: userId,
   id: m.id,
@@ -98,6 +104,7 @@ const fromMaterial = (m: Material, userId: string) => ({
   grain: m.grain,
   price_cents: m.priceCents,
   color: m.color,
+  ...(m.sheet ? { sheet_length: m.sheet.length, sheet_width: m.sheet.width } : {}),
 });
 
 const toMethod = (r: MethodRow): Method => normalizeMethod({ ...r.spec, id: r.id, name: r.name });
@@ -339,13 +346,22 @@ export const cloudData: DataLayer = {
 
   async listMaterials() {
     await ensureLibrary();
-    const { data, error } = await supabase().from('materials').select('id, name, kind, thickness, grain, price_cents, color').order('created_at');
+    const { data, error } = await supabase().from('materials').select('*').order('created_at');
     if (error) fail(error, 'cargar los materiales');
     return (data as MaterialRow[]).map(toMaterial).filter((m) => materialSchema.safeParse(m).success);
   },
   async saveMaterial(material) {
     const m = materialSchema.parse({ ...material, name: material.name.trim() });
-    const { error } = await supabase().from('materials').upsert(fromMaterial(m, await userId()), { onConflict: 'user_id,id' });
+    const row = fromMaterial(m, await userId());
+    // Con la columna de la placa, sin medida propia se guarda vacía (vuelve a la de partida).
+    let { error } = await supabase()
+      .from('materials')
+      .upsert({ ...row, sheet_length: m.sheet?.length ?? null, sheet_width: m.sheet?.width ?? null }, { onConflict: 'user_id,id' });
+    if (error?.code === 'PGRST204') {
+      // Falta la migración de la medida de placa.
+      if (m.sheet) throw new Error('Para guardar la medida de la placa falta aplicar en Supabase la migración 20261121000001_medida_de_placa.sql (ver docs/nube.md).');
+      ({ error } = await supabase().from('materials').upsert(row, { onConflict: 'user_id,id' }));
+    }
     if (error) fail(error, 'guardar el material');
     return m;
   },

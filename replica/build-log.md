@@ -183,3 +183,13 @@ Comprobado: 15 pruebas de la web (7 nuevas: texto del tooltip, atajo aparte, pos
 | S21 | Planta del ambiente: puertas y ventanas arrastrables, flechas, distancias a los extremos | hecho | pasar una abertura a otra pared arrastrándola | los muebles de delante tapaban la abertura: la zona para agarrarla se extiende por fuera de la pared |
 
 Comprobado: 151 pruebas del motor (7 nuevas de `slideOpening`: dentro de la pared, pegada a los extremos y a otra abertura, salto al lugar libre más cercano, pared fuera de escuadra); en el navegador (modo local), arrastrar la ventana hasta el final de la pared (queda en 2200 en una pared de 3200), Mayús + flecha (300 mm) y las distancias 1.900 y 300. El arrastre con el dedo no se probó en un celular real.
+
+## Plano de cortes, issue #3 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| motor | `cutting.ts`: cortes guillotina con veta, sierra y refilado | hecho | retazos | — |
+| S24 | Despiece → Plano de cortes, con dibujo por placa y costo de placas enteras | hecho; **migración de la medida de placa pendiente de aplicar en Supabase** | — | — |
+| S11 | Tablero: medida de la placa | hecho | — | — |
+
+Comprobado: 160 pruebas del motor (9 del plano: placa llena justo, 1 mm de más, pieza que no entra, giro con y sin veta, 200 listas al azar sin superposiciones ni piezas perdidas, determinismo, plano y costo de un mueble), 59 de base de datos (3 de la medida de placa); en el navegador (modo local), el despiece del proyecto de ejemplo: la melamina blanca 18 en 4 placas, las tres primeras al 90 %.

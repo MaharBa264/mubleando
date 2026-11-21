@@ -185,6 +185,8 @@ export interface Material {
   priceCents: number;
   /** Color para el visor 3D, como token o valor CSS. */
   color: string;
+  /** Medida de la placa que se compra (tableros). Sin ella, la de partida según el espesor (ver cutting.ts). */
+  sheet?: { length: Len; width: Len };
 }
 
 export interface Method {
@@ -369,6 +371,7 @@ export const materialSchema: z.ZodType<Material> = z.object({
   grain: z.enum(['none', 'length']),
   priceCents: z.number().int().nonnegative(),
   color: z.string().min(1),
+  sheet: z.object({ length: lenSchema.positive(), width: lenSchema.positive() }).optional(),
 });
 
 export const methodSchema: z.ZodType<Method> = z.object({

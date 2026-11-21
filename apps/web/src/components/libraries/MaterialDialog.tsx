@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { mm, type Material } from '@mw/engine';
+import { defaultSheet, mm, type Len, type Material } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
-import { parseCents } from '@/lib/format';
+import { fmtMm, parseCents } from '@/lib/format';
 
 /** Colores del visor 3D disponibles para un material (tokens de globals.css). */
 export const MATERIAL_COLORS: [string, string][] = [
@@ -38,6 +38,9 @@ export function MaterialDialog({
 }) {
   const [m, setM] = useState(initial);
   const [price, setPrice] = useState(centsText(initial.priceCents));
+  // Medida de la placa: las dos vacías = la de partida según el espesor.
+  const [sheetL, setSheetL] = useState<Len | null>(initial.sheet?.length ?? null);
+  const [sheetW, setSheetW] = useState<Len | null>(initial.sheet?.width ?? null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const panel = m.kind === 'panel';
@@ -46,10 +49,13 @@ export function MaterialDialog({
   const save = async () => {
     if (!m.name.trim()) return setError('Ponle un nombre.');
     if (cents === null) return setError('El precio tiene que ser un número, por ejemplo 25.000 o 25.000,50.');
+    if (panel && (sheetL === null) !== (sheetW === null)) return setError('Completá el largo y el ancho de la placa, o dejá los dos vacíos para usar la de partida.');
+    const { sheet: _old, ...rest } = m;
+    const sheet = panel && sheetL !== null && sheetW !== null ? { length: Math.max(sheetL, sheetW), width: Math.min(sheetL, sheetW) } : undefined;
     setBusy(true);
     setError(null);
     try {
-      await onSave({ ...m, name: m.name.trim(), priceCents: cents });
+      await onSave({ ...rest, name: m.name.trim(), priceCents: cents, ...(sheet ? { sheet } : {}) });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se ha podido guardar.');
@@ -95,6 +101,16 @@ export function MaterialDialog({
               <span className="block text-xs text-muted">Las piezas no se podrán girar al colocarlas en el tablero; el largo de la pieza va en la dirección de la veta.</span>
             </span>
           </label>
+        )}
+        {panel && (
+          <div>
+            <p className="mb-1.5 text-sm font-medium">Medida de la placa que comprás</p>
+            <div className="grid grid-cols-2 gap-3">
+              <MmField label="Largo" value={sheetL} allowEmpty min={mm(100)} max={mm(6000)} placeholder={fmtMm(defaultSheet(m.thickness).length)} onCommit={setSheetL} />
+              <MmField label="Ancho" value={sheetW} allowEmpty min={mm(100)} max={mm(3000)} placeholder={fmtMm(defaultSheet(m.thickness).width)} onCommit={setSheetW} />
+            </div>
+            <p className="mt-1 text-xs text-muted">Para el plano de cortes. Vacío = la de partida ({fmtMm(defaultSheet(m.thickness).length)} × {fmtMm(defaultSheet(m.thickness).width)}). Con veta, la veta va a lo largo.</p>
+          </div>
         )}
         <SelectField label="Color en el visor 3D" value={m.color} onChange={(e) => setM({ ...m, color: e.target.value })}>
           {MATERIAL_COLORS.map(([v, label]) => (

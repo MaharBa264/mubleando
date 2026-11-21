@@ -6,6 +6,7 @@
 | [Guía de uso](guia-de-uso.md) | quien vaya a diseñar muebles | de crear un proyecto a mandar la lista de corte a la maderera o imprimir el mueble en 3D |
 | [El motor de cálculo](motor.md) | quien quiera entender o cambiar cómo salen las medidas | unidades, el documento del diseño, el método de fabricación, cada pieza y su fórmula, avisos, funciones de edición |
 | [Ambientes](ambientes.md) | quien vaya a dibujar una cocina o una habitación | planta, medidas de obra fuera de escuadra, aberturas, colocar muebles, avisos y cómo funciona por dentro |
+| [Plano de cortes](plano-de-cortes.md) | quien compre las placas | cuántas placas, cómo se acomodan las piezas, sierra, refilado, veta y costo |
 | [Herrajes](herrajes.md) | quien elija bisagras, correderas y corredizas | biblioteca, cómo cambia cada herraje las medidas, ejemplos y fuentes |
 | [Exportaciones](exportaciones.md) | quien use los archivos que salen de la app | CSV (columnas, decimales, cómo pedir el corte a una maderera) y STL (modos, escalas, espesor mínimo, cajones, ejes) |
 | [Sistema de diseño](diseno.md) | quien diseñe o toque la interfaz | principios de UX, colores, tipografías, radios, sombras, componentes base, patrones de pantalla y registro de decisiones visuales |

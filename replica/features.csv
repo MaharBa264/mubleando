@@ -42,7 +42,7 @@ Dimensiones permanentes en 3D,3d,should,yes,yes,S03; cotas generales y del hueco
 Deshacer / rehacer,ui,should,yes,yes,global; botones y Ctrl+Z / Ctrl+Y
 Parámetros y variables del mueble,motor,should,yes,no,S23
 Presupuesto PDF para el cliente,salidas,should,partial,no,v6 solo tiene precios; la plantilla es de v7
-Optimizador de corte de tableros propio,salidas,should,no,no,sustituye a OptiCut
+Optimizador de corte de tableros propio,salidas,should,no,yes,"sustituye a OptiCut; guillotina con veta, sierra y refilado, costo de placas enteras"
 Hoja de pedido para la maderera (PDF),salidas,should,no,no,mejora: sin CNC el corte se encarga fuera; hoy sirve el CSV o imprimir el despiece
 Exportar STL del mueble completo a escala,salidas,should,no,yes,mejora: maquetas en impresora 3D; escala y espesor mínimo impreso
 Exportar STL pieza a pieza (ZIP con LEEME),salidas,should,no,yes,mejora: piezas iguales una vez con la cantidad en el nombre

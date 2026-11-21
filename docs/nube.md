@@ -35,6 +35,7 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
    - `20261117000001_precios_en_pesos.sql`: deja sin precio los materiales de partida que seguían con su precio en euros.
    - `20261118000001_herrajes.sql`: tabla de herrajes; los métodos argentinos de partida pasan a usar herrajes por defecto. Mientras no esté, la app funciona sin herrajes.
    - `20261118000000_ambientes.sql`: tabla de ambientes (planta y muebles colocados). Mientras no esté, los proyectos se ven sin ambientes y crear uno avisa de que falta.
+   - `20261121000001_medida_de_placa.sql`: medida de la placa de cada tablero, para el plano de cortes. Mientras no esté, el plano usa las placas de partida.
    - `20261121000000_registro_con_lista.sql`: el registro pasa a ser **solo para los mails de una lista** que edita el administrador. La cuenta más antigua del proyecto pasa a ser la administradora. Ver [Quién puede registrarse](#quién-puede-registrarse).
 
 Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.

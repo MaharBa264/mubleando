@@ -130,6 +130,12 @@ describe('cuenta A', () => {
     await expect(data.deleteMaterial('ar-mel-blanca-18')).rejects.toBeInstanceOf(InUseError);
     await data.saveMaterial({ id: 'prueba-mat', name: 'Tablero prueba', kind: 'panel', thickness: mm(18), grain: 'length', priceCents: 1234, color: 'var(--mat-oak)' });
     expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.priceCents).toBe(1234);
+    // Medida de la placa: se guarda, y al quitarla vuelve a la de partida.
+    const tablero = (await data.listMaterials()).find((x) => x.id === 'prueba-mat')!;
+    await data.saveMaterial({ ...tablero, sheet: { length: mm(2600), width: mm(1830) } });
+    expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.sheet).toEqual({ length: mm(2600), width: mm(1830) });
+    await data.saveMaterial(tablero);
+    expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.sheet).toBeUndefined();
     await data.deleteMaterial('prueba-mat');
     await data.renameProject(projectId, 'Cocina renombrada');
     expect((await data.getProject(projectId))?.name).toBe('Cocina renombrada');
