@@ -193,3 +193,6 @@ Comprobado: 151 pruebas del motor (7 nuevas de `slideOpening`: dentro de la pare
 | S11 | Tablero: medida de la placa | hecho | — | — |
 
 Comprobado: 160 pruebas del motor (9 del plano: placa llena justo, 1 mm de más, pieza que no entra, giro con y sin veta, 200 listas al azar sin superposiciones ni piezas perdidas, determinismo, plano y costo de un mueble), 59 de base de datos (3 de la medida de placa); en el navegador (modo local), el despiece del proyecto de ejemplo: la melamina blanca 18 en 4 placas, las tres primeras al 90 %.
+
+Migración de la medida de placa aplicada en Supabase (21-11-2026): la prueba contra el proyecto real pasa 15 de 15, incluido guardar y quitar la medida de placa de un tablero.
+
