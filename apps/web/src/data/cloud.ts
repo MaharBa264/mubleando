@@ -174,9 +174,19 @@ async function ensureHardware() {
   const { count, error } = await sb.from('hardware').select('id', { count: 'exact', head: true });
   if (error && isMissingTable(error)) return; // falta la migración: se sigue sin herrajes
   if (error) fail(error, 'leer los herrajes');
+  const legs = PRESET_HARDWARE.filter((h) => h.kind === 'leg');
   if (!count) {
-    const r = await sb.from('hardware').upsert(PRESET_HARDWARE.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    let r = await sb.from('hardware').upsert(PRESET_HARDWARE.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    // Sin la migración de las patas, la base no acepta el tipo 'leg': se crean los demás.
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'leg').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (r.error) fail(r.error, 'crear los herrajes de partida');
+  } else {
+    // Cuentas que ya tenían herrajes: las patas de partida, una vez (si no tienen ninguna).
+    const has = await sb.from('hardware').select('id', { count: 'exact', head: true }).eq('kind', 'leg');
+    if (!has.error && !has.count) {
+      const r = await sb.from('hardware').upsert(legs.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      if (r.error && r.error.code !== '23514') fail(r.error, 'crear las patas de partida');
+    }
   }
   hardwareChecked = uid;
 }

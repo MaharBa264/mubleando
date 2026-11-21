@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { compute, type HardwareItem } from '@mw/engine';
+import { compute, type HardwareItem, type LegOut } from '@mw/engine';
 import { Page } from '@/components/AppShell';
 import { CutListView } from '@/components/CutListView';
 import { ButtonLink } from '@/components/ui/Button';
@@ -48,11 +48,13 @@ export default function ProjectCutListPage() {
 
   const warnings: string[] = [];
   const hwItems: HardwareItem[] = [];
+  const legs: Record<string, LegOut[]> = {};
   const items = cabinets.flatMap((c) => {
     const method = methods.find((m) => m.id === c.methodId) ?? methods[0]!;
     const r = compute(c.design, method, materials, hardware);
     for (const w of r.warnings) warnings.push(`${c.name}: ${w.message}`);
     for (const h of r.hardware) hwItems.push({ ...h, qty: h.qty * c.quantity });
+    if (r.legs.length) legs[c.name] = r.legs;
     return r.parts.map((part) => ({ part, qty: c.quantity, source: c.name }));
   });
 
@@ -68,7 +70,7 @@ export default function ProjectCutListPage() {
       <p className="-mt-4 mb-6 text-sm text-muted">
         {cabinets.length} {cabinets.length === 1 ? 'mueble' : 'muebles'}
       </p>
-      <CutListView title={project.name} items={items} materials={materials} hardware={hwItems} fileName={slug(project.name)} warnings={warnings} />
+      <CutListView title={project.name} legs={legs} items={items} materials={materials} hardware={hwItems} fileName={slug(project.name)} warnings={warnings} />
     </Page>
   );
 }

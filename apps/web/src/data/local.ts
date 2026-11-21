@@ -31,7 +31,7 @@ const KEY = 'mueblesweb:v1';
  * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
  * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos · 4: ambientes · 5: herrajes.
  */
-const SCHEMA = 5;
+const SCHEMA = 6;
 
 interface State {
   schema?: number;
@@ -118,6 +118,10 @@ function migrate(s: State): State {
     // Herrajes de partida y, en los métodos argentinos de partida, los herrajes por defecto.
     s.hardware = structuredClone(PRESET_HARDWARE);
     s.methods = s.methods.map((m) => (m.id.startsWith('ar-18-') && !m.hardware ? { ...m, hardware: { ...DEFAULT_HARDWARE_CHOICE } } : m));
+  }
+  if ((s.schema ?? 1) === 5 && !(s.hardware ?? []).some((h) => h.kind === 'leg')) {
+    // Patas de partida, para las bibliotecas que ya tenían herrajes.
+    s.hardware = [...(s.hardware ?? []), ...structuredClone(PRESET_HARDWARE.filter((h) => h.kind === 'leg'))];
   }
   s.hardware = (s.hardware ?? []).filter((h) => hardwareSchema.safeParse(h).success);
   s.schema = SCHEMA;

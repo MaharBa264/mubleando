@@ -1,4 +1,5 @@
 import type { Box, ComputeResult, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
+import { placeLegs } from './legs';
 import { hingeCount, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
 import { normalizeMethod } from './presets';
 import { distribute, mm, toMm, type Len } from './units';
@@ -56,7 +57,59 @@ interface Rect {
  * Orden de las piezas: costados, tapa, base, trasera, estantes y divisores, zócalo,
  * puertas, y por cada cajón su frente y su caja.
  */
+/**
+ * Calcula las piezas de un mueble. Con patas (y sin zócalo), arma la caja con el alto que queda y
+ * la sube el alto de la pata; con zócalo, las patas van ocultas detrás y el alto lo da el zócalo.
+ */
 export function compute(design: Design, methodIn: Method, materials: readonly Material[], hardwareLib: readonly Hardware[] = []): ComputeResult {
+  if (!design.legs) return computeBox(design, methodIn, materials, hardwareLib);
+  const hw =
+    (hardwareLib.find((h) => h.id === design.legs!.hardwareId && h.kind === 'leg') as Extract<Hardware, { kind: 'leg' }> | undefined) ??
+    (PRESET_HARDWARE.find((h) => h.id === design.legs!.hardwareId && h.kind === 'leg') as Extract<Hardware, { kind: 'leg' }> | undefined);
+  if (!hw) {
+    const r = computeBox({ ...design, legs: undefined }, methodIn, materials, hardwareLib);
+    r.warnings.push({ code: 'material_missing', message: 'Las patas elegidas ya no están en la biblioteca: el mueble se calcula sin patas.' });
+    return r;
+  }
+  const spec = hw.spec;
+  const { w, h, d } = design.size;
+  const plinthH = design.plinth && design.plinth.height > 0 ? design.plinth.height : 0;
+  const warnings: Warning[] = [];
+  let r: ComputeResult;
+  let legH: Len;
+  if (plinthH > 0) {
+    // Detrás del zócalo: la pata mide lo que el zócalo.
+    legH = plinthH;
+    r = computeBox({ ...design, legs: undefined }, methodIn, materials, hardwareLib);
+    if (spec.style === 'adjustable' && spec.adjustMax > 0 && (legH < spec.adjustMin || legH > spec.adjustMax)) {
+      warnings.push({ code: 'hardware_mismatch', message: `El zócalo mide ${toMm(legH)} mm y las patas regulan de ${toMm(spec.adjustMin)} a ${toMm(spec.adjustMax)} mm.` });
+    }
+  } else {
+    legH = spec.height;
+    const inside = design.legs.includeInHeight !== false;
+    const boxH = inside ? h - legH : h;
+    if (boxH <= 0) {
+      r = computeBox({ ...design, legs: undefined }, methodIn, materials, hardwareLib);
+      r.warnings.push({ code: 'zone_too_small', message: 'Las patas son tan altas como el mueble: se calcula sin patas.' });
+      return r;
+    }
+    r = computeBox({ ...design, legs: undefined, size: { ...design.size, h: boxH } }, methodIn, materials, hardwareLib);
+    // La caja sube el alto de la pata: todas las piezas y huecos.
+    for (const p of r.parts) p.box = { ...p.box, y: p.box.y + legH };
+    for (const z of r.zones) z.box = { ...z.box, y: z.box.y + legH };
+  }
+  // La huella de la caja (sin las puertas, que sobresalen): las patas van debajo de la caja.
+  const carcass = r.parts.filter((p) => p.role === 'side' || p.role === 'bottom');
+  const depth = carcass.length ? Math.max(...carcass.map((p) => p.box.z + p.box.dz)) : d;
+  const legs = placeLegs(spec, w, depth, legH);
+  const note = `${toMm(legH)} mm`;
+  const prev = r.hardware.find((x) => x.hardwareId === hw.id && x.note === note);
+  if (prev) prev.qty += legs.length;
+  else r.hardware.push({ hardwareId: hw.id, name: hw.name, kind: 'leg', qty: legs.length, unit: 'unidad', priceCents: hw.priceCents, note });
+  return { ...r, warnings: [...r.warnings, ...warnings], legs };
+}
+
+function computeBox(design: Design, methodIn: Method, materials: readonly Material[], hardwareLib: readonly Hardware[] = []): ComputeResult {
   // Un método guardado con una versión anterior (sin frentes ni cajones) se completa en lugar de fallar.
   const method = normalizeMethod(methodIn);
   const mats = new Map(materials.map((m) => [m.id, m]));
@@ -66,7 +119,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   const overrides = design.overrides ?? {};
 
   // ── herrajes: el que elige el mueble, o el del método ──
-  const pickHw = <K extends HardwareKind>(kind: K) => {
+  const pickHw = <K extends Exclude<HardwareKind, 'leg'>>(kind: K) => {
     const id = design.hardware?.[kind] ?? method.hardware?.[kind];
     return id ? (hardwareLib.find((h) => h.id === id && h.kind === kind) as Extract<Hardware, { kind: K }> | undefined) : undefined;
   };
@@ -240,7 +293,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   const innerH = innerTopY - (plinthH + t);
   if (innerW <= 0 || innerH <= 0) {
     warnings.push({ code: 'zone_too_small', message: 'El mueble es más estrecho o más bajo que dos tableros.' });
-    return { parts, zones, warnings, hardware: [] };
+    return { parts, zones, warnings, hardware: [], legs: [] };
   }
 
   const frontEdgeOnly = methodFrontEdge ? { ...NO_EDGES, L1: methodFrontEdge } : { ...NO_EDGES };
@@ -696,7 +749,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     return true;
   });
 
-  return { parts, zones, warnings: unique, hardware: [...items.values()] };
+  return { parts, zones, warnings: unique, hardware: [...items.values()], legs: [] };
 }
 
 /**

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { mm, type Hardware, type HardwareKind, type Len, type Material, type Method } from '@mw/engine';
+import { mm, type Hardware, type Len, type Material, type Method } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
@@ -166,7 +166,7 @@ export function MethodDialog({
                   ['hinge', 'Bisagras'],
                   ['slide', 'Correderas'],
                   ['sliding', 'Sistema corredizo'],
-                ] as [HardwareKind, string][]
+                ] as [keyof NonNullable<Method['hardware']>, string][]
               ).map(([kind, label]) => (
                 <SelectField
                   key={kind}

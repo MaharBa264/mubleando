@@ -5,7 +5,7 @@
  * nítidas a cualquier tamaño. Ejes del motor: x a lo ancho (a la derecha), y a lo alto, z hacia el
  * frente. Se mira desde adelante, a la derecha y arriba, en isométrica. Puro y determinista.
  */
-import type { Part } from '@mw/engine';
+import type { LegOut, Part } from '@mw/engine';
 
 export type Vec3 = [number, number, number];
 export type Pt2 = [number, number];
@@ -271,10 +271,37 @@ export interface ViewOptions {
   mode: FrontsMode | 'exploded';
   /** Número de cada pieza (por ejemplo, el de la lista agrupada), para rotularla. */
   labels?: ReadonlyMap<string, string>;
+  /** Patas del mueble: se dibujan como prismas a plomo, con su sección media. */
+  legs?: readonly LegOut[];
+}
+
+/** Las patas como piezas de dibujo: un prisma vertical por pata, en el punto medio entre arriba y el piso. */
+function legParts(legs: readonly LegOut[]): Part[] {
+  return legs.map((l, i) => {
+    const size = (l.topSize + l.bottomSize) / 2;
+    const cx = (l.top.x + l.foot.x) / 2;
+    const cz = (l.top.z + l.foot.z) / 2;
+    return {
+      key: `leg${i}`,
+      role: 'plinth',
+      name: `Pata ${i + 1}`,
+      materialId: '',
+      thickness: size,
+      length: l.height,
+      width: size,
+      cutLength: l.height,
+      cutWidth: size,
+      edges: { L1: null, L2: null, W1: null, W2: null },
+      grain: 'none',
+      box: { x: cx - size / 2, y: 0, z: cz - size / 2, dx: size, dy: l.height, dz: size },
+    } as Part;
+  });
 }
 
 /** Vista de un mueble: polígonos en orden de dibujo y, si se piden, los rótulos de las piezas. */
-export function cabinetView(parts: readonly Part[], opts: ViewOptions): CabinetView {
+export function cabinetView(partsIn: readonly Part[], opts: ViewOptions): CabinetView {
+  // En la explotada, las patas no se dibujan (son herrajes, no piezas que se cortan).
+  const parts = opts.legs?.length && opts.mode !== 'exploded' ? [...partsIn, ...legParts(opts.legs)] : partsIn;
   const size = { w: 0, h: 0, d: 0 };
   for (const p of parts) {
     size.w = Math.max(size.w, p.box.x + p.box.dx);

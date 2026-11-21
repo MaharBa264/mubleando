@@ -4,13 +4,14 @@
  * Todo dibujado como vectores en A4.
  */
 import { jsPDF } from 'jspdf';
-import { cuttingPlan, groupedRows, toMm, type CutItem, type CuttingOptions, type Material, type Part } from '@mw/engine';
+import { cuttingPlan, groupedRows, toMm, type CutItem, type CuttingOptions, type LegOut, type Material, type Part } from '@mw/engine';
 import { addLabelPages, LABEL_FORMATS, labelsFromCutList, type LabelFormat } from './labels';
 import { cabinetView, type CabinetView } from './views';
 
 export interface DocCabinet {
   name: string;
   parts: Part[];
+  legs?: LegOut[];
 }
 
 export interface DocInclude {
@@ -140,7 +141,7 @@ function coverPage(doc: jsPDF, o: DocOptions) {
   // Una vista armada del primer mueble, si hay alguna vista elegida (o siempre, si no hay otra cosa que mostrar).
   const first = o.cabinets[0];
   if (first && first.parts.length) {
-    drawView(doc, cabinetView(first.parts, { mode: 'closed' }), { x: PAGE.m + 10, y: y + 18, w: PAGE.w - 2 * PAGE.m - 20, h: PAGE.h - y - 50 });
+    drawView(doc, cabinetView(first.parts, { mode: 'closed', legs: first.legs }), { x: PAGE.m + 10, y: y + 18, w: PAGE.w - 2 * PAGE.m - 20, h: PAGE.h - y - 50 });
   }
 }
 
@@ -282,7 +283,7 @@ function viewPages(doc: jsPDF, o: DocOptions) {
     for (const v of views) {
       doc.addPage('a4', 'portrait');
       const top = heading(doc, c.name, `${v.name}${v.note ? ` · ${v.note}` : ''}`);
-      drawView(doc, cabinetView(c.parts, { mode: v.mode, labels: v.mode === 'exploded' ? refs : undefined }), {
+      drawView(doc, cabinetView(c.parts, { mode: v.mode, labels: v.mode === 'exploded' ? refs : undefined, legs: c.legs }), {
         x: PAGE.m,
         y: top + 4,
         w: PAGE.w - 2 * PAGE.m,

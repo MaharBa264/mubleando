@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { hardwareChoiceSchema, type HardwareChoice, type HardwareItem } from './hardware';
+import type { LegOut } from './legs';
 import type { Len } from './units';
 
 // ───────────────────────── documento de diseño (lo que se guarda) ─────────────────────────
@@ -106,6 +107,17 @@ export interface Design {
   construction?: Construction;
   /** Herrajes elegidos para este mueble. Lo que falta sale del método de fabricación. */
   hardware?: HardwareChoice;
+  /**
+   * Patas (herraje de la biblioteca). Sin zócalo, el mueble sube el alto de la pata; con zócalo,
+   * las patas van ocultas detrás (las regulables de cocina) y el alto lo da el zócalo.
+   */
+  legs?: Legs;
+}
+
+export interface Legs {
+  hardwareId: string;
+  /** El alto del mueble incluye las patas (por defecto). Si no, el mueble mide su alto más las patas. */
+  includeInHeight?: boolean;
 }
 
 const lenSchema = z.number().int();
@@ -151,6 +163,7 @@ export const designSchema: z.ZodType<Design> = z.object({
   size: z.object({ w: lenSchema.positive(), h: lenSchema.positive(), d: lenSchema.positive() }),
   root: zoneSchema,
   plinth: z.object({ height: lenSchema.nonnegative(), setback: lenSchema.nonnegative() }).optional(),
+  legs: z.object({ hardwareId: z.string().min(1), includeInHeight: z.boolean().optional() }).optional(),
   overrides: z
     .record(
       z.string(),
@@ -359,6 +372,8 @@ export interface ComputeResult {
   warnings: Warning[];
   /** Herrajes que lleva el mueble (bisagras, correderas, sistemas corredizos), si se pasó la biblioteca. */
   hardware: HardwareItem[];
+  /** Patas del mueble (vacío si no lleva). */
+  legs: LegOut[];
 }
 
 // ───────────────────────── validación de bibliotecas guardadas ─────────────────────────

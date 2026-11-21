@@ -38,12 +38,13 @@ beforeAll(async () => {
   await db.exec(SHIM);
   const dir = join(import.meta.dirname, '..', 'migrations');
   const files = readdirSync(dir).filter((x) => x.endsWith('.sql')).sort();
-  // Se aplican todas menos la de herrajes, se crea un método argentino "viejo" y después la de herrajes.
+  // Se aplican las anteriores a la de herrajes, se crea un método argentino "viejo", la de herrajes y las siguientes.
   const hw = files.find((f) => f.includes('herrajes'))!;
-  for (const f of files.filter((f) => f !== hw)) await db.exec(readFileSync(join(dir, f), 'utf8'));
+  for (const f of files.filter((f) => f < hw)) await db.exec(readFileSync(join(dir, f), 'utf8'));
   await db.query('insert into auth.users (id) values ($1), ($2)', [ANA, BEA]);
   await as(ANA, (tx) => tx.query("insert into methods (id, name, spec) values ('ar-18-ranura', 'M', '{}'), ('propio', 'P', '{}')"));
   await db.exec(readFileSync(join(dir, hw), 'utf8'));
+  for (const f of files.filter((f) => f > hw)) await db.exec(readFileSync(join(dir, f), 'utf8'));
 });
 afterAll(async () => db?.close());
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
-import type { Design, Part, ZoneOut } from '@mw/engine';
+import type { Design, LegOut, Part, ZoneOut } from '@mw/engine';
 import { exportStl, exportToy, slug, zip, type DrawerMode } from '@mw/exporters';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
@@ -40,6 +40,7 @@ export function StlExportDialog({
   onClose,
   parts,
   zones,
+  legs = [],
   size,
   name,
 }: {
@@ -47,6 +48,7 @@ export function StlExportDialog({
   onClose: () => void;
   parts: Part[];
   zones: ZoneOut[];
+  legs?: LegOut[];
   size: Design['size'];
   name: string;
 }) {
@@ -60,11 +62,11 @@ export function StlExportDialog({
   // Se calcula al vuelo (son unos pocos cientos de triángulos) para enseñar el tamaño y los avisos antes de descargar.
   const preview = useMemo(() => {
     if (mode === 'toy') {
-      const t = exportToy(parts, zones, size, { name: name || 'mueble', scale, clearance, minWall: Math.max(minT, 0.8) });
+      const t = exportToy(parts, zones, size, { name: name || 'mueble', scale, clearance, minWall: Math.max(minT, 0.8), legs });
       return { ...t, printedSize: null };
     }
-    return exportStl(parts, { mode, scale, minThicknessMm: minT, drawers: hasDrawers ? drawers : 'integrated', name: name || 'mueble' });
-  }, [parts, zones, size, mode, scale, minT, drawers, hasDrawers, name, clearance]);
+    return exportStl(parts, { mode, scale, minThicknessMm: minT, drawers: hasDrawers ? drawers : 'integrated', name: name || 'mueble', legs });
+  }, [parts, zones, legs, size, mode, scale, minT, drawers, hasDrawers, name, clearance]);
 
   const download = () => {
     const { files, readme } = preview;

@@ -1,4 +1,5 @@
-import type { Box, Part } from '@mw/engine';
+import type { Box, LegOut, Part } from '@mw/engine';
+import { legTriangles, type Tri3 } from './legmesh';
 
 /**
  * Exportación STL para impresión 3D (maquetas).
@@ -151,12 +152,35 @@ export function boxTriangles(b: PBox): Tri[] {
   ];
 }
 
+/** Triángulo con su normal (calculada a partir del orden de los vértices). */
+function withNormal([a, b, c]: Tri3): Tri {
+  const u: [number, number, number] = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+  const v: [number, number, number] = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+  const n: [number, number, number] = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+  const l = Math.hypot(...n) || 1;
+  return [[n[0] / l, n[1] / l, n[2] / l], a, b, c];
+}
+
+/** Caja que encierra unos triángulos (para medir el tamaño impreso con las patas). */
+function trisBox(tris: readonly Tri3[]): PBox | null {
+  if (!tris.length) return null;
+  const vs = tris.flat();
+  return {
+    x0: Math.min(...vs.map((v) => v[0])),
+    x1: Math.max(...vs.map((v) => v[0])),
+    y0: Math.min(...vs.map((v) => v[1])),
+    y1: Math.max(...vs.map((v) => v[1])),
+    z0: Math.min(...vs.map((v) => v[2])),
+    z1: Math.max(...vs.map((v) => v[2])),
+  };
+}
+
 /**
  * STL binario: cabecera de 80 bytes, número de triángulos (uint32) y 50 bytes por triángulo
  * (normal + 3 vértices en float32, y 2 bytes de atributo a cero). Todo en little endian.
  */
-export function binaryStl(boxes: PBox[], header = 'mueblesweb'): Uint8Array<ArrayBuffer> {
-  const tris = boxes.flatMap(boxTriangles);
+export function binaryStl(boxes: PBox[], header = 'mueblesweb', extra: readonly Tri3[] = []): Uint8Array<ArrayBuffer> {
+  const tris: Tri[] = [...boxes.flatMap(boxTriangles), ...extra.map(withNormal)];
   const buf = new ArrayBuffer(84 + tris.length * 50);
   const view = new DataView(buf);
   const head = new TextEncoder().encode(header.slice(0, 80));
@@ -239,7 +263,7 @@ function scaleLabel(scale: number) {
  */
 export function exportStl(
   parts: Part[],
-  opts: StlOptions & { mode: 'assembled' | 'pieces'; drawers?: DrawerMode; name: string },
+  opts: StlOptions & { mode: 'assembled' | 'pieces'; drawers?: DrawerMode; name: string; legs?: readonly LegOut[] },
 ): StlExport {
   const o: Required<StlOptions> = {
     scale: opts.scale ?? DEFAULTS.scale,
@@ -261,8 +285,23 @@ export function exportStl(
   const files: StlFile[] = [];
   let printedSize: StlExport['printedSize'] = null;
 
+  // Patas: a la escala del archivo (x, −z, y) y engordadas al espesor mínimo.
+  const legs = opts.legs ?? [];
+  const toFile = ([x, y, z]: [number, number, number]): [number, number, number] => [toPrinted(x, o.scale), -toPrinted(z, o.scale), toPrinted(y, o.scale)];
+  const minLeg = (o.minThicknessMm / o.scale) * 100;
+
   if (opts.mode === 'pieces') {
     files.push(...piecesFiles(parts, '', o, readme, counters));
+    if (legs.length) {
+      // Una pata (todas son iguales), apoyada en la cama: se imprime tantas veces como patas lleva.
+      const tris = legTriangles(legs[0]!, toFile, minLeg);
+      const b = trisBox(tris)!;
+      const moved = tris.map((t) => t.map((v) => [v[0] - b.x0, v[1] - b.y0, v[2] - b.z0]) as Tri3);
+      const name = `pata-x${legs.length}.stl`;
+      files.push({ name, data: binaryStl([], 'pata', moved) });
+      readme.push(`${name}
+    Imprimir ${legs.length} veces. Alto real ${realMm(legs[0]!.height)} mm.`);
+    }
   } else {
     const drawers = opts.drawers ?? 'integrated';
     const isDrawer = (p: Part) => p.assembly?.kind === 'drawer';
@@ -272,10 +311,19 @@ export function exportStl(
       if (thicken(b, o.minThicknessMm)) counters.thin++;
       return b;
     });
-    const boxes = toOrigin(placed);
-    printedSize = sizeOf(boxes);
+    const legTris = legs.flatMap((l) => legTriangles(l, toFile, minLeg));
+    // Todo junto con la esquina mínima en el origen (las patas inclinadas pueden salir de la caja).
+    const lb = trisBox(legTris);
+    const all = lb ? [...placed, lb] : placed;
+    const mx = Math.min(...all.map((b) => b.x0));
+    const my = Math.min(...all.map((b) => b.y0));
+    const mz = Math.min(...all.map((b) => b.z0));
+    const boxes = placed.map((b) => ({ x0: b.x0 - mx, x1: b.x1 - mx, y0: b.y0 - my, y1: b.y1 - my, z0: b.z0 - mz, z1: b.z1 - mz }));
+    const movedLegs = legTris.map((t) => t.map((v) => [v[0] - mx, v[1] - my, v[2] - mz]) as Tri3);
+    const lb2 = trisBox(movedLegs);
+    printedSize = sizeOf(lb2 ? [...boxes, lb2] : boxes);
     const main = `${base}.stl`;
-    files.push({ name: main, data: binaryStl(boxes, opts.name) });
+    files.push({ name: main, data: binaryStl(boxes, opts.name, movedLegs) });
     readme.push(
       `${main}\n    Mueble montado${drawers === 'integrated' ? ', con los cajones en su sitio' : ', sin cajones'}. Tamaño impreso ${fmt(printedSize?.x ?? 0)} x ${fmt(printedSize?.y ?? 0)} x ${fmt(printedSize?.z ?? 0)} mm (ancho x fondo x alto).`,
     );

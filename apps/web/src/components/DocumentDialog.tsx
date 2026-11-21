@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CutItem, Material, Part } from '@mw/engine';
+import type { CutItem, LegOut, Material, Part } from '@mw/engine';
 import { cabinetPdf, type DocInclude } from '@mw/exporters';
 import { readCuttingOptions } from '@/components/CuttingPlanView';
 import { readSavedLabelFormat } from '@/components/LabelsDialog';
@@ -42,6 +42,7 @@ export function DocumentDialog({
   title,
   fileName,
   cost,
+  legs = {},
 }: {
   open: boolean;
   onClose: () => void;
@@ -51,6 +52,8 @@ export function DocumentDialog({
   fileName: string;
   /** Costo estimado ya escrito, si hay precios. */
   cost?: string;
+  /** Patas de cada mueble, por nombre. */
+  legs?: Record<string, LegOut[]>;
 }) {
   const [include, setInclude] = useState<DocInclude>(() => (typeof window === 'undefined' ? DEFAULT : readInclude()));
   const [busy, setBusy] = useState(false);
@@ -65,8 +68,8 @@ export function DocumentDialog({
       list.push(it.part);
       m.set(name, list);
     }
-    return [...m].map(([name, parts]) => ({ name, parts }));
-  }, [items, title]);
+    return [...m].map(([name, parts]) => ({ name, parts, legs: legs[name] }));
+  }, [items, title, legs]);
 
   const subtitle = useMemo(() => {
     if (cabinets.length !== 1) return `${cabinets.length} muebles`;

@@ -1,4 +1,5 @@
-import type { Box, Part, ZoneOut } from '@mw/engine';
+import type { Box, LegOut, Part, ZoneOut } from '@mw/engine';
+import { legTriangles } from './legmesh';
 import { slug, type StlFile } from './stl';
 
 /**
@@ -24,6 +25,8 @@ export interface ToyOptions {
   /** Holgura entre piezas que se mueven, mm. Por defecto 0,4. */
   clearance?: number;
   name: string;
+  /** Patas del mueble: van unidas a la base, en la misma pieza. */
+  legs?: readonly LegOut[];
 }
 
 export interface ToyExport {
@@ -314,6 +317,9 @@ export function exportToy(parts: Part[], zones: ZoneOut[], size: { w: number; h:
   }
 
   const mainName = `${base}-juguete.stl`;
+  // Patas: unidas a la base (entran 0,1 mm impreso en ella para que se fundan), engordadas al mínimo de pared.
+  const sink = (0.1 / scale) * 100;
+  for (const l of opts.legs ?? []) main.push(...legTriangles({ ...l, height: l.height + sink }, (p) => toStl([s(p[0]), s(p[1]), s(p[2])]), (minWall / scale) * 100));
   files.unshift({ name: mainName, data: trisToStl(main, `${opts.name} juguete`) });
   readme.splice(
     6,

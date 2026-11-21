@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { mm, type Len } from './units';
 
 /**
- * Herrajes: bisagras, correderas de cajón y sistemas de puertas corredizas.
+ * Herrajes: bisagras, correderas de cajón, sistemas de puertas corredizas y patas.
  *
  * Cada herraje trae las medidas que el motor necesita para calcular las piezas (holguras,
  * descuentos, largos disponibles). Las constantes cambian de una marca a otra: los valores de
@@ -70,10 +70,36 @@ export interface SlidingSpec {
   trackGap: Len;
 }
 
+export interface LegSpec {
+  /**
+   * - 'straight': recta (misma sección arriba y abajo).
+   * - 'tapered': cónica (más fina abajo).
+   * - 'midcentury': estilo años 60: cónica e inclinada hacia afuera, con placa de montaje.
+   * - 'adjustable': regulable de plástico (de cocina), normalmente oculta detrás de un zócalo.
+   */
+  style: 'straight' | 'tapered' | 'midcentury' | 'adjustable';
+  section: 'square' | 'round';
+  /** Alto de la pata (en las regulables, el alto de partida). */
+  height: Len;
+  /** Lado o diámetro arriba (donde se atornilla) y abajo (en el piso). */
+  topSize: Len;
+  bottomSize: Len;
+  /** Inclinación hacia afuera, en grados (0 = vertical). */
+  splay: number;
+  /** Retiro desde los bordes del mueble hasta el borde de la pata. */
+  inset: Len;
+  /** Regulables: alto mínimo y máximo. 0 en las demás. */
+  adjustMin: Len;
+  adjustMax: Len;
+  /** Cuántas patas según el ancho del mueble: pares [ancho hasta, cantidad], de menor a mayor. */
+  countByWidth: [Len, number][];
+}
+
 export type Hardware =
   | { id: string; name: string; kind: 'hinge'; priceCents: number; spec: HingeSpec }
   | { id: string; name: string; kind: 'slide'; priceCents: number; spec: SlideSpec }
-  | { id: string; name: string; kind: 'sliding'; priceCents: number; spec: SlidingSpec };
+  | { id: string; name: string; kind: 'sliding'; priceCents: number; spec: SlidingSpec }
+  | { id: string; name: string; kind: 'leg'; priceCents: number; spec: LegSpec };
 
 export type HardwareKind = Hardware['kind'];
 
@@ -104,6 +130,11 @@ const HINGE_COUNT: [Len, number][] = [
   [mm(1600), 3],
   [mm(2000), 4],
   [mm(2600), 5],
+];
+const LEG_COUNT: [Len, number][] = [
+  [mm(1200), 4],
+  [mm(2400), 6],
+  [mm(3600), 8],
 ];
 const steps = (from: number, to: number, step: number) => Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => mm(from + i * step));
 const NO_DEDUCTIONS = { innerWidthDeduction: 0, lengthDeduction: 0, maxSideThickness: 0, bottomWidthDeduction: 0, backWidthDeduction: 0, bottomLengthDeduction: 0 };
@@ -156,7 +187,27 @@ export const PRESET_HARDWARE: Hardware[] = [
     priceCents: 0,
     spec: { leaves: 3, overlap: mm(20), topGap: mm(10), bottomGap: mm(10), frontSetback: mm(5), trackGap: mm(6) },
   },
+  ...PRESET_LEGS(),
 ];
+
+/** Patas de partida (también se agregan solas a las bibliotecas que ya existían sin patas). */
+function PRESET_LEGS(): Hardware[] {
+  const leg = (id: string, name: string, spec: Partial<LegSpec> & Pick<LegSpec, 'style' | 'section' | 'height' | 'topSize' | 'bottomSize'>): Hardware => ({
+    id,
+    name,
+    kind: 'leg',
+    priceCents: 0,
+    spec: { splay: 0, inset: mm(30), adjustMin: 0, adjustMax: 0, countByWidth: LEG_COUNT, ...spec },
+  });
+  return [
+    leg('hw-pata-regulable', 'Pata regulable plástica 100 mm (para zócalo)', { style: 'adjustable', section: 'round', height: mm(100), topSize: mm(50), bottomSize: mm(40), inset: mm(40), adjustMin: mm(95), adjustMax: mm(150) }),
+    leg('hw-pata-recta-cuadrada', 'Pata recta cuadrada 40 × 40', { style: 'straight', section: 'square', height: mm(150), topSize: mm(40), bottomSize: mm(40) }),
+    leg('hw-pata-recta-redonda', 'Pata recta redonda Ø 40', { style: 'straight', section: 'round', height: mm(150), topSize: mm(40), bottomSize: mm(40) }),
+    leg('hw-pata-conica', 'Pata cónica Ø 45 → 25', { style: 'tapered', section: 'round', height: mm(150), topSize: mm(45), bottomSize: mm(25) }),
+    leg('hw-pata-60', 'Pata estilo años 60, inclinada 12°', { style: 'midcentury', section: 'round', height: mm(200), topSize: mm(45), bottomSize: mm(22), splay: 12, inset: mm(50) }),
+  ];
+}
+export const PRESET_LEG_IDS = PRESET_LEGS().map((h) => h.id);
 
 /** Herrajes que usan por defecto los métodos de partida argentinos. */
 export const DEFAULT_HARDWARE_CHOICE: HardwareChoice = { hinge: 'hw-bisagra-codo0', slide: 'hw-corredera-bolas-45', sliding: 'hw-corredizo-2' };
@@ -209,6 +260,24 @@ export const hardwareSchema: z.ZodType<Hardware> = z.discriminatedUnion('kind', 
       bottomGap: nonNeg,
       frontSetback: nonNeg,
       trackGap: nonNeg,
+    }),
+  }),
+  z.object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(120),
+    kind: z.literal('leg'),
+    priceCents: z.number().int().nonnegative(),
+    spec: z.object({
+      style: z.enum(['straight', 'tapered', 'midcentury', 'adjustable']),
+      section: z.enum(['square', 'round']),
+      height: len.positive(),
+      topSize: len.positive(),
+      bottomSize: len.positive(),
+      splay: z.number().min(0).max(30),
+      inset: nonNeg,
+      adjustMin: nonNeg,
+      adjustMax: nonNeg,
+      countByWidth: z.array(z.tuple([len.positive(), z.number().int().min(2).max(20)])).min(1),
     }),
   }),
 ]);

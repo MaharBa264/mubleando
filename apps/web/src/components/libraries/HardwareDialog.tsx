@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { mm, type Hardware, type HingeSpec, type Len, type SlideSpec, type SlidingSpec } from '@mw/engine';
+import { mm, type Hardware, type HingeSpec, type Len, type LegSpec, type SlideSpec, type SlidingSpec } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
 import { fmtMm, parseCents } from '@/lib/format';
 
-export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo' };
-const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego' };
+export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo', leg: 'Pata' };
+const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego', leg: 'por unidad' };
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
@@ -171,6 +171,64 @@ export function HardwareDialog({ open, initial, isNew, onClose, onSave }: { open
               {len('Del frente a la hoja de adelante', h.spec.frontSetback, (v) => spec<SlidingSpec>({ frontSetback: v }))}
               {len('Entre las dos hojas', h.spec.trackGap, (v) => spec<SlidingSpec>({ trackGap: v }), 'Espacio entre rieles, además del espesor de la hoja.')}
             </div>
+          </Group>
+        )}
+        {h.kind === 'leg' && (
+          <Group title="Pata" hint="El mueble sube el alto de la pata (o, con zócalo, las patas van ocultas detrás).">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField label="Estilo" value={h.spec.style} onChange={(e) => spec<LegSpec>({ style: e.target.value as LegSpec['style'] })}>
+                <option value="straight">Recta</option>
+                <option value="tapered">Cónica</option>
+                <option value="midcentury">Estilo años 60 (inclinada, con placa)</option>
+                <option value="adjustable">Regulable (para zócalo)</option>
+              </SelectField>
+              <SelectField label="Sección" value={h.spec.section} onChange={(e) => spec<LegSpec>({ section: e.target.value as LegSpec['section'] })}>
+                <option value="square">Cuadrada</option>
+                <option value="round">Redonda</option>
+              </SelectField>
+              {len('Alto', h.spec.height, (v) => v > 0 && spec<LegSpec>({ height: v }))}
+              {len('Retiro desde los bordes del mueble', h.spec.inset, (v) => spec<LegSpec>({ inset: v }), 'Hasta el borde de la pata.')}
+              {len(h.spec.section === 'square' ? 'Lado arriba' : 'Diámetro arriba', h.spec.topSize, (v) => v > 0 && spec<LegSpec>({ topSize: v }))}
+              {len(h.spec.section === 'square' ? 'Lado abajo' : 'Diámetro abajo', h.spec.bottomSize, (v) => v > 0 && spec<LegSpec>({ bottomSize: v }), 'Igual que arriba = recta.')}
+              <TextField
+                label="Inclinación hacia afuera (grados)"
+                inputMode="decimal"
+                value={String(h.spec.splay).replace('.', ',')}
+                onChange={(e) => {
+                  const v = Number(e.target.value.replace(',', '.'));
+                  if (Number.isFinite(v) && v >= 0 && v <= 30) spec<LegSpec>({ splay: v });
+                }}
+              />
+              {h.spec.style === 'adjustable' && (
+                <>
+                  {len('Regula desde', h.spec.adjustMin, (v) => spec<LegSpec>({ adjustMin: v }))}
+                  {len('Regula hasta', h.spec.adjustMax, (v) => spec<LegSpec>({ adjustMax: v }))}
+                </>
+              )}
+            </div>
+            <p className="text-xs font-medium">Cantidad según el ancho del mueble</p>
+            <ul className="space-y-2">
+              {h.spec.countByWidth.map(([upTo, count], i) => (
+                <li key={i} className="grid grid-cols-[minmax(0,1fr)_100px] gap-2">
+                  <MmField
+                    compact
+                    label={i === 0 ? 'Muebles de hasta' : 'Hasta'}
+                    value={upTo}
+                    min={mm(100)}
+                    onCommit={(v) => v !== null && h.kind === 'leg' && spec<LegSpec>({ countByWidth: h.spec.countByWidth.map((r, j) => (j === i ? [v, r[1]] : r)) })}
+                  />
+                  <TextField
+                    label="Patas"
+                    inputMode="numeric"
+                    value={String(count)}
+                    onChange={(e) => {
+                      const c = Math.max(2, Math.min(20, Number(e.target.value.replace(/\D/g, '')) || 2));
+                      if (h.kind === 'leg') spec<LegSpec>({ countByWidth: h.spec.countByWidth.map((r, j) => (j === i ? [r[0], c] : r)) });
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
           </Group>
         )}
         {error && <Alert tone="danger">{error}</Alert>}

@@ -1,4 +1,4 @@
-import type { Construction, Design, Front, PartOverride, Plinth, Split, Zone } from './types';
+import type { Construction, Design, Front, Legs, PartOverride, Plinth, Split, Zone } from './types';
 import type { Len } from './units';
 
 export type IdGen = () => string;
@@ -169,6 +169,15 @@ export function setDrawerSize(design: Design, zoneId: string, index: number, siz
 }
 
 // ───────────────────────── zócalo y cambios por pieza ─────────────────────────
+
+/** Patas del mueble (o sin patas). */
+export function setLegs(design: Design, legs: Legs | undefined): Design {
+  if (!legs) {
+    const { legs: _l, ...rest } = design;
+    return rest;
+  }
+  return { ...design, legs: { ...legs } };
+}
 
 export function setPlinth(design: Design, plinth: Plinth | undefined): Design {
   if (!plinth) {

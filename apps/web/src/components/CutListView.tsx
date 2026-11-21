@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type Material } from '@mw/engine';
+import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type LegOut, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { CuttingPlanView } from '@/components/CuttingPlanView';
 import { DocumentDialog } from '@/components/DocumentDialog';
@@ -19,6 +19,7 @@ export function CutListView({
   hardware = [],
   fileName,
   title = '',
+  legs = {},
   warnings = [],
 }: {
   items: CutItem[];
@@ -28,6 +29,8 @@ export function CutListView({
   fileName: string;
   /** Nombre del mueble o proyecto (para las etiquetas). */
   title?: string;
+  /** Patas de cada mueble (por nombre), para las vistas del PDF. */
+  legs?: Record<string, LegOut[]>;
   warnings?: string[];
 }) {
   const [mode, setMode] = useState<'grouped' | 'individual'>('grouped');
@@ -282,6 +285,7 @@ export function CutListView({
           items={items}
           materials={materials}
           title={title || fileName}
+          legs={legs}
           fileName={fileName}
           cost={sum.totalCents + hwCents > 0 ? fmtMoney(sum.totalCents + hwCents) : undefined}
         />

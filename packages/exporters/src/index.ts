@@ -5,3 +5,4 @@ export * from './toy';
 export * from './labels';
 export * from './views';
 export * from './document';
+export * from './legmesh';

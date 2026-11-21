@@ -14,12 +14,12 @@ import {
   setFront,
   setOverride,
   setConstruction,
+  setLegs,
   setPlinth,
   setShelfHeight,
   setSize,
   type Construction,
   type HardwareChoice,
-  type HardwareKind,
   type Design,
   type Edges,
   type Front,
@@ -144,23 +144,7 @@ function CabinetProps() {
         </div>
       </Section>
 
-      <Section title="Zócalo">
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-[var(--accent)]"
-            checked={!!plinth}
-            onChange={(e) => apply((x) => setPlinth(x, e.target.checked ? { height: mm(100), setback: mm(50) } : undefined))}
-          />
-          Con zócalo (la base sube y se pone un tablero delante, retranqueado)
-        </label>
-        {plinth && (
-          <div className="grid grid-cols-2 gap-2">
-            <MmField compact label="Altura" value={plinth.height} min={mm(20)} max={h - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, height: v }))} />
-            <MmField compact label="Retranqueo" value={plinth.setback} min={0} max={d - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, setback: v }))} />
-          </div>
-        )}
-      </Section>
+      <BaseSection />
 
       <ConstructionSection />
 
@@ -192,14 +176,109 @@ function CabinetProps() {
   );
 }
 
-const HW_LABEL: Record<HardwareKind, string> = { hinge: 'Bisagras', slide: 'Correderas de cajón', sliding: 'Sistema corredizo' };
+const HW_LABEL: Record<keyof HardwareChoice, string> = { hinge: 'Bisagras', slide: 'Correderas de cajón', sliding: 'Sistema corredizo' };
+
+/** Base del mueble: en el piso, con zócalo (y patas regulables detrás, si se quiere) o con patas. */
+function BaseSection() {
+  const { hardware, result } = useEnv();
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
+  const { h, d } = design.size;
+  const plinth = design.plinth;
+  const legs = design.legs;
+  const legHw = hardware.filter((x) => x.kind === 'leg');
+  const adjustable = legHw.filter((x) => x.kind === 'leg' && x.spec.style === 'adjustable');
+  const visible = legHw.filter((x) => x.kind === 'leg' && x.spec.style !== 'adjustable');
+  const mode = plinth ? 'plinth' : legs ? 'legs' : 'floor';
+  const setMode = (m: 'floor' | 'plinth' | 'legs') =>
+    apply((x) => {
+      if (m === 'floor') return setLegs(setPlinth(x, undefined), undefined);
+      if (m === 'plinth') return setLegs(setPlinth(x, x.plinth ?? { height: mm(100), setback: mm(50) }), undefined);
+      const first = visible[0] ?? legHw[0];
+      return first ? setLegs(setPlinth(x, undefined), { hardwareId: first.id }) : x;
+    });
+  const legItem = result.hardware.find((x) => x.kind === 'leg');
+  const options: [typeof mode, string][] = [
+    ['floor', 'En el piso'],
+    ['plinth', 'Con zócalo'],
+    ['legs', 'Con patas'],
+  ];
+  return (
+    <Section title="Base">
+      <div role="radiogroup" aria-label="Base del mueble" className="grid grid-cols-3 gap-1 rounded-control bg-surface-2 p-1">
+        {options.map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            role="radio"
+            aria-checked={mode === k}
+            disabled={k === 'legs' && legHw.length === 0}
+            title={k === 'legs' && legHw.length === 0 ? 'Agregá patas en Bibliotecas → Herrajes' : undefined}
+            onClick={() => setMode(k)}
+            className={`rounded-control px-2 py-1.5 text-sm disabled:opacity-45 ${mode === k ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {plinth && (
+        <>
+          <p className="text-xs text-muted">La base sube y se pone un tablero delante, retranqueado.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <MmField compact label="Altura" value={plinth.height} min={mm(20)} max={h - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, height: v }))} />
+            <MmField compact label="Retranqueo" value={plinth.setback} min={0} max={d - mm(100)} onCommit={(v) => v !== null && apply((x) => setPlinth(x, { ...plinth, setback: v }))} />
+          </div>
+          {legHw.length > 0 && (
+            <SelectField label="Patas detrás del zócalo" value={legs?.hardwareId ?? ''} onChange={(e) => apply((x) => setLegs(x, e.target.value ? { hardwareId: e.target.value } : undefined))}>
+              <option value="">Sin patas</option>
+              {(adjustable.length ? adjustable : legHw).map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </SelectField>
+          )}
+        </>
+      )}
+      {!plinth && legs && (
+        <>
+          <SelectField label="Patas" value={legs.hardwareId} onChange={(e) => apply((x) => setLegs(x, { ...legs, hardwareId: e.target.value }))}>
+            {legHw.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+            {!legHw.some((x) => x.id === legs.hardwareId) && <option value={legs.hardwareId}>(ya no está en la biblioteca)</option>}
+          </SelectField>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-[var(--accent)]"
+              checked={legs.includeInHeight !== false}
+              onChange={(e) => apply((x) => setLegs(x, { ...legs, includeInHeight: e.target.checked ? undefined : false }))}
+            />
+            <span>
+              El alto incluye las patas
+              <span className="block text-xs text-muted">Si no, el mueble mide {fmtMm(h)} mm más el alto de las patas.</span>
+            </span>
+          </label>
+        </>
+      )}
+      {legItem && (
+        <p className="text-xs text-muted">
+          {legItem.qty} patas de {legItem.note}. Las medidas y la cantidad según el ancho se cambian en Bibliotecas → Herrajes.
+        </p>
+      )}
+    </Section>
+  );
+}
 
 /** Herrajes del mueble: los del método o los que se elijan aquí. Cambian holguras y descuentos. */
 function HardwareSection() {
   const { hardware, method, result } = useEnv();
   const design = useEditor((s) => s.design);
   const apply = useEditor((s) => s.apply);
-  const set = (kind: HardwareKind, id: string) =>
+  const set = (kind: keyof HardwareChoice, id: string) =>
     apply((d) => {
       const next: HardwareChoice = { ...d.hardware };
       if (id) next[kind] = id;
