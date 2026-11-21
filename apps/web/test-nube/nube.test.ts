@@ -47,6 +47,9 @@ const users: { id: string; email: string; client: SupabaseClient; token: string 
 async function makeUser(name: string) {
   const email = `mw-prueba-${tag}-${name}@example.com`;
   const password = randomBytes(18).toString('base64url');
+  // El registro es solo para mails de la lista: se agrega con la clave secreta (no pasa por las reglas de acceso).
+  const allow = await admin.from('signup_allowlist').insert({ email, note: 'prueba automática' });
+  if (allow.error) throw new Error(`autorizar ${name}: ${allow.error.message}`);
   const { data: created, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw new Error(`crear ${name}: ${error.message}`);
   const client = createClient(URL_, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -75,6 +78,7 @@ beforeAll(async () => {
 afterAll(async () => {
   // Limpieza pase lo que pase: borrar las cuentas que queden (cascada borra sus datos).
   for (const u of users) await admin.auth.admin.deleteUser(u.id).catch(() => {});
+  await admin.from('signup_allowlist').delete().like('email', `mw-prueba-${tag}-%`);
   for (const u of users) {
     const left = await admin.auth.admin.getUserById(u.id);
     console.log(`limpieza ${u.email.replace(/^(.{14}).*@/, '$1…@')}: ${left.data.user ? 'SIGUE EXISTIENDO' : 'borrada'}`);
@@ -242,5 +246,25 @@ describe('borrar la cuenta', () => {
     expect((await admin.auth.admin.getUserById(A.id)).data.user).toBeNull();
     for (const t of ['projects', 'cabinets', 'rooms', 'materials', 'methods', 'hardware']) expect(await rowsOf(t, A.id), t).toBe(0);
     expect(await rowsOf('materials', B.id)).toBe(9);
+  });
+});
+
+describe('registro solo con lista', () => {
+  it('un mail que no está en la lista no puede crear cuenta', async () => {
+    const email = `mw-prueba-${tag}-intrusa@example.com`;
+    const { data: created, error } = await admin.auth.admin.createUser({ email, password: randomBytes(18).toString('base64url'), email_confirm: true });
+    if (created.user) users.push({ id: created.user.id, email, client: A.client, token: '' });
+    expect(error).not.toBeNull();
+    expect(created.user).toBeNull();
+  });
+
+  it('una cuenta que no es administradora no ve la lista ni las cuentas, ni puede agregarse mails', async () => {
+    const isAdmin = await A.client.rpc('is_admin');
+    expect(isAdmin.data).toBe(false);
+    expect((await A.client.rpc('admin_allowlist')).error?.code).toBe('42501');
+    expect((await A.client.rpc('admin_accounts')).error?.code).toBe('42501');
+    expect((await A.client.from('signup_allowlist').select('*')).data).toEqual([]);
+    const ins = await A.client.from('signup_allowlist').insert({ email: `mw-prueba-${tag}-amiga@example.com` });
+    expect(ins.error?.code).toBe('42501');
   });
 });

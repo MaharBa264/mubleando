@@ -19,6 +19,8 @@ function safeNext(v: string | null): string {
 function authMessage(msg: string): string {
   if (/invalid login credentials/i.test(msg)) return 'El correo o la contraseña no son correctos.';
   if (/email not confirmed/i.test(msg)) return 'Todavía no has confirmado el correo. Busca el mensaje que te enviamos (mira también en spam).';
+  // El registro es solo para los mails de la lista: la base rechaza el alta (Supabase lo devuelve como un error genérico).
+  if (/MW403|database error saving new user/i.test(msg)) return 'Este mail no tiene permiso para registrarse. Pedíselo al responsable de la app.';
   if (/already registered|already exists/i.test(msg)) return 'Ya hay una cuenta con ese correo. Entra o recupera la contraseña.';
   if (/rate limit|too many/i.test(msg)) return 'Demasiados intentos seguidos. Espera unos minutos y vuelve a probar.';
   if (/password should be at least|weak password/i.test(msg)) return 'La contraseña es demasiado corta o débil: usa al menos 8 caracteres.';

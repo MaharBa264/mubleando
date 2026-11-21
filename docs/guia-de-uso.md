@@ -14,6 +14,8 @@ La primera vez que abres la app aparece la "Cocina de ejemplo", con un bajo de f
 
 ## Ambientes
 
+**Cuentas.** Con la nube, solo pueden crear cuenta los mails que autorice el responsable de la app, desde **Administración** (ver [Quién puede registrarse](nube.md#quién-puede-registrarse)).
+
 Además de muebles sueltos, un proyecto puede tener **ambientes**: la planta de una cocina o habitación, con las paredes medidas en obra (también fuera de escuadra), puertas y ventanas, y los muebles colocados. La app avisa si un mueble choca con otro o con la pared, si tapa una puerta o una ventana, y qué relleno hace falta en una esquina fuera de escuadra. Todo, paso a paso, en [Ambientes](ambientes.md).
 
 ## 2. Crear un mueble

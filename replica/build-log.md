@@ -155,3 +155,11 @@ Comprobado: 142 pruebas del motor (16 de herrajes con cifras a mano), 24 de expo
 | motor | Estantes y divisores detrás de corredizas y frentes encastrados | hecho | — | el aviso se arma al final, cuando las piezas ya tienen su nombre numerado |
 
 Antes el motor solo avisaba y dejaba los estantes con el retranqueo del método, que chocaban con las hojas. Ahora se retranquean solos lo que ocupa el frente más 2 mm, también en los huecos de dentro. Un retranqueo elegido a mano se respeta y, si es menor, avisa con el nombre de la pieza. Comprobado: 145 pruebas del motor (3 nuevas con cifras a mano: estante de 493 a 2 mm de la hoja de atrás; huecos de dentro y vecinos; retranqueo a mano de 20 y de 60).
+
+## Registro con lista de mails, issue #2 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| admin | Administración: mails autorizados y cuentas | hecho; **migración pendiente de aplicar en Supabase** | — | cómo nombrar al primer administrador sin poner un mail en el repositorio público: la cuenta más antigua, y en un proyecto nuevo la primera que se registra |
+
+Comprobado: 56 pruebas de base de datos (8 nuevas: alta rechazada fuera de la lista, también sin mail; solo el administrador lee y edita; mails en minúsculas; las funciones de la pantalla fallan para los demás; sin administradores el registro vuelve a abrirse), 8 de la web (3 nuevas: separar mails pegados). La prueba contra Supabase suma 2 comprobaciones de registro.

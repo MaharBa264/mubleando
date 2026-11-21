@@ -35,6 +35,7 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
    - `20261117000001_precios_en_pesos.sql`: deja sin precio los materiales de partida que seguían con su precio en euros.
    - `20261118000001_herrajes.sql`: tabla de herrajes; los métodos argentinos de partida pasan a usar herrajes por defecto. Mientras no esté, la app funciona sin herrajes.
    - `20261118000000_ambientes.sql`: tabla de ambientes (planta y muebles colocados). Mientras no esté, los proyectos se ven sin ambientes y crear uno avisa de que falta.
+   - `20261121000000_registro_con_lista.sql`: el registro pasa a ser **solo para los mails de una lista** que edita el administrador. La cuenta más antigua del proyecto pasa a ser la administradora. Ver [Quién puede registrarse](#quién-puede-registrarse).
 
 Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.
 4. Comprueba en **Table Editor** que aparecen cuatro tablas: `projects`, `cabinets`, `materials` y `methods`, todas con el candado de *RLS enabled*.
@@ -83,7 +84,7 @@ SUPABASE_SERVICE_ROLE_KEY=la-clave-service-role-o-secret
 
 ### 5. Primer uso
 
-1. Abre la app → **Crear cuenta** con tu correo y una contraseña de al menos 8 caracteres.
+1. Abre la app → **Crear cuenta** con tu correo y una contraseña de al menos 8 caracteres. En un proyecto nuevo, la primera cuenta que se crea es la **administradora**; desde ahí, solo pueden registrarse los mails que ella agregue (ver [Quién puede registrarse](#quién-puede-registrarse)).
 2. Abre el correo de confirmación y pulsa el enlace. Vuelves a la app; entra.
 3. La cuenta nueva recibe los tableros, cantos y métodos de partida.
 4. Si en ese navegador tenías proyectos de antes, en **Cuenta → Datos de este navegador → Subir a mi cuenta** se copian a la nube. No se borra nada del navegador, y si lo repites no se duplica.
@@ -109,6 +110,23 @@ Las piezas no se guardan: las calcula el motor en el navegador a partir del dise
 - **Reglas de acceso por fila** (Row Level Security) en las cuatro tablas: cada usuario solo lee, crea, cambia y borra filas con su `user_id`. Para la base de datos, las filas de otros no existen.
 - Los visitantes sin sesión (`anon`) no tienen ningún permiso.
 - Las claves foráneas incluyen el `user_id`: un mueble solo puede apuntar a un proyecto y a un método de su mismo dueño, aunque alguien manipule la petición.
+
+### Quién puede registrarse
+
+Solo los mails de una lista, que edita el administrador en la app (**Administración**, en la barra de arriba; solo se ve con una cuenta administradora).
+
+| Pieza | Qué hace |
+| --- | --- |
+| `app_admins` | Cuentas administradoras. Cada cuenta solo puede ver si ella misma lo es. |
+| `signup_allowlist` | Mails autorizados (en minúsculas), con una nota. Solo los administradores la leen y la cambian. |
+| Disparador `signup_allowlist_check` sobre `auth.users` | Rechaza el alta de un mail que no está en la lista. Está en la base de datos: no se saltea llamando a Supabase desde fuera de la app, ni con el panel de Supabase («Add user» también falla). |
+| `admin_allowlist()` y `admin_accounts()` | Lo que muestra la pantalla de administración: la lista, con quién ya creó su cuenta, y todas las cuentas. Fallan si quien las llama no es administrador. |
+
+- **Arranque.** Mientras no haya ningún administrador, el registro queda abierto y la primera cuenta que se crea pasa a serlo. Al aplicar la migración en un proyecto con cuentas, la **más antigua** pasa a ser la administradora.
+- **Las cuentas que ya existían** no se tocan: siguen entrando aunque su mail no esté en la lista. La pantalla de administración las marca («no está en la lista») para que las revises. Para borrar una cuenta: Supabase → **Authentication → Users**.
+- **Quitar un mail de la lista** no borra su cuenta si ya la tenía; solo impide crearla.
+- **Si se borra la cuenta administradora** y no queda otra, el registro vuelve a quedar abierto hasta que alguien se registre (y pase a ser administrador). Para agregar otro administrador, en el SQL Editor: `insert into public.app_admins (user_id) select id from auth.users where email = 'su-mail';`
+- Al intentar registrarse con un mail que no está, Supabase devuelve un error genérico («Database error saving new user») y la app muestra: «Este mail no tiene permiso para registrarse. Pedíselo al responsable de la app.»
 
 ### Reglas que pone la base de datos
 

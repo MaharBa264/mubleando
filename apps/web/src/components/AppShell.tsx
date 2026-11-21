@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { AuthGate, AuthProvider, useAuth } from '@/components/auth/AuthProvider';
+import { isAdmin } from '@/lib/admin';
+import { useAsync } from '@/lib/useAsync';
 
 const NAV = [
   { href: '/', label: 'Proyectos', match: (p: string) => p === '/' || p.startsWith('/proyectos') || p.startsWith('/muebles') },
   { href: '/bibliotecas', label: 'Bibliotecas', match: (p: string) => p.startsWith('/bibliotecas') },
 ];
+const ADMIN_NAV = { href: '/admin', label: 'Administración', match: (p: string) => p.startsWith('/admin') };
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
@@ -22,6 +25,9 @@ function Shell({ children }: { children: ReactNode }) {
   const path = usePathname() ?? '/';
   const { mode, session } = useAuth();
   const email = session?.user.email ?? '';
+  // Administración solo aparece para las cuentas administradoras (lo decide la base de datos).
+  const admin = useAsync(() => (mode === 'cloud' && session ? isAdmin() : Promise.resolve(false)), [mode, session?.user.id]);
+  const nav = admin.status === 'ready' && admin.data ? [...NAV, ADMIN_NAV] : NAV;
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
@@ -40,7 +46,7 @@ function Shell({ children }: { children: ReactNode }) {
           </Link>
           {/* Navegación como control segmentado: mismo lenguaje que los selectores del panel. */}
           <nav aria-label="Principal" className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">
-            {NAV.map((n) => {
+            {nav.map((n) => {
               const active = n.match(path);
               return (
                 <Link

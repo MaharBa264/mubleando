@@ -5,7 +5,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | # | Propuesta | Issue | Tamaño | Por qué en este lugar |
 | --- | --- | --- | --- | --- |
 | 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | **Hecho** (21-11-2026). |
-| 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | Hoy cualquiera puede crearse una cuenta en el proyecto de Supabase. |
+| 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | **Hecho** (21-11-2026). |
 | 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | Hoy cuesta usar la app sin saber dónde tocar; cada función nueva lo empeora. |
 | 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | Los muebles y las esquinas se arrastran; las aberturas, no. |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
@@ -38,6 +38,8 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 ---
 
 ## 2. Registro solo para mails autorizados
+
+> **Hecho** el 21-11-2026. Cómo funciona: [Quién puede registrarse](nube.md#quién-puede-registrarse).
 
 **Qué pasa hoy.** Cualquiera que entre en la página publicada puede crearse una cuenta. No ve los datos de otras cuentas (las reglas de acceso de la base lo impiden), pero ocupa espacio y cuota del proyecto de Supabase.
 
