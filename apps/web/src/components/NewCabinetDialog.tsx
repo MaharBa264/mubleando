@@ -103,7 +103,7 @@ export function NewCabinetDialog({
                   return (
                     <label
                       key={t.id}
-                      className={`flex cursor-pointer flex-col gap-1 rounded-s border p-2 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus ${
+                      className={`flex cursor-pointer flex-col gap-1 rounded-control border p-2 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus ${
                         active ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2'
                       }`}
                     >
@@ -139,7 +139,7 @@ export function NewCabinetDialog({
               ))}
             </SelectField>
           </div>
-          <div className="flex flex-col items-center justify-center rounded-m bg-surface-2 p-3">
+          <div className="flex flex-col items-center justify-center rounded-card bg-surface-2 p-3">
             {method && <CabinetSketch design={preview} method={method} materials={materials} className="h-48 w-full" title={`Frente de ${template.name}`} />}
             <p className="tabular mt-2 text-xs text-muted">{fmtDims(size.w, size.h, size.d)} mm</p>
           </div>

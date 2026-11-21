@@ -75,7 +75,7 @@ export function CutListView({
       )}
 
       <div className="no-print flex flex-wrap items-end justify-between gap-3">
-        <div role="radiogroup" aria-label="Tipo de lista" className="inline-flex gap-1 rounded-s bg-surface-2 p-1">
+        <div role="radiogroup" aria-label="Tipo de lista" className="inline-flex gap-1 rounded-control bg-surface-2 p-1">
           {(
             [
               ['grouped', 'Agrupada'],
@@ -88,7 +88,7 @@ export function CutListView({
               role="radio"
               aria-checked={mode === k}
               onClick={() => setMode(k)}
-              className={`rounded-s px-3 py-1.5 text-sm ${mode === k ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
+              className={`rounded-control px-3 py-1.5 text-sm ${mode === k ? 'bg-surface font-medium shadow-1' : 'text-muted hover:text-text'}`}
             >
               {label}
             </button>
@@ -100,7 +100,7 @@ export function CutListView({
             <select
               value={decimal}
               onChange={(e) => setDecimal(e.target.value as ',' | '.')}
-              className="h-8 rounded-s border border-border bg-surface px-2 text-sm text-text"
+              className="h-8 rounded-control border border-border bg-surface px-2 text-sm text-text"
             >
               <option value=",">coma (Excel)</option>
               <option value=".">punto (CNC / optimizador)</option>
@@ -120,13 +120,13 @@ export function CutListView({
         {rows.map((r) => {
           const edges = (['L1', 'L2', 'W1', 'W2'] as const).filter((k) => r.edges[k]);
           return (
-            <li key={r.ref + r.keys.join()} className="rounded-m border border-border bg-surface p-3 shadow-1">
+            <li key={r.ref + r.keys.join()} className="rounded-card border border-border bg-surface p-3 shadow-1">
               <div className="flex items-start justify-between gap-3">
                 <p className="min-w-0 text-sm">
                   <span className="mr-1 text-muted">{r.ref}</span>
                   {r.name}
                 </p>
-                <span className="tabular shrink-0 rounded-s bg-surface-2 px-2 py-0.5 text-sm font-semibold">×{r.qty}</span>
+                <span className="tabular shrink-0 rounded-control bg-surface-2 px-2 py-0.5 text-sm font-semibold">×{r.qty}</span>
               </div>
               <p className="tabular mt-1 text-xl font-semibold">
                 {fmtMm(r.cutLength)} × {fmtMm(r.cutWidth)} <span className="text-sm font-normal text-muted">mm</span>
@@ -143,7 +143,7 @@ export function CutListView({
         })}
       </ul>
 
-      <div className="hidden overflow-x-auto rounded-m border border-border bg-surface shadow-1 sm:block print:block">
+      <div className="hidden overflow-x-auto rounded-card border border-border bg-surface shadow-1 sm:block print:block">
         <table className="tabular w-full min-w-[720px] text-sm">
           <caption className="sr-only">Lista de corte, medidas en milímetros</caption>
           <thead className="bg-surface-2 text-left text-xs text-muted">
@@ -192,7 +192,7 @@ export function CutListView({
         <h2 id="totals" className="sr-only">
           Totales
         </h2>
-        <div className="rounded-m border border-border bg-surface p-4 shadow-1">
+        <div className="rounded-card border border-border bg-surface p-4 shadow-1">
           <h3 className="mb-3 text-sm font-semibold">Tablero</h3>
           <ul className="space-y-1 text-sm">
             {sum.panels.map((p) => (
@@ -205,7 +205,7 @@ export function CutListView({
             ))}
           </ul>
         </div>
-        <div className="rounded-m border border-border bg-surface p-4 shadow-1">
+        <div className="rounded-card border border-border bg-surface p-4 shadow-1">
           <h3 className="mb-3 text-sm font-semibold">Canto</h3>
           {sum.edges.length === 0 ? (
             <p className="text-sm text-muted">Sin canto.</p>
@@ -234,7 +234,7 @@ export function CutListView({
           </div>
         )}
         {hw.length > 0 && (
-          <div className="rounded-m border border-border bg-surface p-4 shadow-1 md:col-span-2">
+          <div className="rounded-card border border-border bg-surface p-4 shadow-1 md:col-span-2">
             <h3 className="mb-3 text-sm font-semibold">Herrajes</h3>
             <ul className="space-y-1 text-sm">
               {hw.map((h) => (
@@ -249,7 +249,7 @@ export function CutListView({
             </ul>
           </div>
         )}
-        <div className="flex items-baseline justify-between rounded-m bg-accent-soft px-4 py-3 text-accent md:col-span-2">
+        <div className="flex items-baseline justify-between rounded-card bg-accent-soft px-4 py-3 text-accent md:col-span-2">
           <span className="text-sm font-medium">
             {pieces} piezas · material{hw.length > 0 ? ' y herrajes' : ''} estimado (sin mermas ni mano de obra)
           </span>

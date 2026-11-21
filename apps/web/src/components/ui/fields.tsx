@@ -3,9 +3,10 @@
 import { useEffect, useId, useState, type ComponentProps, type ReactNode } from 'react';
 import type { Len } from '@mw/engine';
 import { fmtMm, parseMm } from '@/lib/format';
+import { Icon } from './Icon';
 
 const inputClass =
-  'h-10 w-full rounded-s border border-border bg-surface px-3 text-sm text-text placeholder:text-muted hover:border-border-strong aria-[invalid=true]:border-danger';
+  'h-10 w-full rounded-control border border-border bg-surface px-3 text-sm text-text transition-[border-color,box-shadow] duration-150 placeholder:text-muted hover:border-border-strong focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/20';
 
 export function Label({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
   return (
@@ -120,7 +121,7 @@ export function MmField({
             }
           }}
         />
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted">mm</span>
+        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[11px] text-muted">mm</span>
       </div>
       {(error || hint) && (
         <p id={`${id}-msg`} className={`mt-1 text-xs ${error ? 'text-danger' : 'text-muted'}`} role={error ? 'alert' : undefined}>
@@ -147,13 +148,13 @@ export function Stepper({
 }) {
   const id = useId();
   const btn =
-    'h-10 w-10 shrink-0 rounded-s border border-border bg-surface text-lg leading-none hover:bg-surface-2 disabled:opacity-40';
+    'grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-surface text-accent transition-colors hover:border-accent hover:bg-accent-soft disabled:text-muted disabled:opacity-40 disabled:hover:border-border disabled:hover:bg-surface';
   return (
     <div>
       <Label htmlFor={id}>{label}</Label>
       <div className="flex items-center gap-2">
         <button type="button" className={btn} aria-label={`Quitar uno (${label})`} disabled={value <= min} onClick={() => onChange(value - 1)}>
-          −
+          <Icon name="minus" size={16} />
         </button>
         <input
           id={id}
@@ -166,7 +167,7 @@ export function Stepper({
           }}
         />
         <button type="button" className={btn} aria-label={`Añadir uno (${label})`} disabled={value >= max} onClick={() => onChange(value + 1)}>
-          +
+          <Icon name="plus" size={16} />
         </button>
       </div>
     </div>

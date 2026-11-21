@@ -7,6 +7,7 @@ import { useStore } from 'zustand';
 import { analyzeRoom, compute, type Hardware, type Material, type Method } from '@mw/engine';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
+import { Icon } from '@/components/ui/Icon';
 import { ConflictError, data, type Cabinet, type Room } from '@/data';
 import { PlanView } from './PlanView';
 import { RoomPanel } from './RoomPanel';
@@ -132,32 +133,33 @@ export function RoomEditor({
     }
   };
 
-  const toggle = (active: boolean) => `rounded-s px-3 py-1.5 text-xs font-medium ${active ? 'bg-accent-soft text-accent' : 'hover:bg-surface-2'}`;
+  const toggle = (active: boolean) => `h-8 rounded-full px-3 text-xs font-medium transition-colors ${active ? 'bg-surface text-text shadow-1' : 'text-muted hover:text-text'}`;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col lg:h-[calc(100dvh-3.5rem)]">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-surface px-3 py-2">
-        <Link href={`/proyectos/${room.projectId}`} className={buttonClass('ghost', 'sm')} aria-label="Volver al proyecto">
-          ←
+    <div className="flex min-h-0 flex-1 flex-col bg-viewer lg:h-[calc(100dvh-3rem)] lg:flex-none">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
+        <Link href={`/proyectos/${room.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto">
+          <Icon name="back" />
         </Link>
         <input
           aria-label="Nombre del ambiente"
           value={name}
           maxLength={120}
           onChange={(e) => store.getState().setName(e.target.value)}
-          className="h-8 min-w-[9rem] flex-1 rounded-s border border-transparent bg-transparent px-2 font-semibold hover:border-border focus:border-border sm:max-w-sm"
+          className="font-display h-8 min-w-[9rem] flex-1 rounded-control border border-transparent bg-transparent px-2 text-[15px] font-semibold tracking-tight hover:border-border focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 sm:max-w-sm"
         />
         <span className={`text-xs ${save.kind === 'error' || save.kind === 'conflict' ? 'text-danger' : 'text-muted'}`} role="status" aria-live="polite">
           {{ saved: 'Guardado', saving: 'Guardando…', error: 'Sin guardar', conflict: 'Conflicto' }[save.kind]}
         </span>
         <div className="ml-auto flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={() => store.getState().undo()} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
-            ↶
+          <Button size="icon-sm" variant="ghost" onClick={() => store.getState().undo()} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
+            <Icon name="undo" />
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
-            ↷
+          <Button size="icon-sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
+            <Icon name="redo" />
           </Button>
-          <div role="radiogroup" aria-label="Vista" className="flex gap-1 rounded-s bg-surface-2 p-1">
+          <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+          <div role="radiogroup" aria-label="Vista" className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">
             <button type="button" role="radio" aria-checked={view === 'plan'} className={toggle(view === 'plan')} onClick={() => store.getState().setView('plan')}>
               Planta
             </button>
@@ -178,7 +180,7 @@ export function RoomEditor({
         </div>
       )}
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] lg:grid-rows-[minmax(0,1fr)] lg:gap-3 lg:p-3">
         <section className="relative h-[55dvh] min-h-[320px] bg-viewer lg:order-1 lg:h-auto" aria-label={view === 'plan' ? 'Planta' : 'Vista 3D'}>
           {view === 'plan' ? (
             <PlanView store={store} plan={plan} selection={selection} sizes={sizes} names={names} flagged={flagged} />
@@ -192,7 +194,7 @@ export function RoomEditor({
                 wallsMode={wallsMode}
                 onSelect={(id) => store.getState().select(id ? { kind: 'placement', id } : { kind: 'none' })}
               />
-              <div role="radiogroup" aria-label="Paredes" className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-m bg-surface/95 p-1 shadow-1">
+              <div role="radiogroup" aria-label="Paredes" className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface-2/95 p-1 shadow-float backdrop-blur">
                 {(
                   [
                     ['auto', 'Paredes: automático'],
@@ -208,12 +210,12 @@ export function RoomEditor({
             </>
           )}
           {view === 'plan' && (
-            <p className="pointer-events-none absolute bottom-2 left-3 rounded-s bg-surface/90 px-2 py-1 text-[11px] text-muted shadow-1">
+            <p className="pointer-events-none absolute bottom-3 left-3 rounded-full border border-border bg-surface/95 px-3 py-1 text-[11px] text-muted shadow-float">
               Medidas en mm por la cara interior. Ángulos fuera de escuadra en naranja.
             </p>
           )}
         </section>
-        <aside className="border-t border-border bg-surface lg:order-2 lg:overflow-y-auto lg:border-l lg:border-t-0" aria-label="Panel del ambiente">
+        <aside className="border-t border-border bg-surface lg:order-2 lg:overflow-y-auto lg:rounded-card lg:border lg:shadow-float" aria-label="Panel del ambiente">
           <RoomPanel store={store} plan={plan} selection={selection} cabinets={cabinets} warnings={warnings} onSetQuantity={setQuantity} />
         </aside>
       </div>

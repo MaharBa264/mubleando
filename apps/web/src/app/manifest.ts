@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Diseño de muebles por paneles y listas de corte.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#f6f5f2',
-    theme_color: '#1f6f5c',
+    background_color: '#f3f0eb',
+    theme_color: '#1a5fd6',
     lang: 'es',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },

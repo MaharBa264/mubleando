@@ -127,7 +127,7 @@ function AngleField({ label, value, disabled, onCommit }: { label: string; value
             if (e.key === 'Enter') commit();
             if (e.key === 'Escape') setText(shown);
           }}
-          className="tabular h-9 w-full rounded-s border border-border bg-surface px-3 pr-7 text-sm disabled:bg-surface-2 disabled:text-muted aria-[invalid=true]:border-danger"
+          className="tabular h-9 w-full rounded-control border border-border bg-surface px-3 pr-7 text-sm disabled:bg-surface-2 disabled:text-muted aria-[invalid=true]:border-danger"
         />
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted">°</span>
       </div>
@@ -165,7 +165,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
             return (
               <li
                 key={w.id}
-                className={`rounded-m border p-3 ${active ? 'border-accent bg-accent-soft' : 'border-border'}`}
+                className={`rounded-card border p-3 ${active ? 'border-accent bg-accent-soft' : 'border-border'}`}
                 onFocus={() => store.getState().select({ kind: 'wall', index: i })}
               >
                 <p className="mb-2 text-sm font-medium">
@@ -263,7 +263,7 @@ function OpeningsTab({ store, plan, selection }: { store: RoomStore; plan: RoomP
             const active = selection.kind === 'opening' && selection.id === o.id;
             const wi = ws.findIndex((w) => w.id === o.wallId);
             return (
-              <li key={o.id} className={`rounded-m border p-3 ${active ? 'border-accent bg-accent-soft' : 'border-border'}`} onFocus={() => store.getState().select({ kind: 'opening', id: o.id })}>
+              <li key={o.id} className={`rounded-card border p-3 ${active ? 'border-accent bg-accent-soft' : 'border-border'}`} onFocus={() => store.getState().select({ kind: 'opening', id: o.id })}>
                 <div className="grid grid-cols-2 gap-2">
                   <SelectField label="Tipo" value={o.kind} onChange={(e) => update(o.id, { kind: e.target.value as OpeningKind, sill: e.target.value === 'window' ? o.sill || mm(1000) : 0 })}>
                     <option value="door">Puerta</option>
@@ -357,7 +357,7 @@ function CabinetsTab({
           {cabinets.map((c) => {
             const placed = plan.placements.filter((p) => p.cabinetId === c.id).length;
             return (
-              <li key={c.id} className="rounded-m border border-border p-3 text-sm">
+              <li key={c.id} className="rounded-card border border-border p-3 text-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate font-medium">{c.name}</p>
@@ -427,7 +427,7 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
           Girar −90°
         </Button>
         {cabinet && (
-          <Link href={`/muebles/${cabinet.id}`} className="inline-flex h-8 items-center rounded-s px-3 text-sm hover:bg-surface-2">
+          <Link href={`/muebles/${cabinet.id}`} className="inline-flex h-8 items-center rounded-control px-3 text-sm hover:bg-surface-2">
             Abrir el mueble
           </Link>
         )}

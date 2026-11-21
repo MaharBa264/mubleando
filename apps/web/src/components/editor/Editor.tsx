@@ -7,6 +7,7 @@ import { useStore } from 'zustand';
 import { compute, type Hardware, type Material, type Method } from '@mw/engine';
 import { buttonClass, Button } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
+import { Icon, type IconName } from '@/components/ui/Icon';
 import { StlExportDialog } from '@/components/StlExportDialog';
 import { ConflictError, data, type Cabinet } from '@/data';
 import { fmtDims } from '@/lib/format';
@@ -116,28 +117,30 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
 
   return (
     <EditorContext.Provider value={env}>
-      <div className="flex min-h-0 flex-1 flex-col lg:h-[calc(100dvh-3.5rem)]">
+      <div className="flex min-h-0 flex-1 flex-col bg-viewer lg:h-[calc(100dvh-3rem)] lg:flex-none">
         {/* barra superior */}
-        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-surface px-3 py-2">
-          <Link href={`/proyectos/${cabinet.projectId}`} className={buttonClass('ghost', 'sm')} aria-label="Volver al proyecto">
-            ←
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
+          <Link href={`/proyectos/${cabinet.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto">
+            <Icon name="back" />
           </Link>
           <input
             aria-label="Nombre del mueble"
             value={name}
             maxLength={120}
             onChange={(e) => store.getState().setName(e.target.value)}
-            className="h-8 min-w-[9rem] flex-1 rounded-s border border-transparent bg-transparent px-2 font-semibold hover:border-border focus:border-border sm:max-w-sm"
+            className="font-display h-8 min-w-[9rem] flex-1 rounded-control border border-transparent bg-transparent px-2 text-[15px] font-semibold tracking-tight hover:border-border focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 sm:max-w-sm"
           />
           <SaveBadge state={save} />
           <div className="ml-auto flex items-center gap-1">
-            <Button size="sm" variant="ghost" onClick={() => store.getState().undo()} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
-              ↶
+            <Button size="icon-sm" variant="ghost" onClick={() => store.getState().undo()} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
+              <Icon name="undo" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
-              ↷
+            <Button size="icon-sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
+              <Icon name="redo" />
             </Button>
+            <span className="mx-1 h-5 w-px bg-border" aria-hidden />
             <Button size="sm" onClick={() => setStlOpen(true)} title="Exportar a STL para impresión 3D">
+              <Icon name="download" size={16} className="-ml-0.5" />
               STL
             </Button>
             <Link href={`/muebles/${cabinet.id}/despiece`} className={buttonClass('primary', 'sm')}>
@@ -165,8 +168,12 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
         )}
 
         {/* cuerpo: estructura | visor | propiedades (apilado en móvil) */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[260px_minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
-          <aside className="hidden overflow-y-auto border-r border-border bg-surface lg:block" aria-label="Estructura">
+        {/*
+          Escritorio: la escena (bg-viewer) es el fondo de todo y los paneles flotan encima como tarjetas,
+          así el mueble se lee como protagonista. Móvil: visor arriba y panel con pestañas debajo.
+        */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)_348px] lg:grid-rows-[minmax(0,1fr)] lg:gap-3 lg:p-3">
+          <aside className="hidden overflow-y-auto rounded-card border border-border bg-surface shadow-float lg:block" aria-label="Estructura">
             <StructureTree />
           </aside>
 
@@ -183,21 +190,22 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               onHover={(h) => store.getState().setHover(h)}
             />
             <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start gap-2">
-              <span className="tabular rounded-s bg-surface/90 px-2 py-1 text-xs shadow-1">{fmtDims(design.size.w, design.size.h, design.size.d)} mm</span>
+              <span className="measure rounded-full bg-surface/95 px-3 py-1.5 text-xs font-medium shadow-float">{fmtDims(design.size.w, design.size.h, design.size.d)} mm</span>
               <QuickTools />
             </div>
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1 rounded-m bg-surface/95 p-1 shadow-1" role="toolbar" aria-label="Vista">
-              <ToggleBtn pressed={!view.ortho} onClick={() => store.getState().setView({ ortho: !view.ortho })}>
+            <div className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur" role="toolbar" aria-label="Vista">
+              <ToggleBtn icon={view.ortho ? 'square' : 'cube'} pressed={!view.ortho} onClick={() => store.getState().setView({ ortho: !view.ortho })}>
                 {view.ortho ? 'Ortogonal' : 'Perspectiva'}
               </ToggleBtn>
-              <ToggleBtn pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })}>
+              <ToggleBtn icon="wire" pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })}>
                 Alámbrico
               </ToggleBtn>
-              <ToggleBtn pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })}>
+              <ToggleBtn icon="ruler" pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })}>
                 Cotas
               </ToggleBtn>
               {hasFronts && (
                 <ToggleBtn
+                  icon="door"
                   pressed={view.fronts !== 'closed'}
                   onClick={() => store.getState().setView({ fronts: NEXT_FRONTS[view.fronts] })}
                   title="Cambiar cómo se ven puertas y cajones"
@@ -205,15 +213,17 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
                   {FRONTS_LABEL[view.fronts]}
                 </ToggleBtn>
               )}
-              <ToggleBtn onClick={() => store.getState().resetCamera()}>Centrar</ToggleBtn>
+              <ToggleBtn icon="focus" onClick={() => store.getState().resetCamera()}>
+                Centrar
+              </ToggleBtn>
             </div>
             <p className="sr-only" aria-live="polite">
               {selection.kind === 'zone' ? `Seleccionado: ${labels.get(selection.id)?.full}` : selection.kind === 'part' ? `Seleccionada una pieza` : ''}
             </p>
           </section>
 
-          <aside className="border-t border-border bg-surface lg:overflow-y-auto lg:border-l lg:border-t-0" aria-label="Propiedades">
-            <div className="flex border-b border-border lg:hidden" role="tablist" aria-label="Panel">
+          <aside className="border-t border-border bg-surface lg:overflow-y-auto lg:rounded-card lg:border lg:shadow-float" aria-label="Propiedades">
+            <div className="sticky top-0 z-10 m-2 flex gap-0.5 rounded-full bg-surface-2 p-0.5 lg:hidden" role="tablist" aria-label="Panel">
               {(
                 [
                   ['props', 'Propiedades'],
@@ -226,7 +236,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
                   role="tab"
                   aria-selected={mobileTab === k}
                   onClick={() => setMobileTab(k)}
-                  className={`flex-1 px-3 py-2.5 text-sm ${mobileTab === k ? 'border-b-2 border-accent font-medium text-accent' : 'text-muted'}`}
+                  className={`flex-1 rounded-full px-3 py-2 text-sm transition-colors ${mobileTab === k ? 'bg-surface font-medium text-text shadow-1' : 'text-muted'}`}
                 >
                   {label}
                 </button>
@@ -245,16 +255,24 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
   );
 }
 
-function ToggleBtn({ pressed, onClick, children, title }: { pressed?: boolean; onClick: () => void; children: React.ReactNode; title?: string }) {
+/**
+ * Botón de la barra de vista. En pantallas chicas muestra solo el icono (el texto queda como
+ * nombre accesible y como tooltip); en las demás, icono + texto.
+ */
+function ToggleBtn({ pressed, onClick, children, title, icon }: { pressed?: boolean; onClick: () => void; children: string; title?: string; icon: IconName }) {
   return (
     <button
       type="button"
-      title={title}
+      title={title ?? children}
+      aria-label={children}
       aria-pressed={pressed}
       onClick={onClick}
-      className={`rounded-s px-3 py-1.5 text-xs font-medium ${pressed ? 'bg-accent-soft text-accent' : 'hover:bg-surface-2'}`}
+      className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors sm:px-3 ${pressed ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-text'}`}
     >
-      {children}
+      <Icon name={icon} size={17} />
+      <span className="hidden sm:inline" aria-hidden>
+        {children}
+      </span>
     </button>
   );
 }
@@ -262,8 +280,10 @@ function ToggleBtn({ pressed, onClick, children, title }: { pressed?: boolean; o
 function SaveBadge({ state }: { state: SaveState }) {
   const text = { saved: 'Guardado', saving: 'Guardando…', error: 'Sin guardar', conflict: 'Conflicto' }[state.kind];
   const tone = state.kind === 'saved' ? 'text-muted' : state.kind === 'saving' ? 'text-muted' : 'text-danger';
+  const dot = state.kind === 'saved' ? 'bg-border-strong' : state.kind === 'saving' ? 'animate-pulse bg-accent' : 'bg-danger';
   return (
-    <span className={`text-xs ${tone}`} role="status" aria-live="polite">
+    <span className={`flex items-center gap-1.5 text-xs ${tone}`} role="status" aria-live="polite">
+      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />
       {text}
     </span>
   );

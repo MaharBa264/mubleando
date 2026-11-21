@@ -10,7 +10,7 @@ import { fmtMm } from '@/lib/format';
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <fieldset className="space-y-3 rounded-m border border-border p-4">
+    <fieldset className="space-y-3 rounded-card border border-border p-4">
       <legend className="px-1 text-sm font-semibold">{title}</legend>
       {hint && <p className="-mt-1 text-xs text-muted">{hint}</p>}
       {children}

@@ -1,10 +1,10 @@
-// Genera los iconos PNG de la PWA (sin dependencias): fondo verde y el mismo dibujo que icon.svg.
+// Genera los iconos PNG de la PWA (sin dependencias): fondo azul cobalto (--accent) y el mismo dibujo que icon.svg.
 import { writeFileSync } from 'node:fs';
 import { deflateSync } from 'node:zlib';
 
 function png(size, file) {
   const s = size / 64;
-  const bg = [0x1f, 0x6f, 0x5c], fg = [255, 255, 255];
+  const bg = [0x1a, 0x5f, 0xd6], fg = [255, 255, 255];
   const raw = Buffer.alloc((size * 4 + 1) * size);
   const inRect = (x, y, x0, y0, x1, y1) => x >= x0 * s && x < x1 * s && y >= y0 * s && y < y1 * s;
   for (let y = 0; y < size; y++) {

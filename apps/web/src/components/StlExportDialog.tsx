@@ -156,7 +156,7 @@ export function StlExportDialog({
         </div>
 
         {preview.printedSize && (
-          <p className="tabular rounded-s bg-surface-2 px-3 py-2 text-sm">
+          <p className="tabular rounded-control bg-surface-2 px-3 py-2 text-sm">
             Tamaño impreso: <strong>{fmtNum(preview.printedSize.x, 1)} × {fmtNum(preview.printedSize.y, 1)} × {fmtNum(preview.printedSize.z, 1)} mm</strong>{' '}
             <span className="text-muted">(ancho × fondo × alto)</span>
           </p>
@@ -201,7 +201,7 @@ function Choice<T extends string>({
         {options.map((o) => (
           <label
             key={o.value}
-            className="flex cursor-pointer items-start gap-3 rounded-s border border-border p-3 has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
+            className="flex cursor-pointer items-start gap-3 rounded-control border border-border p-3 has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
           >
             <input type="radio" className="mt-1 accent-[var(--accent)]" checked={value === o.value} onChange={() => onChange(o.value)} />
             <span>
