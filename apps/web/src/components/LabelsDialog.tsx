@@ -18,6 +18,12 @@ interface Saved {
 }
 const DEFAULT_CUSTOM: LabelFormat = { ...LABEL_FORMATS[0]!, id: CUSTOM, name: 'Medidas propias' };
 
+/** Formato de etiquetas elegido en este navegador (lo usa también el documento PDF). */
+export function readSavedLabelFormat(): LabelFormat {
+  const s = readSaved();
+  return s.formatId === CUSTOM ? s.custom : (LABEL_FORMATS.find((f) => f.id === s.formatId) ?? LABEL_FORMATS[0]!);
+}
+
 function readSaved(): Saved {
   try {
     const v = JSON.parse(window.localStorage.getItem(KEY) ?? 'null') as Saved | null;

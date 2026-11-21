@@ -224,21 +224,32 @@ export interface LabelsPdfOptions {
   title?: string;
 }
 
+/**
+ * Agrega las hojas de etiquetas a un PDF. `newPage`: empezar en una hoja nueva (si el documento ya
+ * tiene otras páginas); si no, la primera etiqueta va en la página actual.
+ */
+export function addLabelPages(doc: jsPDF, labels: readonly LabelData[], format: LabelFormat, opts: LabelsPdfOptions & { newPage?: boolean } = {}) {
+  const problem = formatProblem(format);
+  if (problem) throw new Error(problem);
+  const slots = labelSlots(format, labels.length, opts.start ?? 0);
+  if (opts.newPage) doc.addPage('a4', 'portrait');
+  let page = 0;
+  labels.forEach((l, i) => {
+    const s = slots[i]!;
+    while (s.page > page) {
+      doc.addPage('a4', 'portrait');
+      page++;
+    }
+    drawLabel(doc, l, s.x, s.y, format.width, format.height, opts.outline ?? false);
+  });
+}
+
 /** PDF con las etiquetas. Devuelve los bytes y la cantidad de hojas. */
 export function labelsPdf(labels: readonly LabelData[], format: LabelFormat, opts: LabelsPdfOptions = {}): { bytes: ArrayBuffer; pages: number } {
   const problem = formatProblem(format);
   if (problem) throw new Error(problem);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
   doc.setProperties({ title: opts.title ? `Etiquetas · ${opts.title}` : 'Etiquetas', creator: 'mubleando' });
-  const slots = labelSlots(format, labels.length, opts.start ?? 0);
-  let page = 0;
-  labels.forEach((l, i) => {
-    const s = slots[i]!;
-    while (s.page > page) {
-      doc.addPage();
-      page++;
-    }
-    drawLabel(doc, l, s.x, s.y, format.width, format.height, opts.outline ?? false);
-  });
+  addLabelPages(doc, labels, format, opts);
   return { bytes: doc.output('arraybuffer'), pages: doc.getNumberOfPages() };
 }

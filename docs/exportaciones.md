@@ -61,6 +61,26 @@ Función: `cutListCsv(rows, materials, { separator = ';', decimal = ',', bom = t
 
 ---
 
+## Documento PDF del mueble o del proyecto
+
+En el despiece, botón **PDF**. Un solo archivo, en A4, con lo que elijas:
+
+| Parte | Qué lleva |
+| --- | --- |
+| Portada (siempre) | Nombre, medidas (o cantidad de muebles), fecha, costo estimado del material y herrajes (si hay precios) y una vista del mueble armado. |
+| Lista de corte | La lista agrupada: número, pieza, material, largo y ancho de corte, espesor, cantidad y cantos (L1 delantero, L2 trasero, A1 y A2 los extremos). Sigue en otra página si no entra. |
+| Plano de cortes | Cada material aparte, dos placas por página, con las piezas numeradas y su medida. Usa la sierra y el refilado elegidos en el plano de cortes del despiece. |
+| Mueble armado, frentes cerrados | Vista isométrica (desde adelante, a la derecha y arriba). |
+| Mueble armado, frentes abiertos | Puertas abiertas 95° sobre sus bisagras, cajones afuera el 60 % de su fondo y corredizas corridas (como en el 3D). |
+| Vista explotada | Cada pieza separada en la dirección en que se arma (costados hacia los lados, tapa arriba, fondo atrás, estantes y frentes adelante, cajones afuera), con su número de la lista. |
+| Etiquetas | Al final, sin pie de página, en el formato elegido en **Etiquetas**: esas hojas se imprimen en papel autoadhesivo. |
+
+En un proyecto, las vistas salen una por mueble. Lo elegido queda guardado en ese navegador.
+
+**Cómo se dibujan las vistas.** No son capturas de la pantalla: cada pieza es una caja con sus medidas reales y se dibuja con polígonos, así que se ven nítidas a cualquier tamaño. Se dibuja solo la cara de cada pieza que mira hacia el observador, con tres tonos (arriba más claro, costados más oscuros) para que se lea el volumen. El orden de dibujo sale de comparar cada par de piezas que se tapan en el papel: primero la que queda detrás. En la vista explotada, cada número busca un punto visible de su pieza.
+
+Código: [`packages/exporters/src/views.ts`](../packages/exporters/src/views.ts) (`cabinetView`) y [`document.ts`](../packages/exporters/src/document.ts) (`cabinetPdf`). Pruebas: proyección con cifras a mano, contornos y superposición, orden de dibujo (el lateral del cajón detrás del costado), vista abierta y explotada (todas las piezas con su número) y cantidad de páginas según lo elegido.
+
 ## Etiquetas para las piezas (PDF)
 
 En el despiece, botón **Etiquetas**. Un PDF para imprimir en hojas A4 autoadhesivas y pegar cada etiqueta en su pieza.

@@ -9,7 +9,7 @@ import { fmtMm, fmtMoney, fmtNum } from '@/lib/format';
 const KEY = 'mw-plano-de-cortes';
 
 /** Sierra y refilado elegidos en este navegador (si se puede leer). */
-function readOptions(): CuttingOptions {
+export function readCuttingOptions(): CuttingOptions {
   try {
     const v = JSON.parse(window.localStorage.getItem(KEY) ?? 'null') as Partial<CuttingOptions> | null;
     if (v && Number.isInteger(v.kerf) && Number.isInteger(v.trim)) return { kerf: v.kerf!, trim: v.trim! };
@@ -28,7 +28,7 @@ const m2 = (a: number) => a / 1e10;
  */
 export function CuttingPlanView({ items, materials }: { items: CutItem[]; materials: Material[] }) {
   const [options, setOptions] = useState<CuttingOptions>(DEFAULT_CUTTING);
-  useEffect(() => setOptions(readOptions()), []);
+  useEffect(() => setOptions(readCuttingOptions()), []);
   const update = (patch: Partial<CuttingOptions>) => {
     const next = { ...options, ...patch };
     setOptions(next);

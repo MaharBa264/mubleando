@@ -10,7 +10,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | **Hecho** (21-11-2026). |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | **Hecho** (21-11-2026), salvo los retazos. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | **Hecho** (21-11-2026), salvo el código QR. |
-| 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | Junta en un solo archivo el plano de cortes y las etiquetas (#4), y suma las vistas del mueble. |
+| 10 | [Documento PDF del mueble: cortes, etiquetas y vistas](#10-documento-pdf-del-mueble-cortes-etiquetas-y-vistas) | [#10](https://github.com/MaharBa264/mubleando/issues/10) | grande | **Hecho** (21-11-2026). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | Suma herrajes nuevos (como las patas) y una lista aparte para la vidriería. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | Necesita la huella real del mueble, patas incluidas. |
@@ -257,6 +257,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 10. Documento PDF del mueble: cortes, etiquetas y vistas
+
+> **Hecho** el 21-11-2026; la vista explotada lleva las piezas separadas con su número, sin flechas de armado. Cómo funciona: [Exportaciones → Documento PDF](exportaciones.md#documento-pdf-del-mueble-o-del-proyecto).
 
 **Para qué.** Un solo archivo para llevar a la maderera o al taller, o mandar al cliente, en vez de imprimir pantallas.
 

@@ -184,6 +184,7 @@ Desde el editor (**Despiece**) o desde el proyecto (**despiece del proyecto**).
 - Abajo, el resumen: piezas y m² por tablero, metros de canto y costo estimado del material (sin mermas ni mano de obra).
 - **Imprimir** saca una versión limpia para papel o PDF.
 - **Descargar CSV** baja la lista para Excel o para mandarla a la maderera.
+- **PDF**: un documento con portada, lista de corte, plano de cortes, vistas del mueble (armado con frentes cerrados o abiertos, y explotado) y etiquetas, a elección (ver [Exportaciones → Documento PDF](exportaciones.md#documento-pdf-del-mueble-o-del-proyecto)).
 - **Etiquetas**: PDF con una etiqueta por pieza para hojas A4 autoadhesivas (ver [Exportaciones → Etiquetas](exportaciones.md#etiquetas-para-las-piezas-pdf)).
 - Al final, el **plano de cortes**: cuántas placas enteras comprar, cómo sale cada pieza de cada placa y cuánto cuestan. Todo en [Plano de cortes](plano-de-cortes.md).
 

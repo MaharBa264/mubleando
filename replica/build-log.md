@@ -204,3 +204,11 @@ Migración de la medida de placa aplicada en Supabase (21-11-2026): la prueba co
 | S27 | Despiece → Etiquetas (PDF A4) | hecho | código QR | que cada etiqueta lleve su mueble y su pieza aunque la lista agrupada junte varias |
 
 Comprobado: 34 pruebas de exportaciones (10 de etiquetas: formatos, posiciones, hoja empezada, una por unidad con su mueble, pieza y placa, hojas del PDF); un PDF de muestra revisado a ojo (bajo de 600 con puertas: 8 etiquetas, cantos y placa en su lugar); en el navegador (modo local), el diálogo con formato, piezas y cuenta de etiquetas y hojas. No se imprimió sobre una hoja de etiquetas real.
+
+## Documento PDF, issue #10 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| S24 | Despiece → PDF (portada, lista, plano, vistas, etiquetas) | hecho | flechas de armado en la explotada | el orden de dibujo: comparar cajas solo por su rectángulo en el papel creaba ciclos (tapa, costado y puerta) y el lateral del cajón aparecía delante del costado; se compara con el contorno real de cada pieza |
+
+Comprobado: 47 pruebas de exportaciones (13 de vistas y documento); PDF de muestra revisado a ojo (bajo con cajón y puertas: 9 páginas, vistas cerrada, abierta y explotada con todas las piezas numeradas en una parte visible); en el navegador (modo local), el documento del proyecto de ejemplo con todas las partes se genera sin errores (75 KB).

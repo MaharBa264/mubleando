@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { groupedRows, individualRows, totals, type CutItem, type HardwareItem, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { CuttingPlanView } from '@/components/CuttingPlanView';
+import { DocumentDialog } from '@/components/DocumentDialog';
 import { LabelsDialog } from '@/components/LabelsDialog';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
@@ -32,6 +33,7 @@ export function CutListView({
   const [mode, setMode] = useState<'grouped' | 'individual'>('grouped');
   const [decimal, setDecimal] = useState<',' | '.'>(',');
   const [labelsOpen, setLabelsOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
   const rows = useMemo(() => (mode === 'grouped' ? groupedRows(items) : individualRows(items)), [items, mode]);
   const sum = useMemo(() => totals(items, materials), [items, materials]);
   // Herrajes iguales (mismo herraje y mismo detalle) en una línea.
@@ -117,6 +119,9 @@ export function CutListView({
           </Button>
           <Button size="sm" onClick={() => setLabelsOpen(true)} title="PDF con una etiqueta por pieza, para hojas A4 autoadhesivas">
             Etiquetas
+          </Button>
+          <Button size="sm" onClick={() => setDocOpen(true)} title="Un PDF con lista de corte, plano de cortes, vistas del mueble y etiquetas, a elección">
+            PDF
           </Button>
           <Button size="sm" variant="primary" onClick={download}>
             Descargar CSV
@@ -270,6 +275,17 @@ export function CutListView({
       </section>
 
       <CuttingPlanView items={items} materials={materials} />
+      {docOpen && (
+        <DocumentDialog
+          open
+          onClose={() => setDocOpen(false)}
+          items={items}
+          materials={materials}
+          title={title || fileName}
+          fileName={fileName}
+          cost={sum.totalCents + hwCents > 0 ? fmtMoney(sum.totalCents + hwCents) : undefined}
+        />
+      )}
       {labelsOpen && <LabelsDialog open onClose={() => setLabelsOpen(false)} items={items} materials={materials} title={title} fileName={fileName} />}
     </div>
   );
