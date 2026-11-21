@@ -600,12 +600,13 @@ function PartProps({ partKey }: { partKey: string }) {
           )}
           <MmField
             compact
-            label="Retranqueo del frente (vacío = el del método)"
+            label="Retranqueo del frente (vacío = automático)"
             value={override?.frontSetback ?? null}
             allowEmpty
             min={0}
             max={parentZone.box.dz - mm(50)}
-            placeholder={`método · ${fmtMm(parentZone.box.dz - part.box.dz)}`}
+            placeholder={`automático · ${fmtMm(parentZone.box.dz - part.box.dz)}`}
+            hint="Automático: el del método o, detrás de una corrediza o un frente encastrado, lo que ocupa más 2 mm."
             onCommit={(v) => apply((d) => setOverride(d, part.key, { ...override, frontSetback: v ?? undefined }))}
           />
         </Section>

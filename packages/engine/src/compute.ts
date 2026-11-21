@@ -15,6 +15,8 @@ const FALLBACK_THICKNESS = mm(19);
 const MIN_DRAWER_BOX_H = mm(50);
 /** Fondo mínimo de un cajón; por debajo no se genera. */
 const MIN_DRAWER_DEPTH = mm(100);
+/** Margen que se deja, además de lo que ocupa el frente, al retranquear solos los estantes de detrás. */
+const SETBACK_MARGIN = mm(2);
 
 /** Roles que llevan el canto frontal del método en L1. */
 const FRONT_EDGED: ReadonlySet<PartRole> = new Set(['side', 'top', 'bottom', 'shelf', 'divider', 'drawer-side', 'drawer-back']);
@@ -294,15 +296,51 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   });
   if (backPart) addPart(backPart);
 
+  // ── frentes: espesor y sistema corredizo (los estantes de detrás dependen de ellos) ──
+  const fm = method.fronts;
+  const tf = thicknessOf(fm.materialId, 'los frentes');
+  // Sistema corredizo: el elegido o, si no hay, el de partida de 2 hojas (sus medidas típicas).
+  const slidingSpec: SlidingSpec = slidingHw?.spec ?? (PRESET_HARDWARE.find((h) => h.kind === 'sliding')!.spec as SlidingSpec);
+
+  /**
+   * Lo que ocupa un frente dentro del mueble, desde el borde delantero: los estantes y divisores de
+   * detrás tienen que retranquearse al menos eso. Las puertas corredizas van dentro del hueco (retiro,
+   * dos hojas y el espacio entre rieles); las encastradas, su espesor. Las superpuestas, nada.
+   */
+  type Clearance = { need: Len; what: 'sliding' | 'inset' };
+  const clearanceOf = (f: Front | undefined): Clearance | null => {
+    if (!f) return null;
+    if (f.kind === 'sliding') return { need: slidingSpec.frontSetback + 2 * tf + slidingSpec.trackGap, what: 'sliding' };
+    if (f.mount === 'inset') return { need: tf, what: 'inset' };
+    return null;
+  };
+  /** Estantes y divisores con un retranqueo elegido a mano que choca con el frente (el aviso se arma al final, con su nombre). */
+  const collisions: { key: string; setback: Len; clearance: Clearance; zoneId: string }[] = [];
+
   // ── huecos interiores ──
   const inner: Box = { x: t, y: plinthH + t, z: innerZ0, dx: innerW, dy: innerH, dz: D - innerZ0 };
   const fronted: { zone: Zone; front: Front; box: Box }[] = [];
 
-  const layout = (zone: Zone, box: Box, parentId: string | null, depth: number, index: number) => {
+  /**
+   * `behind`: lo que ocupa el frente más profundo de este hueco o de los que lo contienen. Los estantes
+   * y divisores se retranquean solos eso más un margen; si se eligió un retranqueo a mano, se respeta
+   * y, si es menor, se avisa.
+   */
+  const layout = (zone: Zone, box: Box, parentId: string | null, depth: number, index: number, behind: Clearance | null) => {
     zones.push({ id: zone.id, parentId, depth, box, isLeaf: !zone.split, index });
     if (zone.front) fronted.push({ zone, front: zone.front, box });
     const split = zone.split;
     if (!split) return;
+    const own = clearanceOf(zone.front);
+    const clearance = own && (!behind || own.need > behind.need) ? own : behind;
+    const setbackFor = (key: string, methodSetback: Len): Len => {
+      const forced = overrides[key]?.frontSetback;
+      if (forced !== undefined) {
+        if (clearance && forced < clearance.need) collisions.push({ key, setback: forced, clearance, zoneId: zone.id });
+        return forced;
+      }
+      return clearance ? Math.max(methodSetback, clearance.need + SETBACK_MARGIN) : methodSetback;
+    };
 
     const n = split.children.length;
     const along: 'dx' | 'dy' = split.axis === 'x' ? 'dx' : 'dy';
@@ -313,11 +351,11 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     split.children.forEach((child, i) => {
       const size = Math.max(0, sizes[i] ?? 0);
       const childBox: Box = split.axis === 'x' ? { ...box, x: pos, dx: size } : { ...box, y: pos, dy: size };
-      layout(child, childBox, zone.id, depth + 1, i);
+      layout(child, childBox, zone.id, depth + 1, i, clearance);
       pos += size;
       if (i < n - 1) {
         if (split.axis === 'y') {
-          const dz = box.dz - (overrides[`zone:${zone.id}/div${i}`]?.frontSetback ?? method.shelfFrontSetback);
+          const dz = box.dz - setbackFor(`zone:${zone.id}/div${i}`, method.shelfFrontSetback);
           addPart({
             key: `zone:${zone.id}/div${i}`,
             role: 'shelf',
@@ -330,7 +368,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
             zoneId: zone.id,
           });
         } else {
-          const dz = box.dz - (overrides[`zone:${zone.id}/div${i}`]?.frontSetback ?? method.dividerFrontSetback);
+          const dz = box.dz - setbackFor(`zone:${zone.id}/div${i}`, method.dividerFrontSetback);
           addPart({
             key: `zone:${zone.id}/div${i}`,
             role: 'divider',
@@ -347,7 +385,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       }
     });
   };
-  layout(design.root, inner, null, 0, 0);
+  layout(design.root, inner, null, 0, 0, null);
 
   // ── zócalo ──
   if (plinthH > 0) {
@@ -367,8 +405,6 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   }
 
   // ── frentes: puertas y cajones ──
-  const fm = method.fronts;
-  const tf = thicknessOf(fm.materialId, 'los frentes');
   const fEdge = validEdge(fm.edgeMaterialId);
   const frontEdges: Edges = { L1: fEdge, L2: fEdge, W1: fEdge, W2: fEdge };
   const gap = fm.gap;
@@ -391,16 +427,6 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
   };
   const frontZ = (mount: FrontMount) => (mount === 'inset' ? D - tf : D);
 
-  /** ¿Hay estantes o divisores dentro del hueco retranqueados menos que `needed` (chocarían con el frente)? */
-  const setbackCollision = (zone: Zone, needed: Len): boolean => {
-    if (!zone.split) return false;
-    const setback = zone.split.axis === 'y' ? method.shelfFrontSetback : method.dividerFrontSetback;
-    return setback < needed || zone.split.children.some((c) => setbackCollision(c, needed));
-  };
-  const insetCollision = (zone: Zone) => setbackCollision(zone, tf);
-  // Sistema corredizo: el elegido o, si no hay, el de partida de 2 hojas (sus medidas típicas).
-  const slidingSpec: SlidingSpec = slidingHw?.spec ?? (PRESET_HARDWARE.find((h) => h.kind === 'sliding')!.spec as SlidingSpec);
-
   let doorCount = 0;
   let drawerCount = 0;
 
@@ -409,14 +435,6 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     if (front.kind === 'sliding') {
       const sp = slidingSpec;
       const n = front.leaves;
-      const needed = sp.frontSetback + 2 * tf + sp.trackGap;
-      if (setbackCollision(zone, needed)) {
-        warnings.push({
-          code: 'front_collision',
-          message: `Las puertas corredizas ocupan ${toMm(needed)} mm desde el frente: los estantes o divisores de detrás tienen que ir retranqueados al menos eso.`,
-          zoneId: zone.id,
-        });
-      }
       const h = box.dy - sp.topGap - sp.bottomGap;
       const widths = distribute(box.dx + (n - 1) * sp.overlap, n);
       if (h <= 0 || widths.some((w) => w <= sp.overlap)) {
@@ -449,13 +467,6 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       continue;
     }
 
-    if (front.mount === 'inset' && insetCollision(zone)) {
-      warnings.push({
-        code: 'front_collision',
-        message: `Los estantes o divisores de detrás de un frente encastrado están retranqueados menos de ${toMm(tf)} mm y chocan con él.`,
-        zoneId: zone.id,
-      });
-    }
     const r = frontRect(box, front.mount);
     if (r.w <= 0 || r.h <= 0) {
       warnings.push({ code: 'zone_too_small', message: 'Un hueco es demasiado pequeño para su frente.', zoneId: zone.id });
@@ -656,6 +667,20 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
       p.name = `${p.name} ${counters[p.role]}`;
     }
   }
+  // Retranqueos elegidos a mano que chocan con el frente: el aviso lleva el nombre ya numerado.
+  for (const c of collisions) {
+    const name = parts.find((p) => p.key === c.key)?.name ?? 'Un estante';
+    const front =
+      c.clearance.what === 'sliding'
+        ? `las puertas corredizas, que ocupan ${toMm(c.clearance.need)} mm desde el frente`
+        : `el frente encastrado, de ${toMm(c.clearance.need)} mm`;
+    warnings.push({
+      code: 'front_collision',
+      message: `${name}: con ${toMm(c.setback)} mm de retranqueo choca con ${front}. Retranquealo al menos ${toMm(c.clearance.need)} mm o quitá el cambio para que se ajuste solo.`,
+      zoneId: c.zoneId,
+    });
+  }
+
   // Con una sola puerta, "Puerta" a secas.
   if (doorCount === 1) {
     const d = parts.find((p) => p.role === 'door');

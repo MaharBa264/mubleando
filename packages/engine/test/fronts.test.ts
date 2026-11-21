@@ -81,13 +81,30 @@ describe('puertas', () => {
     expect(pb!.box.x - (pa!.box.x + pa!.box.dx)).toBe(mm(3));
   });
 
-  it('avisa si una puerta encastrada choca con los estantes', () => {
+  it('detrás de una puerta encastrada, los estantes se retranquean solos su espesor + 2 mm', () => {
     let d = base();
     d = setDivisions(d, d.root.id, 'y', 1, gen);
     d = setFront(d, d.root.id, door('inset'));
     const corto: Method = { ...groove, shelfFrontSetback: mm(10) };
-    expect(compute(d, corto, M).warnings.map((w) => w.code)).toContain('front_collision');
+    const r = compute(d, corto, M);
+    expect(r.warnings).toEqual([]);
+    const tf = r.parts.find((p) => p.role === 'door')!.thickness;
+    const zone = r.zones.find((z) => z.id === d.root.id)!.box;
+    const shelf = r.parts.find((p) => p.role === 'shelf')!;
+    expect(zone.dz - shelf.width).toBe(tf + mm(2));
     expect(compute(d, groove, M).warnings).toEqual([]);
+  });
+
+  it('avisa, con el nombre del estante, si se le eligió a mano un retranqueo que choca con la puerta encastrada', () => {
+    let d = base();
+    d = setDivisions(d, d.root.id, 'y', 1, gen);
+    d = setFront(d, d.root.id, door('inset'));
+    d = setOverride(d, `zone:${d.root.id}/div0`, { frontSetback: mm(10) });
+    const r = compute(d, groove, M);
+    expect(r.warnings.map((w) => w.code)).toEqual(['front_collision']);
+    expect(r.warnings[0]!.message).toMatch(/^Estante 1: con 10 mm de retranqueo choca con el frente encastrado/);
+    const zone = r.zones.find((z) => z.id === d.root.id)!.box;
+    expect(zone.dz - r.parts.find((p) => p.role === 'shelf')!.width).toBe(mm(10));
   });
 });
 

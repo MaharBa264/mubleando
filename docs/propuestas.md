@@ -4,7 +4,7 @@ Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *i
 
 | # | Propuesta | Issue | Tamaño | Por qué en este lugar |
 | --- | --- | --- | --- | --- |
-| 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | Es un error de medidas: lo que se corta hoy no se puede armar. |
+| 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | **Hecho** (21-11-2026). |
 | 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | Hoy cualquiera puede crearse una cuenta en el proyecto de Supabase. |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
@@ -15,6 +15,8 @@ Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *i
 ---
 
 ## 1. Corredizas: los estantes no tienen que chocar con las hojas
+
+> **Hecho** el 21-11-2026. Cómo funciona: [Herrajes → Sistemas de puertas corredizas](herrajes.md#sistemas-de-puertas-corredizas).
 
 **Qué pasa hoy.** Las hojas corredizas van dentro del hueco y ocupan, desde el frente, el retiro de la hoja delantera más dos espesores de hoja más el espacio entre rieles. Con el sistema de partida y hojas de 18 mm son 5 + 18 + 6 + 18 = **47 mm**. El motor solo **avisa**: los estantes y divisores siguen con el retranqueo del método (pocos milímetros), así que en el despiece salen con un fondo que choca con las hojas. Además, el control mira el retranqueo del método y no el que se haya cambiado en un estante concreto.
 
@@ -27,7 +29,7 @@ Funciones propuestas, en el orden en que conviene hacerlas. Cada una tiene su *i
 
 **Hecho cuando.**
 
-- Un bajo de 1200 con 2 hojas y un estante: el estante sale con 49 mm menos de fondo que sin corrediza, y no hay aviso.
+- Un bajo de 1200 con 2 hojas y un estante: el estante sale retranqueado 49 mm (de 522 a 493 de fondo; sin corrediza ya tenía los 20 del método), y no hay aviso.
 - Con el retranqueo del estante forzado a 20 mm, aparece el aviso con su nombre.
 - Pruebas del motor con estas cifras calculadas a mano.
 

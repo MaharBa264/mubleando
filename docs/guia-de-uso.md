@@ -124,7 +124,7 @@ Las medidas salen solas a partir de la holgura del método (3 mm por defecto): l
 
 ### Puertas corredizas
 
-En **Frente**, elegí **Corrediza** (o el botón **Corrediza** de la barra del 3D) y luego **dos** o **tres hojas**. Las hojas van dentro del hueco, en dos rieles; sus medidas salen del sistema corredizo elegido (ver [Herrajes](herrajes.md)). Si dentro hay estantes poco retranqueados, la app avisa de que chocan con las hojas.
+En **Frente**, elegí **Corrediza** (o el botón **Corrediza** de la barra del 3D) y luego **dos** o **tres hojas**. Las hojas van dentro del hueco, en dos rieles; sus medidas salen del sistema corredizo elegido (ver [Herrajes](herrajes.md)). Los estantes y divisores de detrás se retranquean solos lo que ocupan las hojas más 2 mm, y su fondo baja en el despiece. Si a un estante le pusiste a mano un retranqueo menor, se respeta y la app avisa de que choca, con su nombre. Lo mismo pasa detrás de un frente encastrado.
 
 ### Cajones
 

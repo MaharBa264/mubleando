@@ -11,6 +11,7 @@ import {
   PRESET_METHODS,
   setDivisions,
   setFront,
+  setOverride,
   type Design,
   type Method,
   type Part,
@@ -142,11 +143,53 @@ describe('puertas corredizas', () => {
     expect(doors.reduce((s, p) => s + p.width, 0)).toBe(mm(1164 + 40));
   });
 
-  it('estantes retranqueados 20 chocan con las hojas (necesitan 47 mm): avisa', () => {
-    const d = setFront(setDivisions(d0, d0.root.id, 'y', 1, gen), d0.root.id, { kind: 'sliding', leaves: 2 });
-    const r = compute(d, ar, M, HW);
+  // Las hojas ocupan 5 + 18 + 6 + 18 = 47 mm desde el frente; los estantes se retranquean solos 47 + 2 = 49.
+  // Hueco interior de 542 de fondo (z de 18 a 560): estante de 542 − 49 = 493, que llega hasta z = 511;
+  // la hoja de atrás empieza en z = 513 (2 mm de margen).
+  const conEstante = setFront(setDivisions(d0, d0.root.id, 'y', 1, gen), d0.root.id, { kind: 'sliding', leaves: 2 });
+
+  it('los estantes de detrás se retranquean solos 49 mm (47 de las hojas + 2): fondo 493, sin aviso', () => {
+    const r = compute(conEstante, ar, M, HW);
+    expect(r.warnings).toEqual([]);
+    const shelf = r.parts.find((p) => p.role === 'shelf')!;
+    expect([mmOf(shelf.width), mmOf(shelf.box.z + shelf.box.dz)]).toEqual([493, 511]);
+    const back = r.parts.find((p) => p.track === 'back')!;
+    expect(mmOf(back.box.z)).toBe(513);
+    // Sin corrediza, el mismo estante va con el retranqueo del método (20): 29 mm más de fondo.
+    const sin = compute(setDivisions(d0, d0.root.id, 'y', 1, gen), ar, M, HW).parts.find((p) => p.role === 'shelf')!;
+    expect(mmOf(sin.width)).toBe(522);
+  });
+
+  it('también los estantes y divisores de los huecos de dentro; los de un hueco vecino sin corrediza, no', () => {
+    // Bajo de 1200 partido en dos columnas; la izquierda, con un estante y corrediza; la derecha, con un estante y sin frente.
+    let d = setDivisions(d0, d0.root.id, 'x', 1, gen);
+    const [left, right] = d.root.split!.children;
+    d = setDivisions(d, left!.id, 'y', 1, gen);
+    d = setDivisions(d, right!.id, 'y', 1, gen);
+    d = setFront(d, left!.id, { kind: 'sliding', leaves: 2 });
+    let r = compute(d, ar, M, HW);
+    const width = (zoneId: string) => mmOf(r.parts.find((p) => p.role === 'shelf' && p.zoneId === zoneId)!.width);
+    expect([width(left!.id), width(right!.id)]).toEqual([493, 522]);
+    expect(mmOf(r.parts.find((p) => p.role === 'divider')!.width)).toBe(542);
+    // Con la corrediza en todo el mueble, el divisor (retranqueo 0 en el método) también se retranquea 49.
+    d = setFront(setFront(d, left!.id, undefined), d0.root.id, { kind: 'sliding', leaves: 2 });
+    r = compute(d, ar, M, HW);
+    expect(r.warnings).toEqual([]);
+    expect(mmOf(r.parts.find((p) => p.role === 'divider')!.width)).toBe(493);
+    expect([width(left!.id), width(right!.id)]).toEqual([493, 493]);
+  });
+
+  it('un retranqueo elegido a mano se respeta y, si es menor de 47, avisa con el nombre del estante', () => {
+    const key = `zone:${d0.root.id}/div0`;
+    let r = compute(setOverride(conEstante, key, { frontSetback: mm(20) }), ar, M, HW);
+    expect(mmOf(r.parts.find((p) => p.role === 'shelf')!.width)).toBe(522);
     expect(r.warnings.map((w) => w.code)).toEqual(['front_collision']);
-    expect(r.warnings[0]!.message).toContain('47 mm');
+    expect(r.warnings[0]!.message).toBe(
+      'Estante 1: con 20 mm de retranqueo choca con las puertas corredizas, que ocupan 47 mm desde el frente. Retranquealo al menos 47 mm o quitá el cambio para que se ajuste solo.',
+    );
+    r = compute(setOverride(conEstante, key, { frontSetback: mm(60) }), ar, M, HW);
+    expect(r.warnings).toEqual([]);
+    expect(mmOf(r.parts.find((p) => p.role === 'shelf')!.width)).toBe(482);
   });
 
   it('el formato guardado acepta puertas corredizas y herrajes elegidos', () => {

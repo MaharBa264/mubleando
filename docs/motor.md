@@ -314,7 +314,7 @@ const { parts, zones, warnings } = compute(design, method, materials);
 | `zone_too_small` | Algún hueco se queda con medida 0 o negativa. |
 | `groove_too_deep` | La ranura es tan profunda como el tablero o más. |
 | `material_missing` | El método usa un material que no existe. Se sigue calculando con 19 mm, o sin canto. |
-| `front_collision` | Una puerta o cajón encastrado choca con estantes o divisores poco retranqueados. |
+| `front_collision` | Un estante o divisor con un retranqueo elegido a mano choca con las puertas corredizas o con un frente encastrado. Sin retranqueo elegido a mano, el motor los retranquea solos lo que ocupa el frente más 2 mm. |
 | `drawer_too_small` | La caja de un cajón no cabe (menos de 50 mm de alto o 100 mm de fondo). Sale el frente pero no la caja. |
 | `drawer_on_split` | Un hueco con divisiones tiene cajones. Salen los frentes pero no las cajas. |
 | `override_ignored` | Un cambio de material a mano no se puede aplicar (no existe o tiene otro espesor). |

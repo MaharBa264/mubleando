@@ -60,7 +60,12 @@ Las hojas van **dentro del hueco**, en dos rieles; cada hoja se monta sobre la s
 
 Ancho de cada hoja = (ancho del hueco + (hojas − 1) × solape) / hojas.
 
-Ejemplo, bajo de 1200 con 2 hojas: hueco de 1164 × 824 → hojas de 592 × 804, a 5 y a 29 mm del frente. Las hojas ocupan 47 mm desde el frente (5 + 18 + 6 + 18): si dentro hay estantes retranqueados menos que eso, el motor avisa de que chocan.
+Ejemplo, bajo de 1200 con 2 hojas: hueco de 1164 × 824 → hojas de 592 × 804, a 5 y a 29 mm del frente. Las hojas ocupan 47 mm desde el frente (5 + 18 + 6 + 18).
+
+**Estantes y divisores de detrás.** Se retranquean solos lo que ocupan las hojas más 2 mm de margen: en el ejemplo, 49 mm. Vale para los del hueco con la corrediza y para los de todos los huecos que tiene dentro. Con un fondo interior de 542, el estante pasa de 522 (retranqueo del método, 20 mm) a 493, y queda a 2 mm de la hoja de atrás.
+
+- Si a un estante se le eligió el retranqueo a mano (Propiedades → Retranqueo del frente), se respeta. Si es menor que lo que ocupan las hojas, aparece un aviso con su nombre: «Estante 1: con 20 mm de retranqueo choca con las puertas corredizas…». Para volver al automático, se deja el campo vacío.
+- Lo mismo pasa detrás de un frente encastrado, con el espesor del frente más 2 mm.
 
 En la lista de herrajes: un juego por hueco, con el largo de los rieles.
 
