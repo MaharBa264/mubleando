@@ -7,7 +7,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 1 | [Corredizas: los estantes no tienen que chocar con las hojas](#1-corredizas-los-estantes-no-tienen-que-chocar-con-las-hojas) | [#1](https://github.com/MaharBa264/mubleando/issues/1) | chico | **Hecho** (21-11-2026). |
 | 2 | [Registro solo para mails autorizados](#2-registro-solo-para-mails-autorizados) | [#2](https://github.com/MaharBa264/mubleando/issues/2) | chico | **Hecho** (21-11-2026). |
 | 8 | [Ayuda: explicación en el inicio y tooltips](#8-ayuda-explicación-en-el-inicio-y-tooltips) | [#8](https://github.com/MaharBa264/mubleando/issues/8) | mediano | **Hecho** (21-11-2026), salvo el recorrido guiado. |
-| 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | Los muebles y las esquinas se arrastran; las aberturas, no. |
+| 9 | [Arrastrar puertas y ventanas en la planta del ambiente](#9-arrastrar-puertas-y-ventanas-en-la-planta-del-ambiente) | [#9](https://github.com/MaharBa264/mubleando/issues/9) | chico | **Hecho** (21-11-2026). |
 | 3 | [Plano de cortes en las placas](#3-plano-de-cortes-en-las-placas) | [#3](https://github.com/MaharBa264/mubleando/issues/3) | grande | Es lo que más se usa: cuántas placas comprar y cuánto cuestan. |
 | 4 | [Etiquetas para pegar en las piezas](#4-etiquetas-para-pegar-en-las-piezas) | [#4](https://github.com/MaharBa264/mubleando/issues/4) | mediano | Usa el plano de cortes (cada etiqueta dice de qué placa sale la pieza). |
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | Cambia lo que ocupa el mueble en el piso: conviene antes de las colisiones. |
@@ -230,6 +230,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 9. Arrastrar puertas y ventanas en la planta del ambiente
+
+> **Hecho** el 21-11-2026, salvo pasarla a otra pared arrastrándola (era opcional). Cómo funciona: [Ambientes → Aberturas](ambientes.md#aberturas).
 
 **Qué pasa hoy.** En la vista cenital del ambiente se arrastran con el ratón los muebles y las esquinas de las paredes, pero **las puertas y ventanas no**: solo se mueven cambiando su distancia en el panel. No es un error de uso: falta la función.
 

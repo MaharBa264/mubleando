@@ -12,6 +12,8 @@ import {
   selfIntersects,
   setCornerAngle,
   setWallLength,
+  slideOpening,
+  alongWall,
   snapToWall,
   splitWall,
   wallPieces,
@@ -256,3 +258,62 @@ describe('paredes con espesor', () => {
     expect(pieces.filter((p) => p.wallIndex === 1 || p.wallIndex === 3)).toHaveLength(2);
   });
 });
+
+describe('deslizar una abertura por su pared', () => {
+  // Pared 0 de 3000; una puerta de 800 a 500 del inicio y una ventana de 1000 a 1800.
+  const base = rectRoom(mm(3000), mm(2500), gen);
+  const w0 = walls(base)[0]!;
+  const plan: RoomPlan = {
+    ...base,
+    openings: [
+      { id: 'p', wallId: w0.id, kind: 'door', offset: mm(500), width: mm(800), height: mm(2050), sill: 0 },
+      { id: 'v', wallId: w0.id, kind: 'window', offset: mm(1800), width: mm(1000), height: mm(1000), sill: mm(900) },
+    ],
+  };
+  const off = (pl: RoomPlan, id: string) => mmOf(pl.openings.find((o) => o.id === id)!.offset);
+
+  it('se mueve a donde se pide si entra', () => {
+    expect(off(slideOpening(plan, 'p', mm(700)), 'p')).toBe(700);
+  });
+
+  it('no sale de la pared: queda pegada al inicio o al final', () => {
+    expect(off(slideOpening(plan, 'p', mm(-300)), 'p')).toBe(0);
+    expect(off(slideOpening(plan, 'v', mm(2500)), 'v')).toBe(2000);
+  });
+
+  it('no se encima con otra abertura: queda pegada a ella', () => {
+    // La puerta (800) no puede pasar de 1800 − 800 = 1000.
+    expect(off(slideOpening(plan, 'p', mm(1300)), 'p')).toBe(1000);
+    // La ventana no puede bajar de 500 + 800 = 1300.
+    expect(off(slideOpening(plan, 'v', mm(1100)), 'v')).toBe(1300);
+  });
+
+  it('si se pide del otro lado de la vecina y ahí entra, salta al otro lado', () => {
+    // Pidiendo 2100 para la puerta: el tramo libre después de la ventana empieza en 2800 y no entra
+    // (3000 − 800 = 2200 < 2800); el lugar libre más cercano es 1000.
+    expect(off(slideOpening(plan, 'p', mm(2100)), 'p')).toBe(1000);
+    // La ventana, pidiendo 0: antes de la puerta no entra (500 < 1000); queda en 1300.
+    expect(off(slideOpening(plan, 'v', 0), 'v')).toBe(1300);
+    // Sin la ventana en el medio, la puerta sí puede ir al final.
+    const solo = { ...plan, openings: plan.openings.filter((o) => o.id === 'p') };
+    expect(off(slideOpening(solo, 'p', mm(2600)), 'p')).toBe(2200);
+  });
+
+  it('en una pared fuera de escuadra sigue la pared', () => {
+    // Se corre la esquina 2 (fin de la pared 1): la pared 1 queda inclinada y más larga.
+    const skew = moveCorner(base, 2, mm(3400), mm(2500));
+    const w1 = walls(skew)[1]!;
+    const pl: RoomPlan = { ...skew, openings: [{ id: 'x', wallId: w1.id, kind: 'window', offset: 0, width: mm(600), height: mm(1000), sill: mm(900) }] };
+    const moved = slideOpening(pl, 'x', mm(5000));
+    expect(moved.openings[0]!.offset).toBe(Math.floor(w1.length) - mm(600));
+    expect(mmOf(w1.length)).toBeCloseTo(2531.8, 1);
+    // Un punto sobre la pared a 1000 de su inicio se proyecta a 1000.
+    const p = { x: w1.a.x + w1.dir.x * mm(1000), y: w1.a.y + w1.dir.y * mm(1000) };
+    expect(mmOf(alongWall(w1, p))).toBe(1000);
+  });
+
+  it('una abertura que no existe no cambia nada', () => {
+    expect(slideOpening(plan, 'nada', mm(100))).toBe(plan);
+  });
+});
+

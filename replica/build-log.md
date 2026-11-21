@@ -175,3 +175,11 @@ Migración del registro aplicada en Supabase (21-11-2026): la prueba contra el p
 | todas | Tooltips propios (ratón, teclado, pulsación larga) | hecho | — | que la pulsación larga no active el botón ni abra el menú del navegador |
 
 Comprobado: 15 pruebas de la web (7 nuevas: texto del tooltip, atajo aparte, posición dentro de la ventana, y que todo botón de solo icono tenga aria-label, title o data-tip); en el navegador (modo local), la explicación del inicio, el tooltip de Ayuda y el de Deshacer desactivado con su atajo. La pulsación larga no se probó en un celular real.
+
+## Arrastrar aberturas, issue #9 (2026-11-21)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| S21 | Planta del ambiente: puertas y ventanas arrastrables, flechas, distancias a los extremos | hecho | pasar una abertura a otra pared arrastrándola | los muebles de delante tapaban la abertura: la zona para agarrarla se extiende por fuera de la pared |
+
+Comprobado: 151 pruebas del motor (7 nuevas de `slideOpening`: dentro de la pared, pegada a los extremos y a otra abertura, salto al lugar libre más cercano, pared fuera de escuadra); en el navegador (modo local), arrastrar la ventana hasta el final de la pared (queda en 2200 en una pared de 3200), Mayús + flecha (300 mm) y las distancias 1.900 y 300. El arrastre con el dedo no se probó en un celular real.

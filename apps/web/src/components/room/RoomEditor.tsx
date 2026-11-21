@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
-import { analyzeRoom, compute, type Hardware, type Material, type Method } from '@mw/engine';
+import { analyzeRoom, compute, slideOpening, walls, type Hardware, type Material, type Method } from '@mw/engine';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { Icon } from '@/components/ui/Icon';
@@ -113,6 +113,20 @@ export function RoomEditor({
         const id = s.selection.id;
         s.apply((p) => ({ ...p, placements: p.placements.filter((x) => x.id !== id) }));
         s.select({ kind: 'none' });
+      } else if (s.selection.kind === 'opening' && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        // Flechas: la abertura elegida se desliza por su pared, de a 10 mm (100 con Mayús), hacia donde apunta la flecha.
+        e.preventDefault();
+        const id = s.selection.id;
+        const o = s.plan.openings.find((x) => x.id === id);
+        if (!o) return;
+        const w = walls(s.plan).find((x) => x.id === o.wallId);
+        if (!w) return;
+        // La flecha empuja en esa dirección de la pantalla; cuenta lo que coincide con la pared.
+        const v = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key as 'ArrowRight']!;
+        const along = v[0]! * w.dir.x + v[1]! * w.dir.y;
+        if (Math.abs(along) < 0.3) return; // flecha casi perpendicular a la pared
+        const step = (e.shiftKey ? 10000 : 1000) * Math.sign(along);
+        s.apply((p) => slideOpening(p, id, o.offset + step));
       } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
         s.select({ kind: 'none' });
       }

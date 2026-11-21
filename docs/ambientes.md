@@ -45,6 +45,14 @@ Al cambiar un largo o un ángulo, las demás medidas se conservan tal como se ca
 
 Tocá una pared en la planta y agregá **Puerta**, **Ventana** o **Abertura sin hoja**. Aparece centrada, con medidas habituales (puerta 800 × 2050; ventana 1000 × 1100 con antepecho de 1 m). Se ajustan la pared, la distancia desde el inicio de la pared, el ancho, el alto y el antepecho.
 
+**Moverlas en la planta**:
+
+- **Arrastrá** la puerta o ventana con el mouse o el dedo: se desliza a lo largo de su pared, de a 10 mm, aunque la pared esté fuera de escuadra. Se puede agarrar también por la parte de afuera de la pared, si delante hay un mueble.
+- No se sale de la pared ni se encima con otra abertura de la misma pared: queda pegada al límite.
+- Con una abertura elegida, las **flechas** la mueven de a 10 mm (de a 100 con **Mayús**), hacia donde apunta la flecha.
+- Mientras está elegida, la planta muestra la distancia a cada extremo de la pared.
+- Se deshace con Ctrl+Z, como el resto.
+
 ### Colocar muebles
 
 En **Muebles** están todos los muebles del proyecto:
@@ -87,6 +95,7 @@ Código: [`packages/engine/src/room.ts`](../packages/engine/src/room.ts), prueba
 - **Mueble colocado** (`Placement`): esquina trasera izquierda (x, y), giro en grados y altura desde el piso. Con giro 0, el ancho va hacia +x y el frente mira hacia +y.
 - **Arrimar a la pared** (`snapToWall`): giro = el que hace que el frente apunte hacia el interior de la pared; posición = el punto de la pared más cercano a donde estaba, sin pasarse de los extremos.
 - **Fuera de escuadra**: para cada costado del mueble y cada pared casi paralela a él (menos de 15°) que esté a menos de 15 cm, se mide la distancia del punto trasero y del delantero a la recta de la pared. Si difieren 1 mm o más, o el mueble se mete en la pared, se avisa con las dos cifras.
+- **Deslizar una abertura** (`slideOpening`): la lleva a la distancia pedida, o al lugar libre más cercano de su pared si ahí no entra (sin salirse ni encimarse). `alongWall` proyecta un punto de la planta sobre la pared, para el arrastre.
 - **Trozos de pared para el 3D** (`wallPieces`): entre aberturas, pared entera; encima de cada abertura, el dintel; debajo de cada ventana, el antepecho.
 
 Datos: tabla `rooms` en Supabase (migración `20261118000000_ambientes.sql`, con reglas de acceso, `save_room` con control de versión y borrado en cascada con el proyecto y con la cuenta) y `rooms` en el almacenamiento del navegador (formato versión 4).

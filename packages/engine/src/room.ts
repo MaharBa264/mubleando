@@ -266,6 +266,44 @@ export function removeCorner(plan: RoomPlan, index: number): RoomPlan {
 }
 
 /** Mueve una esquina a un punto (arrastrándola en la planta). */
+/**
+ * Desliza una abertura por su pared hasta `offset` (distancia desde el inicio de la pared). No se sale
+ * de la pared ni se encima con otra abertura de la misma pared: si donde se pide no entra, queda en
+ * el lugar libre más cercano (pegada al límite). Si no entra en ningún lado, el plano no cambia.
+ */
+export function slideOpening(plan: RoomPlan, id: string, offset: Len): RoomPlan {
+  const o = plan.openings.find((x) => x.id === id);
+  if (!o) return plan;
+  const w = walls(plan).find((x) => x.id === o.wallId);
+  if (!w) return plan;
+  const others = plan.openings
+    .filter((x) => x.wallId === o.wallId && x.id !== id)
+    .map((x) => [x.offset, x.offset + x.width] as const)
+    .sort((a, b) => a[0] - b[0]);
+  // Tramos de la pared donde puede empezar la abertura: [desde, hasta].
+  const free: [number, number][] = [];
+  let start = 0;
+  for (const [a, b] of others) {
+    if (a - start >= o.width) free.push([start, a - o.width]);
+    start = Math.max(start, b);
+  }
+  const end = Math.floor(w.length) - o.width;
+  if (end >= start) free.push([start, end]);
+  let best: number | null = null;
+  for (const [lo, hi] of free) {
+    const v = Math.min(Math.max(offset, lo), hi);
+    if (best === null || Math.abs(v - offset) < Math.abs(best - offset)) best = v;
+  }
+  if (best === null) return plan;
+  const next = Math.round(best);
+  return next === o.offset ? plan : { ...plan, openings: plan.openings.map((x) => (x.id === id ? { ...x, offset: next } : x)) };
+}
+
+/** Distancia, a lo largo de la pared, desde su inicio hasta la proyección de un punto de la planta. */
+export function alongWall(w: Pick<Wall, 'a' | 'dir'>, p: Pt): number {
+  return (p.x - w.a.x) * w.dir.x + (p.y - w.a.y) * w.dir.y;
+}
+
 export function moveCorner(plan: RoomPlan, index: number, x: Len, y: Len): RoomPlan {
   if (index < 0 || index >= plan.corners.length) return plan;
   return { ...plan, corners: plan.corners.map((c, i) => (i === index ? { ...c, x: Math.round(x), y: Math.round(y) } : c)) };

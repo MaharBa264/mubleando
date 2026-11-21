@@ -2,10 +2,13 @@
 
 import { useMemo, useRef } from 'react';
 import {
+  alongWall,
   footprint,
   moveCorner,
   nearestWall,
+  OPENING_NAME,
   outerCorners,
+  slideOpening,
   snapToWall,
   walls,
   type CabinetSize,
@@ -25,12 +28,14 @@ const pts = (ps: readonly PlanPoint[]) => ps.map((p) => `${p.x},${p.y}`).join(' 
 
 type Drag =
   | { kind: 'placement'; id: string; from: PlanPoint; x0: number; y0: number; before: RoomPlan; moved: boolean }
-  | { kind: 'corner'; index: number; before: RoomPlan; moved: boolean };
+  | { kind: 'corner'; index: number; before: RoomPlan; moved: boolean }
+  | { kind: 'opening'; id: string; from: PlanPoint; offset0: number; before: RoomPlan; moved: boolean };
 
 /**
  * Vista cenital (planta) del ambiente: paredes con su espesor, aberturas, medidas de cada pared,
  * ángulo de cada esquina y muebles colocados. Los muebles se arrastran (se pegan a la pared al
- * soltarlos cerca) y las esquinas también, para copiar un ambiente fuera de escuadra.
+ * soltarlos cerca) y las esquinas también, para copiar un ambiente fuera de escuadra. Las puertas y
+ * ventanas se deslizan a lo largo de su pared.
  */
 export function PlanView({
   store,
@@ -83,6 +88,14 @@ export function PlanView({
       const x = snap(d.x0 + q.x - d.from.x);
       const y = snap(d.y0 + q.y - d.from.y);
       store.getState().preview((p) => ({ ...p, placements: p.placements.map((pl) => (pl.id === d.id ? { ...pl, x, y } : pl)) }));
+    } else if (d.kind === 'opening') {
+      // Se desliza por su pared: solo cuenta lo que el puntero avanza en la dirección de la pared.
+      store.getState().preview((p) => {
+        const o = p.openings.find((x) => x.id === d.id);
+        const w = o && walls(p).find((x) => x.id === o.wallId);
+        if (!w) return p;
+        return slideOpening(p, d.id, snap(d.offset0 + alongWall(w, q) - alongWall(w, d.from)));
+      });
     } else {
       store.getState().preview((p) => moveCorner(p, d.index, snap(q.x), snap(q.y)));
     }
@@ -118,6 +131,15 @@ export function PlanView({
     store.getState().select({ kind: 'placement', id });
     (e.target as Element).setPointerCapture?.(e.pointerId);
     drag.current = { kind: 'placement', id, from: toPlan(e), x0: pl.x, y0: pl.y, before: plan, moved: false };
+  };
+
+  const startOpening = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    const o = plan.openings.find((x) => x.id === id);
+    if (!o) return;
+    store.getState().select({ kind: 'opening', id });
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    drag.current = { kind: 'opening', id, from: toPlan(e), offset0: o.offset, before: plan, moved: false };
   };
 
   const startCorner = (e: React.PointerEvent, index: number) => {
@@ -184,14 +206,18 @@ export function PlanView({
         // Puerta: hoja abierta 90° hacia dentro, con el arco de giro.
         const leafEnd = { x: p0.x + w.inward.x * o.width, y: p0.y + w.inward.y * o.width };
         return (
-          <g
-            key={o.id}
-            className="cursor-pointer"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              store.getState().select({ kind: 'opening', id: o.id });
-            }}
-          >
+          <g key={o.id} className="cursor-move" onPointerDown={(e) => startOpening(e, o.id)}>
+            <title>{`${OPENING_NAME[o.kind][0]!.toUpperCase()}${OPENING_NAME[o.kind].slice(1)}: arrastrala por la pared para moverla (o elegila y usá las flechas)`}</title>
+            {/* zona para tocar más ancha que la abertura dibujada: más fácil de agarrar con el dedo */}
+            <polygon
+              points={pts([
+                { x: p0.x + w.inward.x * t * 0.6, y: p0.y + w.inward.y * t * 0.6 },
+                { x: p1.x + w.inward.x * t * 0.6, y: p1.y + w.inward.y * t * 0.6 },
+                { x: p1.x - w.inward.x * t * 1.6, y: p1.y - w.inward.y * t * 1.6 },
+                { x: p0.x - w.inward.x * t * 1.6, y: p0.y - w.inward.y * t * 1.6 },
+              ])}
+              fill="transparent"
+            />
             <polygon points={pts([p0, p1, out(p1), out(p0)])} fill={active ? 'var(--accent-soft)' : 'var(--bg)'} stroke={active ? 'var(--sel)' : 'none'} strokeWidth={2} vectorEffect="non-scaling-stroke" />
             {o.kind === 'window' && (
               <>
@@ -275,6 +301,36 @@ export function PlanView({
             </g>
           );
         })}
+
+      {/* abertura elegida: distancia a cada extremo de su pared, por dentro */}
+      {sel.kind === 'opening' &&
+        (() => {
+          const o = plan.openings.find((x) => x.id === sel.id);
+          const w = o && ws.find((x) => x.id === o.wallId);
+          if (!o || !w) return null;
+          const inset = 22 * k;
+          const at = (d: number) => ({ x: w.a.x + w.dir.x * d + w.inward.x * inset, y: w.a.y + w.dir.y * d + w.inward.y * inset });
+          const after = w.length - o.offset - o.width;
+          const label = (d0: number, d1: number) => {
+            const m = at((d0 + d1) / 2);
+            const a = at(d0);
+            const b = at(d1);
+            return (
+              <g pointerEvents="none">
+                <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--sel)" strokeWidth={1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+                <text x={m.x} y={m.y} dy={-4 * k} fontSize={fontSize * 0.85} textAnchor="middle" fill="var(--sel)" fontWeight={600} stroke="var(--surface)" strokeWidth={3} paintOrder="stroke" vectorEffect="non-scaling-stroke" className="tabular">
+                  {fmt(d1 - d0)}
+                </text>
+              </g>
+            );
+          };
+          return (
+            <>
+              {o.offset > 0 && label(0, o.offset)}
+              {after > 0 && label(o.offset + o.width, w.length)}
+            </>
+          );
+        })()}
 
       {/* esquinas arrastrables */}
       {plan.corners.map((c, i) => (
