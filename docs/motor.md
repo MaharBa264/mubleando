@@ -223,6 +223,8 @@ Una puerta cierra un hueco cualquiera, aunque tenga estantes o divisores dentro.
 
 La puerta es una pieza de papel `door`, con el largo en vertical y canto en los cuatro lados. Lleva `hinge` (lado de las bisagras), que usa el visor para abrirla.
 
+**Hacia dónde abre** (`opens`): `side` (al costado, por defecto), `up` (hacia arriba, `hinge: 'top'`) o `down` (hacia abajo, `hinge: 'bottom'`). Hacia arriba o abajo hay una sola hoja aunque se pidan dos, las bisagras se cuentan por el **ancho** y el motor pesa la puerta (`weightPerM2` de cada material: el cargado o 0,7 kg/m² por mm de tablero y 2,5 por mm de vidrio) para elegir el pistón, brazo o compás (`liftId`, o el primero de la biblioteca que la aguanta). Detalle y ejemplos en [Herrajes → Pistones, brazos y compases](herrajes.md#pistones-brazos-y-compases).
+
 Ejemplo (bajo de 600 × 720 × 560, holgura 3 mm, canto de 1 mm):
 
 | Puerta | Acabada (mm) | Corte (mm) | Posición |

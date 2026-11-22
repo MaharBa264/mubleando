@@ -244,3 +244,13 @@ Migración de vidrios aplicada en Supabase (22-11-2026): la prueba contra el pro
 | motor | Choques por volúmenes (caja y franja de patas), puertas que golpean, `roomSize` | hecho | — | — |
 
 Comprobado: 206 pruebas del motor (14 nuevas con cifras a mano: pegado de los dos lados y casos que no se pegan, choques con pared y alacena encima, patas inclinadas que se pisan a 0 y no a 60 mm, puertas contra la pared de enfrente y contra un mueble delante o colgado arriba); en el navegador (modo local), un bajo soltado a unos centímetros de su vecino vuelve justo a su lado y contra la pared, y las puertas se ven punteadas en la planta. El bloqueo se probó solo en las pruebas del motor.
+
+## Puertas hacia arriba o hacia abajo, issue #11 (2026-11-23)
+
+| ID | pantalla | estado | qué falta | lo que costó más de lo previsto |
+| --- | --- | --- | --- | --- |
+| S05 | Hueco → Puerta → Abre (al costado, hacia arriba, hacia abajo) y pistón o compás | hecho | elevables paralelas y plegables | — |
+| S11 / S13 | Material: peso por m²; Herrajes: pistones, brazos y compases | hecho | — | — |
+| motor | Peso de la puerta, elección del herraje, avisos; ambiente: techo | hecho | — | — |
+
+Comprobado: 221 pruebas del motor (15 nuevas con cifras a mano: 4,5 kg → pistón de 80 N, 7,1 kg con 20 kg/m² → 120 N, 9 kg sin herraje, compás hacia abajo, perforaciones del vidrio templado arriba, techo a 38 mm) y 2 de la base (tipo `lift` y peso). En el navegador (modo local): una alacena de 800 × 400 con la puerta hacia arriba se abre hacia arriba en el 3D y lleva 2 pistones de 80 N para 4 kg; con 700 de alto avisa que ningún herraje aguanta 7 kg.

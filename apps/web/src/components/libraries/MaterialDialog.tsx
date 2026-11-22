@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { defaultSheet, mm, type Len, type Material } from '@mw/engine';
+import { defaultSheet, mm, weightPerM2, type Len, type Material } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
@@ -42,6 +42,8 @@ export function MaterialDialog({
   // Medida de la placa: las dos vacías = la de partida según el espesor.
   const [sheetL, setSheetL] = useState<Len | null>(initial.sheet?.length ?? null);
   const [sheetW, setSheetW] = useState<Len | null>(initial.sheet?.width ?? null);
+  // Peso por m²: vacío = estimado por el espesor.
+  const [weight, setWeight] = useState(initial.weight ? String(initial.weight).replace('.', ',') : '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const panel = m.kind === 'panel';
@@ -52,12 +54,14 @@ export function MaterialDialog({
     if (!m.name.trim()) return setError('Ponle un nombre.');
     if (cents === null) return setError('El precio tiene que ser un número, por ejemplo 25.000 o 25.000,50.');
     if (panel && (sheetL === null) !== (sheetW === null)) return setError('Completá el largo y el ancho de la placa, o dejá los dos vacíos para usar la de partida.');
-    const { sheet: _old, ...rest } = m;
+    const w = weight.trim() ? Number(weight.replace(',', '.')) : null;
+    if (w !== null && (!Number.isFinite(w) || w <= 0 || w > 500)) return setError('El peso tiene que ser un número mayor que 0, en kg por m² (por ejemplo 12,5).');
+    const { sheet: _old, weight: _w, ...rest } = m;
     const sheet = panel && sheetL !== null && sheetW !== null ? { length: Math.max(sheetL, sheetW), width: Math.min(sheetL, sheetW) } : undefined;
     setBusy(true);
     setError(null);
     try {
-      await onSave({ ...rest, name: m.name.trim(), priceCents: cents, ...(sheet ? { sheet } : {}) });
+      await onSave({ ...rest, name: m.name.trim(), priceCents: cents, ...(sheet ? { sheet } : {}), ...(w && (panel || glass) ? { weight: w } : {}) });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se ha podido guardar.');
@@ -113,6 +117,16 @@ export function MaterialDialog({
             </div>
             <p className="mt-1 text-xs text-muted">Para el plano de cortes. Vacío = la de partida ({fmtMm(defaultSheet(m.thickness).length)} × {fmtMm(defaultSheet(m.thickness).width)}). Con veta, la veta va a lo largo.</p>
           </div>
+        )}
+        {(panel || glass) && (
+          <TextField
+            label="Peso por m² (kg)"
+            inputMode="decimal"
+            value={weight}
+            placeholder={`${String(Math.round(weightPerM2({ kind: m.kind, thickness: m.thickness }) * 10) / 10).replace('.', ',')} (estimado)`}
+            hint="Para calcular el peso de las puertas que abren hacia arriba o hacia abajo. Vacío = estimado por el espesor."
+            onChange={(e) => setWeight(e.target.value)}
+          />
         )}
         {glass && (
           <label className="flex items-start gap-2 text-sm">

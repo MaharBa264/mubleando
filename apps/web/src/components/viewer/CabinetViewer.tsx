@@ -40,26 +40,35 @@ const isFront = (p: Part) => p.role === 'door' || p.role === 'drawer-front' || !
  * - puertas abiertas: giran sobre el canto de las bisagras;
  * - cajones abiertos: todas sus piezas salen hacia delante el 60 % de su fondo.
  */
-function placement(p: Part, mode: FrontsView, drawerDepth: Map<string, number>) {
+type V3 = [number, number, number];
+const Y0: V3 = [0, 0, 0];
+
+function placement(p: Part, mode: FrontsView, drawerDepth: Map<string, number>): { group: V3; rot: V3; mesh: V3 } {
   const c = center(p.box);
-  if (mode !== 'open') return { group: [0, 0, 0] as [number, number, number], rot: 0, mesh: c };
+  if (mode !== 'open') return { group: [0, 0, 0] as [number, number, number], rot: Y0, mesh: c };
   if (p.role === 'door' && p.track) {
     // Corrediza abierta: las hojas de adelante se corren media hoja a la izquierda; las de atrás, a la derecha.
     const shift = (p.box.dx / 2) * S * (p.track === 'front' ? -1 : 1);
-    return { group: [shift, 0, 0] as [number, number, number], rot: 0, mesh: c };
+    return { group: [shift, 0, 0] as [number, number, number], rot: Y0, mesh: c };
   }
   if (p.role === 'door' || p.doorBox) {
     // Las puertas de marco y vidrio giran todas sus piezas sobre el canto de las bisagras de la puerta entera.
     const b = p.doorBox ?? p.box;
+    if (p.hinge === 'top' || p.hinge === 'bottom') {
+      // Hacia arriba gira sobre el canto de arriba; hacia abajo, sobre el de abajo (hasta quedar horizontal).
+      const top = p.hinge === 'top';
+      const pivot: V3 = [c[0], (top ? b.y + b.dy : b.y) * S, b.z * S];
+      return { group: pivot, rot: [top ? -DOOR_OPEN : Math.PI / 2, 0, 0], mesh: [0, c[1] - pivot[1], c[2] - pivot[2]] };
+    }
     const left = p.hinge !== 'right';
-    const pivot: [number, number, number] = [(left ? b.x : b.x + b.dx) * S, c[1], b.z * S];
-    return { group: pivot, rot: left ? -DOOR_OPEN : DOOR_OPEN, mesh: [c[0] - pivot[0], 0, c[2] - pivot[2]] as [number, number, number] };
+    const pivot: V3 = [(left ? b.x : b.x + b.dx) * S, c[1], b.z * S];
+    return { group: pivot, rot: [0, left ? -DOOR_OPEN : DOOR_OPEN, 0], mesh: [c[0] - pivot[0], 0, c[2] - pivot[2]] };
   }
   if (p.assembly?.kind === 'drawer') {
     const out = (drawerDepth.get(p.assembly.id) ?? 0) * DRAWER_OUT * S;
-    return { group: [0, 0, out] as [number, number, number], rot: 0, mesh: c };
+    return { group: [0, 0, out] as [number, number, number], rot: Y0, mesh: c };
   }
-  return { group: [0, 0, 0] as [number, number, number], rot: 0, mesh: c };
+  return { group: [0, 0, 0] as [number, number, number], rot: Y0, mesh: c };
 }
 
 /**
@@ -169,7 +178,7 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
           const isHover = hover === `part:${p.key}`;
           const pl = placement(p, view.fronts, drawerDepth);
           return (
-            <group key={p.key} position={pl.group} rotation={[0, pl.rot, 0]}>
+            <group key={p.key} position={pl.group} rotation={pl.rot}>
             <mesh position={pl.mesh} userData={{ kind: 'part', key: p.key }}>
               <boxGeometry args={size(p.box)} />
               <meshStandardMaterial

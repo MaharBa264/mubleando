@@ -65,10 +65,14 @@ const FACES: { c: number[]; n: Vec3 }[] = [
   { c: [idx(0, 0, 0), idx(0, 1, 0), idx(1, 1, 0), idx(1, 0, 0)], n: [0, 0, -1] },
 ];
 
-/** Transformación de una pieza: giro sobre un eje vertical y luego traslado. */
+/**
+ * Transformación de una pieza: giro sobre un eje vertical (puertas al costado) u horizontal
+ * (`axis: 'x'`, puertas que abren hacia arriba o abajo) y luego traslado.
+ */
 interface Xf {
   pivot?: Vec3;
   angle?: number;
+  axis?: 'x' | 'y';
   move: Vec3;
 }
 function apply(p: Vec3, t: Xf): Vec3 {
@@ -76,10 +80,16 @@ function apply(p: Vec3, t: Xf): Vec3 {
   if (t.pivot && t.angle) {
     const c = Math.cos(t.angle);
     const s = Math.sin(t.angle);
-    const dx = x - t.pivot[0];
     const dz = z - t.pivot[2];
-    x = t.pivot[0] + dx * c + dz * s;
-    z = t.pivot[2] - dx * s + dz * c;
+    if (t.axis === 'x') {
+      const dy = y - t.pivot[1];
+      y = t.pivot[1] + dy * c - dz * s;
+      z = t.pivot[2] + dy * s + dz * c;
+    } else {
+      const dx = x - t.pivot[0];
+      x = t.pivot[0] + dx * c + dz * s;
+      z = t.pivot[2] - dx * s + dz * c;
+    }
   }
   return [x + t.move[0], y + t.move[1], z + t.move[2]];
 }
@@ -87,6 +97,7 @@ const rotN = (n: Vec3, t: Xf): Vec3 => {
   if (!t.angle) return n;
   const c = Math.cos(t.angle);
   const s = Math.sin(t.angle);
+  if (t.axis === 'x') return [n[0], n[1] * c - n[2] * s, n[1] * s + n[2] * c];
   return [n[0] * c + n[2] * s, n[1], -n[0] * s + n[2] * c];
 };
 
@@ -154,6 +165,8 @@ function transformFor(p: Part, mode: FrontsMode | 'exploded', depths: Map<string
   if (p.role === 'door' || p.doorBox) {
     // Gira sobre el canto de las bisagras de la puerta entera (las de marco y vidrio, todas juntas).
     const b = p.doorBox ?? p.box;
+    if (p.hinge === 'top') return { pivot: [0, b.y + b.dy, b.z], angle: -DOOR_OPEN, axis: 'x', move: [0, 0, 0] };
+    if (p.hinge === 'bottom') return { pivot: [0, b.y, b.z], angle: Math.PI / 2, axis: 'x', move: [0, 0, 0] };
     const left = p.hinge !== 'right';
     return { pivot: [left ? b.x : b.x + b.dx, 0, b.z], angle: left ? -DOOR_OPEN : DOOR_OPEN, move: [0, 0, 0] };
   }

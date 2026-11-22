@@ -136,6 +136,11 @@ describe('cuenta A', () => {
     expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.sheet).toEqual({ length: mm(2600), width: mm(1830) });
     await data.saveMaterial(tablero);
     expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.sheet).toBeUndefined();
+    // Peso por m²: se guarda con decimales, y al quitarlo vuelve al estimado.
+    await data.saveMaterial({ ...tablero, weight: 11.5 });
+    expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.weight).toBe(11.5);
+    await data.saveMaterial(tablero);
+    expect((await data.listMaterials()).find((x) => x.id === 'prueba-mat')?.weight).toBeUndefined();
     await data.deleteMaterial('prueba-mat');
     await data.renameProject(projectId, 'Cocina renombrada');
     expect((await data.getProject(projectId))?.name).toBe('Cocina renombrada');
@@ -165,10 +170,11 @@ describe('cuenta B no ve nada de A', () => {
 });
 
 describe('herrajes', () => {
-  it('cuenta nueva: recibe los 18 herrajes de partida (con las 5 patas y las 3 bisagras para vidrio); se pueden guardar y no se borra uno en uso', async () => {
+  it('cuenta nueva: recibe los 24 herrajes de partida (con las 5 patas, las 3 bisagras para vidrio y los 6 de apertura); se pueden guardar y no se borra uno en uso', async () => {
     current = A.client;
     const hw = await data.listHardware();
-    expect(hw).toHaveLength(18);
+    expect(hw).toHaveLength(24);
+    expect(hw.filter((h) => h.kind === 'lift')).toHaveLength(6);
     const ball = hw.find((h) => h.id === 'hw-corredera-bolas-45')!;
     await data.saveHardware({ ...ball, priceCents: 250000 });
     expect((await data.listHardware()).find((h) => h.id === ball.id)?.priceCents).toBe(250000);

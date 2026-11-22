@@ -14,6 +14,11 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 5 | [Patas, como herrajes de la biblioteca](#5-patas-como-herrajes-de-la-biblioteca) | [#5](https://github.com/MaharBa264/mubleando/issues/5) | mediano | **Hecho** (21-11-2026); la huella en el ambiente va con la #7. |
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | **Hecho** (22-11-2026), salvo perfil de aluminio y corredizas de vidrio. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | **Hecho** (22-11-2026). |
+| 11 | [Puertas que abren hacia arriba o hacia abajo](#11-puertas-que-abren-hacia-arriba-o-hacia-abajo) | [#11](https://github.com/MaharBa264/mubleando/issues/11) | mediano | **Hecho** (23-11-2026), salvo elevables paralelas y plegables. |
+| 12 | [Esquinero ciego con mecanismo que sale con la puerta](#12-esquinero-ciego-con-mecanismo-que-sale-con-la-puerta) | [#12](https://github.com/MaharBa264/mubleando/issues/12) | mediano | Es el esquinero de cocina más común y no necesita piezas con otra forma. |
+| 13 | [Piezas con cualquier contorno](#13-piezas-con-cualquier-contorno) | [#13](https://github.com/MaharBa264/mubleando/issues/13) | grande | Es la base de los techos inclinados, los esquineros en L y ochava y los rellenos cónicos. |
+| 14 | [Techo irregular en el ambiente y muebles que se adaptan](#14-techo-irregular-en-el-ambiente-y-muebles-que-se-adaptan) | [#14](https://github.com/MaharBa264/mubleando/issues/14) | mediano | El techo se puede hacer sin la #13; adaptar el mueble la necesita. |
+| 15 | [Esquineros en L y en ochava, y rellenos cónicos](#15-esquineros-en-l-y-en-ochava-y-rellenos-cónicos) | [#15](https://github.com/MaharBa264/mubleando/issues/15) | grande | Usan la #13. |
 
 ---
 
@@ -291,3 +296,113 @@ Dos cosas distintas, con herrajes distintos.
 - En la vista explotada, ninguna pieza tapa por completo a otra y cada una lleva su número.
 - Pruebas: cantidad de páginas según lo elegido, y la proyección isométrica de un mueble simple con cifras calculadas a mano.
 
+---
+
+## 11. Puertas que abren hacia arriba o hacia abajo
+
+> **Hecho** el 23-11-2026: abrir hacia arriba o hacia abajo, pistones, brazos con freno y compases en la biblioteca, peso de la puerta y aviso del techo en el ambiente. Quedan para más adelante las puertas elevables paralelas y las plegables. Cómo funciona: [Herrajes → Pistones, brazos y compases](herrajes.md#pistones-brazos-y-compases).
+
+**Qué pasa hoy.** Las puertas de bisagra abren solo hacia un costado. Las alacenas con puerta rebatible hacia arriba (con pistón a gas o brazo con freno) y los escritorios o bares con tapa que baja (con compás) no se pueden hacer.
+
+**Propuesta.**
+
+- En una puerta, **hacia dónde abre**: al costado (como hoy), **hacia arriba** (bisagras arriba) o **hacia abajo** (bisagras abajo). Una sola hoja.
+- Nuevo tipo de herraje en la biblioteca: **apertura**. Tres clases:
+  - **pistón a gas** (hacia arriba), por fuerza en newtons;
+  - **brazo con freno** (hacia arriba), que deja la puerta quieta en cualquier posición; se elige por la «potencia» que da el fabricante, peso por alto de la puerta;
+  - **compás** (hacia abajo), que frena la tapa y la sostiene horizontal.
+  - Datos de cada uno: rango de alto de puerta, rango de peso (o de fuerza), fondo mínimo del mueble, cuántos lleva por puerta (uno o dos), ángulo de apertura y precio.
+- **El motor calcula el peso de la puerta** con el material: los materiales tienen un dato nuevo, **peso por m²** (melamina de 18: unos 12,5 kg/m²). Una puerta de 900 × 400 pesa 0,36 m² × 12,5 = 4,5 kg.
+  - Con el peso y el alto, **elige el herraje** que alcanza de la biblioteca (o usa el elegido) y avisa si ninguno entra en su rango.
+  - Las bisagras de cazoleta siguen yendo, ahora arriba o abajo.
+- **3D:** al abrir, la puerta gira sobre su borde de arriba (o de abajo) hasta el ángulo del herraje.
+- **Ambiente:** la puerta abierta hacia arriba sube por encima del mueble: avisa si golpea el techo u otro mueble colgado encima.
+- **Más adelante:** puertas elevables paralelas y plegables en dos hojas hacia arriba.
+
+**Hecho cuando.**
+
+- Una alacena de 900 × 400 con puerta hacia arriba: 4,5 kg calculados, el pistón elegido es el del rango correcto y salen 2 bisagras arriba.
+- Una puerta demasiado pesada para todos los pistones da un aviso con el peso.
+- En el 3D la puerta abre hacia arriba; en el ambiente, una alacena pegada al techo avisa que la puerta golpea.
+
+---
+
+## 12. Esquinero ciego con mecanismo que sale con la puerta
+
+**Qué pasa hoy.** Un esquinero se puede armar como una caja común, pero no hay mecanismos de esquina ni forma de marcar el panel ciego que queda tapado por el mueble vecino.
+
+**Propuesta.**
+
+- **Esquinero ciego:** una caja rectangular que se mete detrás del mueble de al lado. Al frente: un **panel ciego** (fijo, del lado de la esquina) y una **puerta**.
+- Nuevo tipo de herraje: **mecanismo de esquina**. De partida:
+  - **media luna**: bandejas que giran hacia afuera con la puerta;
+  - **rinconero extraíble**: los canastos de adelante salen con la puerta y los de atrás se corren hacia adelante.
+  - Datos: ancho mínimo y máximo del mueble, ancho de puerta que pide, fondo y alto mínimos, lado (izquierdo o derecho) y precio.
+- **El motor**: deja el espacio del mecanismo libre (sin estantes), suma el panel ciego al despiece, el mecanismo a los herrajes y avisa si el mueble o la puerta no cumplen sus medidas.
+- **3D:** el mecanismo como volumen simple; con la puerta abierta, las bandejas afuera.
+- **Ambiente:** encastrarlo en la esquina; el panel ciego no cuenta como «tapado» y el choque con el vecino se calcula bien.
+
+**Para definir.** Qué mecanismos se usan más; si hay catálogos de proveedores, con sus medidas reales.
+
+**Hecho cuando.**
+
+- Un esquinero de 1000 con puerta de 450 y rinconero extraíble: panel ciego de 550 en el despiece, mecanismo en herrajes y sin estantes.
+- Un mueble más angosto que el mínimo del mecanismo da un aviso.
+
+---
+
+## 13. Piezas con cualquier contorno
+
+**Qué pasa hoy.** Todas las piezas son rectángulos.
+
+**Propuesta.**
+
+- Una pieza puede tener un **contorno poligonal** dentro de su rectángulo: trapecio, L, esquina cortada en ángulo.
+- Se ve en el 3D, el STL y las vistas del PDF.
+- En la lista de corte: el rectángulo de placa a cortar y un croquis con las medidas del corte.
+- En el plano de cortes, por ahora, el rectángulo que la contiene.
+- En las etiquetas, el dibujo de la forma.
+- El tapacanto se cuenta por el contorno real.
+
+**Hecho cuando.**
+
+- Un costado trapezoidal de 560 de fondo, 900 atrás y 700 adelante: área, tapacanto y STL correctos (sólido cerrado).
+
+---
+
+## 14. Techo irregular en el ambiente y muebles que se adaptan
+
+**Qué pasa hoy.** El ambiente tiene un alto único. Un bajo escalera o un altillo no se pueden representar, y un mueble no puede tener la tapa inclinada.
+
+**Propuesta.**
+
+- El techo del ambiente puede ser:
+  - **plano** (como hoy);
+  - **inclinado**: el alto en dos puntos de la planta (por ejemplo, 2400 junto a una pared y 900 en la otra), como un altillo o un bajo escalera;
+  - **escalonado**: escalones (alzada y pedada), para un bajo escalera con escalones a la vista.
+- El 3D del ambiente dibuja el techo y las paredes cortadas por él.
+- Aviso nuevo: **el mueble pasa el techo**, con cuánto.
+- **Ajustar al techo:** el mueble toma la inclinación que le toca donde está: costados trapezoidales y tapa inclinada (con la #13).
+
+**Para definir.** Si alcanza con una inclinación recta o hace falta seguir los escalones.
+
+**Hecho cuando.**
+
+- Un bajo escalera de 2400 a 900 en 3000: un mueble de 1800 a 2000 de la pared baja avisa que pasa el techo y, ajustado, sus costados miden lo calculado a mano.
+
+---
+
+## 15. Esquineros en L y en ochava, y rellenos cónicos
+
+**Propuesta.**
+
+- **Esquinero en L** para cocinas en L: tapa y base en L, puerta plegable en ángulo (dos hojas unidas con bisagra) o bandejas giratorias de 3/4.
+- **Esquinero en ochava**: frente a 45°, con costados y tapa cortados en ángulo.
+- **Relleno cónico o costado en cuña** en una esquina fuera de escuadra del ambiente: hoy la app avisa cuánto hace falta; con esto lo agrega al despiece.
+
+**Hecho cuando.**
+
+- Un esquinero en L de 900 × 900: tapa y base en L con sus medidas, la puerta plegable con sus bisagras.
+- Un bajo junto a una pared a 91°: el relleno de 0 a 9,8 mm aparece en el despiece.
+
+---

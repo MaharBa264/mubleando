@@ -1,15 +1,40 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { mm, type Hardware, type HingeSpec, type Len, type LegSpec, type SlideSpec, type SlidingSpec } from '@mw/engine';
+import { mm, type Hardware, type HingeSpec, type Len, type LegSpec, type LiftSpec, type SlideSpec, type SlidingSpec } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
 import { fmtMm, parseCents } from '@/lib/format';
 
-export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo', leg: 'Pata' };
-const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego', leg: 'por unidad' };
+export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo', leg: 'Pata', lift: 'Pistón, brazo o compás' };
+const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego', leg: 'por unidad', lift: 'por unidad' };
+
+/** Número con coma decimal, o null si no es un número de 0 a `max`. */
+const parseNum = (text: string, max: number) => {
+  const v = Number(text.replace(',', '.'));
+  return Number.isFinite(v) && v >= 0 && v <= max ? v : null;
+};
+const fmtNum = (v: number) => String(v).replace('.', ',');
+
+/** Un número que se edita como texto y se aplica cuando es válido. */
+function NumField({ label, value, max, hint, onChange }: { label: string; value: number; max: number; hint?: string; onChange: (v: number) => void }) {
+  const [text, setText] = useState(fmtNum(value));
+  return (
+    <TextField
+      label={label}
+      inputMode="decimal"
+      value={text}
+      hint={hint}
+      onChange={(e) => {
+        setText(e.target.value);
+        const v = parseNum(e.target.value, max);
+        if (v !== null) onChange(v);
+      }}
+    />
+  );
+}
 
 function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
@@ -48,6 +73,9 @@ export function HardwareDialog({ open, initial, isNew, onClose, onSave }: { open
     if (!h.name.trim()) return setError('Ponele un nombre.');
     if (cents === null) return setError('El precio tiene que ser un número, por ejemplo 2.500 o 2.500,50.');
     let next: Hardware = { ...h, name: h.name.trim(), priceCents: cents };
+    if (next.kind === 'lift' && (next.spec.minWeight > next.spec.maxWeight || next.spec.minHeight > next.spec.maxHeight)) {
+      return setError('El peso y el alto mínimos no pueden ser mayores que los máximos.');
+    }
     if (next.kind === 'slide') {
       const lengths = parseLengths(lengthsText);
       if (!lengths) return setError('Los largos de corredera tienen que ser medidas en mm separadas por espacios, por ejemplo: 250 300 350 400.');
@@ -229,6 +257,35 @@ export function HardwareDialog({ open, initial, isNew, onClose, onSave }: { open
                 </li>
               ))}
             </ul>
+          </Group>
+        )}
+        {h.kind === 'lift' && (
+          <Group title="Apertura hacia arriba o hacia abajo" hint="El motor calcula el peso de la puerta y elige el primero que la aguanta (o avisa si el elegido no). Los rangos salen de la tabla del fabricante.">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField
+                label="Tipo"
+                value={h.spec.type}
+                onChange={(e) => {
+                  const type = e.target.value as LiftSpec['type'];
+                  spec<LiftSpec>({ type, direction: type === 'flap' ? 'down' : 'up', ...(type === 'gas' ? {} : { force: 0 }) });
+                }}
+              >
+                <option value="gas">Pistón a gas (hacia arriba)</option>
+                <option value="stay">Brazo con freno (hacia arriba, queda en cualquier posición)</option>
+                <option value="flap">Compás con freno (tapa que baja)</option>
+              </SelectField>
+              {h.spec.type === 'gas' && <NumField label="Fuerza (N)" value={h.spec.force} max={2000} hint="Para pedirlo al comprar." onChange={(v) => spec<LiftSpec>({ force: v })} />}
+              <NumField label="Peso de puerta desde (kg)" value={h.spec.minWeight} max={100} onChange={(v) => spec<LiftSpec>({ minWeight: v })} />
+              <NumField label="Hasta (kg)" value={h.spec.maxWeight} max={100} hint={`Con los ${h.spec.perDoor} que lleva cada puerta.`} onChange={(v) => v > 0 && spec<LiftSpec>({ maxWeight: v })} />
+              <MmField compact label="Alto de puerta desde" value={h.spec.minHeight} min={0} max={mm(1500)} onCommit={(v) => v !== null && spec<LiftSpec>({ minHeight: v })} />
+              <MmField compact label="Hasta" value={h.spec.maxHeight} min={mm(50)} max={mm(1500)} onCommit={(v) => v !== null && spec<LiftSpec>({ maxHeight: v })} />
+              {len('Fondo mínimo del mueble', h.spec.minDepth, (v) => spec<LiftSpec>({ minDepth: v }))}
+              <SelectField label="Por puerta" value={String(h.spec.perDoor)} onChange={(e) => spec<LiftSpec>({ perDoor: e.target.value === '1' ? 1 : 2 })}>
+                <option value="2">Dos (uno por lado)</option>
+                <option value="1">Uno</option>
+              </SelectField>
+              <NumField label="Ángulo de apertura (grados)" value={h.spec.angle} max={180} hint="90 = horizontal. Más de 90 sube por encima del mueble." onChange={(v) => v >= 45 && spec<LiftSpec>({ angle: v })} />
+            </div>
           </Group>
         )}
         {error && <Alert tone="danger">{error}</Alert>}

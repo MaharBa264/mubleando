@@ -77,7 +77,7 @@ export function RoomEditor({
     const out: Record<string, CabinetSize> = {};
     for (const c of cabinets) {
       const method = methods.find((x) => x.id === c.methodId) ?? methods[0];
-      out[c.id] = method ? roomSize(c.design, compute(c.design, method, materials, hardware)) : c.design.size;
+      out[c.id] = method ? roomSize(c.design, compute(c.design, method, materials, hardware), hardware) : c.design.size;
     }
     return out;
   }, [cabinets, methods, materials, hardware]);

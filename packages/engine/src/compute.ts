@@ -1,8 +1,13 @@
 import type { Box, ComputeResult, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
 import { placeLegs } from './legs';
-import { hingeCount, hingePositions, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
+import { hingeCount, hingePositions, liftFits, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
+import { weightPerM2 } from './types';
 import { normalizeMethod } from './presets';
-import { distribute, mm, toMm, type Len } from './units';
+import { distribute, mm, toM2, toMm, type Len } from './units';
+
+type Lift = Extract<Hardware, { kind: 'lift' }>;
+/** Kilos con una decimal y coma: 4,5. */
+const kg = (w: number) => String(Math.round(w * 10) / 10).replace('.', ',');
 
 export const LIMITS = {
   w: { min: mm(100), max: mm(3000) },
@@ -121,7 +126,7 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
   const overrides = design.overrides ?? {};
 
   // ── herrajes: el que elige el mueble, o el del método ──
-  const pickHw = <K extends Exclude<HardwareKind, 'leg'>>(kind: K) => {
+  const pickHw = <K extends Exclude<HardwareKind, 'leg' | 'lift'>>(kind: K) => {
     const id = design.hardware?.[kind] ?? method.hardware?.[kind];
     return id ? (hardwareLib.find((h) => h.id === id && h.kind === kind) as Extract<Hardware, { kind: K }> | undefined) : undefined;
   };
@@ -482,6 +487,39 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
   };
   const frontZ = (mount: FrontMount) => (mount === 'inset' ? D - tf : D);
 
+  // Herrajes de apertura (hacia arriba o abajo): los de la biblioteca o, si no tiene ninguno, los de partida.
+  const libLifts = hardwareLib.filter((h): h is Lift => h.kind === 'lift');
+  const lifts = libLifts.length ? libLifts : PRESET_HARDWARE.filter((h): h is Lift => h.kind === 'lift');
+  const liftFor = (id: string | undefined, opens: 'up' | 'down', weight: number, height: Len, zoneId: string) => {
+    const dir = opens === 'up' ? 'hacia arriba' : 'hacia abajo';
+    const chosen = id ? ((hardwareLib.find((h) => h.id === id && h.kind === 'lift') ?? PRESET_HARDWARE.find((h) => h.id === id && h.kind === 'lift')) as Lift | undefined) : undefined;
+    const lift =
+      chosen ??
+      [...lifts].filter((h) => h.spec.direction === opens && liftFits(h.spec, weight, height)).sort((a, b) => a.spec.maxWeight - b.spec.maxWeight || a.spec.minWeight - b.spec.minWeight)[0];
+    if (!lift) {
+      warnings.push({
+        code: 'hardware_mismatch',
+        message: `La puerta pesa ${kg(weight)} kg y mide ${toMm(height)} mm de alto: ningún herraje de la biblioteca para abrir ${dir} la aguanta.`,
+        zoneId,
+      });
+      return;
+    }
+    const sp = lift.spec;
+    if (sp.direction !== opens) {
+      warnings.push({ code: 'hardware_mismatch', message: `«${lift.name}» es para puertas que abren ${sp.direction === 'up' ? 'hacia arriba' : 'hacia abajo'} y esta abre ${dir}.`, zoneId });
+    } else if (!liftFits(sp, weight, height)) {
+      warnings.push({
+        code: 'hardware_mismatch',
+        message: `La puerta pesa ${kg(weight)} kg y mide ${toMm(height)} mm de alto: «${lift.name}» es para puertas de ${kg(sp.minWeight)} a ${kg(sp.maxWeight)} kg y de ${toMm(sp.minHeight)} a ${toMm(sp.maxHeight)} mm.`,
+        zoneId,
+      });
+    }
+    if (D < sp.minDepth) {
+      warnings.push({ code: 'hardware_mismatch', message: `«${lift.name}» necesita un mueble de al menos ${toMm(sp.minDepth)} mm de fondo.`, zoneId });
+    }
+    addItem(lift, sp.perDoor, 'unidad', `puerta de ${kg(weight)} kg`);
+  };
+
   let doorCount = 0;
   /** Piezas de puertas de varias partes (marco, vidrio): clave, nombre, número de puerta y lado, para nombrarlas al final. */
   const doorNames: [string, string, number, string][] = [];
@@ -532,7 +570,11 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
     const z = frontZ(front.mount);
 
     if (front.kind === 'door') {
-      const widths = front.leaves === 2 ? distribute(r.w - gap, 2) : [r.w];
+      // Hacia arriba o hacia abajo: una sola hoja, con las bisagras en el canto de arriba o de abajo.
+      const opens = front.opens ?? 'side';
+      const vertical = opens !== 'side';
+      const leaves = vertical ? 1 : front.leaves;
+      const widths = leaves === 2 ? distribute(r.w - gap, 2) : [r.w];
       const glass = front.glass;
       const glassMat = glass ? mats.get(glass.glassId) : undefined;
       if (glass && (!glassMat || glassMat.kind !== 'glass')) {
@@ -551,8 +593,11 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
       widths.forEach((w, i) => {
         doorCount++;
         const num = doorCount;
-        const side = front.leaves === 2 ? (i === 0 ? ' (izquierda)' : ' (derecha)') : '';
-        const hingeSide: 'left' | 'right' = front.leaves === 2 ? (i === 0 ? 'left' : 'right') : front.hinge;
+        const side = leaves === 2 ? (i === 0 ? ' (izquierda)' : ' (derecha)') : '';
+        const hingeSide: NonNullable<Part['hinge']> = opens === 'up' ? 'top' : opens === 'down' ? 'bottom' : leaves === 2 ? (i === 0 ? 'left' : 'right') : front.hinge;
+        /** Largo del canto que lleva las bisagras: el alto, o el ancho si abre hacia arriba o abajo. */
+        const hingeRun = vertical ? w : r.h;
+        const first = parts.length;
         const doorBox: Box = { x, y: r.y, z, dx: w, dy: r.h, dz: tf };
         const base = { zoneId: zone.id, hinge: hingeSide };
         const fw = glass?.type === 'frame' ? glass.frameWidth : 0;
@@ -591,7 +636,7 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
             ...base,
           });
           if (hinge) {
-            addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+            addItem(hinge, hingeCount(hinge.spec, hingeRun), 'unidad');
             if (fw < hinge.spec.cupDistance + hinge.spec.cupDiameter) {
               warnings.push({
                 code: 'hardware_mismatch',
@@ -603,9 +648,16 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
         } else if (glass?.type === 'frameless') {
           // Puerta entera de vidrio templado.
           const g = glassHinge?.spec;
+          const off = g ? g.cupDistance + g.cupDiameter / 2 : 0;
           const holes =
             g?.forGlass?.mount === 'drilled'
-              ? hingePositions(g, r.h).map((y) => ({ x: hingeSide === 'left' ? g.cupDistance + g.cupDiameter / 2 : w - g.cupDistance - g.cupDiameter / 2, y, d: g.cupDiameter }))
+              ? hingePositions(g, hingeRun).map((pos) =>
+                  hingeSide === 'top'
+                    ? { x: pos, y: r.h - off, d: g.cupDiameter }
+                    : hingeSide === 'bottom'
+                      ? { x: pos, y: off, d: g.cupDiameter }
+                      : { x: hingeSide === 'left' ? off : w - off, y: pos, d: g.cupDiameter },
+                )
               : undefined;
           const key = `zone:${zone.id}/door${i}`;
           doorNames.push([key, 'Puerta de vidrio', num, side]);
@@ -624,7 +676,7 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
             holes,
             ...base,
           });
-          if (glassHinge) addItem(glassHinge, hingeCount(glassHinge.spec, r.h), 'unidad');
+          if (glassHinge) addItem(glassHinge, hingeCount(glassHinge.spec, hingeRun), 'unidad');
         } else {
           if (glass?.type === 'frame') {
             warnings.push({ code: 'zone_too_small', message: `El marco de ${toMm(fw)} mm no deja lugar para el vidrio: la puerta va entera de tablero.`, zoneId: zone.id });
@@ -641,7 +693,15 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
             edges: { ...frontEdges },
             ...base,
           });
-          if (hinge) addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+          if (hinge) addItem(hinge, hingeCount(hinge.spec, hingeRun), 'unidad');
+        }
+        if (vertical) {
+          // Peso de la puerta entera (marco y vidrio incluidos) para elegir el pistón, el brazo o el compás.
+          const weight = parts.slice(first).reduce((sum, q) => {
+            const m = mats.get(q.materialId);
+            return sum + toM2(q.length * q.width) * weightPerM2(m ?? { kind: q.role === 'glass' ? 'glass' : 'panel', thickness: q.thickness });
+          }, 0);
+          liftFor(front.liftId, opens, weight, r.h, zone.id);
         }
         x += w + gap;
       });

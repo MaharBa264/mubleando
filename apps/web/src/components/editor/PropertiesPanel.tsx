@@ -471,6 +471,43 @@ function ZoneProps({ id }: { id: string }) {
 }
 
 /** Vidrio de una puerta: ninguno, con marco (una «ventana») o la puerta entera de vidrio templado. */
+/** Puertas que abren hacia arriba o abajo: el pistón, brazo o compás (o el que aguante la puerta) y lo que pesa. */
+function LiftOptions({
+  opens,
+  value,
+  lifts,
+  items,
+  onChange,
+}: {
+  opens: 'up' | 'down';
+  value: string | undefined;
+  lifts: Extract<Hardware, { kind: 'lift' }>[];
+  items: { hardwareId: string; name: string; qty: number; note?: string }[];
+  onChange: (id: string | undefined) => void;
+}) {
+  const fit = lifts.filter((h) => h.spec.direction === opens || h.id === value);
+  return (
+    <div className="space-y-1">
+      <SelectField label={opens === 'up' ? 'Pistón o brazo' : 'Compás'} value={value ?? ''} onChange={(e) => onChange(e.target.value || undefined)}>
+        <option value="">Automático: el que aguante la puerta</option>
+        {fit.map((h) => (
+          <option key={h.id} value={h.id}>
+            {h.name} · {fmtKg(h.spec.minWeight)} a {fmtKg(h.spec.maxWeight)} kg
+          </option>
+        ))}
+      </SelectField>
+      {items.map((it) => (
+        <p key={`${it.hardwareId}|${it.note ?? ''}`} className="text-xs text-muted">
+          {it.note ? `${it.note[0]!.toUpperCase()}${it.note.slice(1)}` : ''}: {it.qty} × {it.name}
+        </p>
+      ))}
+      {fit.length === 0 && <p className="text-xs text-muted">No hay {opens === 'up' ? 'pistones ni brazos' : 'compases'} en la biblioteca: agregalos en Bibliotecas → Herrajes.</p>}
+    </div>
+  );
+}
+
+const fmtKg = (w: number) => String(Math.round(w * 10) / 10).replace('.', ',');
+
 function GlassOptions({ value, glasses, hinges, onChange }: { value: DoorGlass | undefined; glasses: Material[]; hinges: Hardware[]; onChange: (g: DoorGlass | undefined) => void }) {
   const type = value?.type ?? 'none';
   const firstGlass = (tempered: boolean) => (glasses.find((g) => !!g.tempered === tempered) ?? glasses[0])?.id;
@@ -607,15 +644,42 @@ function FrontSection({ zoneId }: { zoneId: string }) {
       {front?.kind === 'door' && (
         <>
           <Segmented
-            label="Hojas"
-            value={front.leaves}
-            onChange={(n) => put({ ...front, leaves: n })}
+            label="Abre"
+            value={front.opens ?? 'side'}
+            onChange={(opens) => {
+              const { opens: _o, liftId: _l, ...rest } = front;
+              put(opens === 'side' ? rest : { ...rest, opens, leaves: 1 });
+            }}
             options={[
-              [1, 'Una hoja'],
-              [2, 'Dos hojas'],
+              ['side', 'Al costado'],
+              ['up', 'Hacia arriba'],
+              ['down', 'Hacia abajo'],
             ]}
           />
-          {front.leaves === 1 && (
+          {front.opens && front.opens !== 'side' && (
+            <LiftOptions
+              opens={front.opens}
+              value={front.liftId}
+              lifts={hardware.filter((h): h is Extract<Hardware, { kind: 'lift' }> => h.kind === 'lift')}
+              items={result.hardware.filter((h) => h.kind === 'lift')}
+              onChange={(liftId) => {
+                const { liftId: _l, ...rest } = front;
+                put(liftId ? { ...rest, liftId } : rest);
+              }}
+            />
+          )}
+          {(front.opens ?? 'side') === 'side' && (
+            <Segmented
+              label="Hojas"
+              value={front.leaves}
+              onChange={(n) => put({ ...front, leaves: n })}
+              options={[
+                [1, 'Una hoja'],
+                [2, 'Dos hojas'],
+              ]}
+            />
+          )}
+          {front.leaves === 1 && (front.opens ?? 'side') === 'side' && (
             <Segmented
               label="Bisagras"
               value={front.hinge}

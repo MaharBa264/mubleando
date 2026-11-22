@@ -223,6 +223,11 @@ export function exportToy(partsIn: Part[], zones: ZoneOut[], size: { w: number; 
   let hingeCount = 0;
   const loose: Part[] = [];
   for (const d of hinged) {
+    // Las que abren hacia arriba o abajo no llevan bisagra impresa (va al costado): van aparte.
+    if (d.hinge === 'top' || d.hinge === 'bottom') {
+      loose.push(d);
+      continue;
+    }
     const b = mbox(d.box);
     const tf = b.z1 - b.z0;
     const left = d.hinge !== 'right';
@@ -279,7 +284,12 @@ export function exportToy(partsIn: Part[], zones: ZoneOut[], size: { w: number; 
     main.push(...door);
   }
   for (const d of loose) {
-    warnings.push(`${d.name}: no llega al costado del mueble, así que no lleva bisagra impresa; va en un archivo aparte para pegarla.`);
+    const vertical = d.hinge === 'top' || d.hinge === 'bottom';
+    warnings.push(
+      vertical
+        ? `${d.name}: abre hacia ${d.hinge === 'top' ? 'arriba' : 'abajo'}, así que no lleva bisagra impresa; va en un archivo aparte para pegarla.`
+        : `${d.name}: no llega al costado del mueble, así que no lleva bisagra impresa; va en un archivo aparte para pegarla.`,
+    );
     const name = `${base}-${slug(d.name)}.stl`;
     files.push({ name, data: trisToStl(boxTris(mbox(d.box)), d.name) });
     readme.push(`${name}\n    ${d.name}, sin bisagra (pegarla o ponerle una bisagra comprada).`);

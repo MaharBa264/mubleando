@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { mm, type Len } from './units';
 
 /**
- * Herrajes: bisagras, correderas de cajón, sistemas de puertas corredizas y patas.
+ * Herrajes: bisagras, correderas de cajón, sistemas de puertas corredizas, patas y herrajes de
+ * apertura de puertas que abren hacia arriba o hacia abajo.
  *
  * Cada herraje trae las medidas que el motor necesita para calcular las piezas (holguras,
  * descuentos, largos disponibles). Las constantes cambian de una marca a otra: los valores de
@@ -102,11 +103,37 @@ export interface LegSpec {
   countByWidth: [Len, number][];
 }
 
+export interface LiftSpec {
+  /**
+   * - 'gas': pistón a gas, hacia arriba (sube solo y frena al final). Se elige por fuerza.
+   * - 'stay': brazo con freno, hacia arriba: la puerta queda quieta en cualquier posición.
+   * - 'flap': compás con freno, hacia abajo: frena la tapa y la deja horizontal.
+   */
+  type: 'gas' | 'stay' | 'flap';
+  /** Hacia dónde abre la puerta que lleva este herraje. */
+  direction: 'up' | 'down';
+  /** Pistones: fuerza en newtons (dato del fabricante, para elegirlo al comprar). 0 en los demás. */
+  force: number;
+  /** Peso de puerta que aguanta, en kg, con los que lleva por puerta (`perDoor`). */
+  minWeight: number;
+  maxWeight: number;
+  /** Alto de puerta para el que sirve (el lado que gira: de las bisagras al borde libre). */
+  minHeight: Len;
+  maxHeight: Len;
+  /** Fondo mínimo del mueble para montarlo. */
+  minDepth: Len;
+  /** Cuántos lleva cada puerta (uno o uno por lado). */
+  perDoor: 1 | 2;
+  /** Ángulo de apertura, en grados (90 = horizontal). */
+  angle: number;
+}
+
 export type Hardware =
   | { id: string; name: string; kind: 'hinge'; priceCents: number; spec: HingeSpec }
   | { id: string; name: string; kind: 'slide'; priceCents: number; spec: SlideSpec }
   | { id: string; name: string; kind: 'sliding'; priceCents: number; spec: SlidingSpec }
-  | { id: string; name: string; kind: 'leg'; priceCents: number; spec: LegSpec };
+  | { id: string; name: string; kind: 'leg'; priceCents: number; spec: LegSpec }
+  | { id: string; name: string; kind: 'lift'; priceCents: number; spec: LiftSpec };
 
 export type HardwareKind = Hardware['kind'];
 
@@ -216,7 +243,50 @@ export const PRESET_HARDWARE: Hardware[] = [
     spec: { leaves: 3, overlap: mm(20), topGap: mm(10), bottomGap: mm(10), frontSetback: mm(5), trackGap: mm(6) },
   },
   ...PRESET_LEGS(),
+  ...PRESET_LIFTS(),
 ];
+
+/**
+ * Herrajes de apertura de partida (también se agregan solos a las bibliotecas que no tienen ninguno).
+ * Rangos de ejemplo para puertas de 250 a 500 mm de alto: cada fabricante da su tabla de peso por
+ * alto, comprobala con la ficha del que compres.
+ */
+function PRESET_LIFTS(): Hardware[] {
+  const gas = (n: number, min: number, max: number): Hardware => ({
+    id: `hw-piston-${n}`,
+    name: `Pistón a gas ${n} N`,
+    kind: 'lift',
+    priceCents: 0,
+    spec: { type: 'gas', direction: 'up', force: n, minWeight: min, maxWeight: max, minHeight: mm(250), maxHeight: mm(500), minDepth: mm(250), perDoor: 2, angle: 100 },
+  });
+  return [
+    gas(60, 1.5, 3),
+    gas(80, 3, 4.5),
+    gas(100, 4.5, 6),
+    gas(120, 6, 7.5),
+    {
+      id: 'hw-brazo-freno',
+      name: 'Brazo con freno, se detiene en cualquier posición',
+      kind: 'lift',
+      priceCents: 0,
+      spec: { type: 'stay', direction: 'up', force: 0, minWeight: 1, maxWeight: 6, minHeight: mm(200), maxHeight: mm(600), minDepth: mm(250), perDoor: 2, angle: 100 },
+    },
+    {
+      id: 'hw-compas-freno',
+      name: 'Compás con freno para tapa que baja',
+      kind: 'lift',
+      priceCents: 0,
+      spec: { type: 'flap', direction: 'down', force: 0, minWeight: 0.5, maxWeight: 8, minHeight: mm(200), maxHeight: mm(600), minDepth: mm(250), perDoor: 2, angle: 90 },
+    },
+  ];
+}
+export const PRESET_LIFT_IDS = PRESET_LIFTS().map((h) => h.id);
+
+/** ¿El herraje de apertura aguanta una puerta de este peso (kg) y alto? Se redondea el peso a 0,1 kg. */
+export function liftFits(spec: LiftSpec, weight: number, height: Len): boolean {
+  const w = Math.round(weight * 10) / 10;
+  return w >= spec.minWeight && w <= spec.maxWeight && height >= spec.minHeight && height <= spec.maxHeight;
+}
 
 /** Patas de partida (también se agregan solas a las bibliotecas que ya existían sin patas). */
 function PRESET_LEGS(): Hardware[] {
@@ -321,6 +391,24 @@ export const hardwareSchema: z.ZodType<Hardware> = z.discriminatedUnion('kind', 
       adjustMax: nonNeg,
       countByWidth: z.array(z.tuple([len.positive(), z.number().int().min(2).max(20)])).min(1),
     }),
+  }),
+  z.object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(120),
+    kind: z.literal('lift'),
+    priceCents: z.number().int().nonnegative(),
+    spec: z.object({
+        type: z.enum(['gas', 'stay', 'flap']),
+        direction: z.enum(['up', 'down']),
+        force: z.number().min(0).max(2000),
+        minWeight: z.number().min(0).max(100),
+        maxWeight: z.number().positive().max(100),
+        minHeight: nonNeg,
+        maxHeight: len.positive(),
+        minDepth: nonNeg,
+        perDoor: z.union([z.literal(1), z.literal(2)]),
+        angle: z.number().min(45).max(180),
+      }),
   }),
 ]);
 

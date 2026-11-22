@@ -79,3 +79,4 @@ STL de juguete con bisagras impresas en su lugar,salidas,should,no,yes,mejora: i
 Paredes del ambiente transparentes según la cámara,3d,should,no,yes,mejora
 "Patas como herrajes, con inclinación y regulables detrás del zócalo",construccion,should,no,yes,"mejora; 3D, STL, juguete y PDF"
 "Puertas con marco y vidrio, y de vidrio templado con perforaciones",frentes,should,no,yes,mejora; lista para la vidriería
+"Puertas que abren hacia arriba o hacia abajo, con pistón, brazo o compás según el peso",frentes,should,no,yes,"mejora; peso por m² de los materiales, aviso del techo en el ambiente"

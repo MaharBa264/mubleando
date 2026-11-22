@@ -106,11 +106,57 @@ Qué hace el motor:
 
 Dónde se ven: en el 3D del editor, en el STL (montado y pieza a pieza, con un archivo de pata para imprimir tantas veces como patas), en el STL de juguete (unidas a la base, de una pieza), en las vistas del documento PDF (no en la explotada) y en la lista de herrajes con su costo.
 
+## Pistones, brazos y compases
+
+Son los herrajes de las **puertas que abren hacia arriba** (alacenas) **o hacia abajo** (tapas de escritorio o de bar). La puerta se marca en el hueco: **Frente → Puerta → Abre → Hacia arriba / Hacia abajo**. Hacia arriba o hacia abajo va siempre una sola hoja, con las bisagras de cazoleta en el canto de arriba o de abajo (la cantidad sale del **ancho** de la puerta, no del alto).
+
+| Campo | Para qué |
+| --- | --- |
+| Tipo | **Pistón a gas** (hacia arriba: sube solo y frena al final), **brazo con freno** (hacia arriba: la puerta queda quieta donde la dejes) o **compás con freno** (hacia abajo: frena la tapa y la deja horizontal). |
+| Fuerza (N) | Solo pistones: el dato para pedirlo al comprar (60 N, 80 N…). |
+| Peso de puerta desde / hasta | En kg, con los que lleva cada puerta. Es lo que usa el motor para elegirlo. |
+| Alto de puerta desde / hasta | El lado que gira: de las bisagras al borde libre. |
+| Fondo mínimo del mueble | Para montarlo dentro. |
+| Por puerta | Uno o dos (uno por lado). |
+| Ángulo de apertura | En grados. 90 = horizontal; más de 90 sube por encima del mueble (cuenta para el techo en el ambiente). |
+
+De partida (valores de ejemplo: cada fabricante da su tabla de peso por alto de puerta, comprobala con la ficha del que compres):
+
+| Herraje | Peso de puerta | Alto de puerta | Por puerta | Apertura |
+| --- | --- | --- | --- | --- |
+| Pistón a gas 60 N | 1,5 a 3 kg | 250 a 500 mm | 2 | 100° |
+| Pistón a gas 80 N | 3 a 4,5 kg | 250 a 500 mm | 2 | 100° |
+| Pistón a gas 100 N | 4,5 a 6 kg | 250 a 500 mm | 2 | 100° |
+| Pistón a gas 120 N | 6 a 7,5 kg | 250 a 500 mm | 2 | 100° |
+| Brazo con freno | 1 a 6 kg | 200 a 600 mm | 2 | 100° |
+| Compás con freno (hacia abajo) | 0,5 a 8 kg | 200 a 600 mm | 2 | 90° |
+
+Todos piden al menos 250 mm de fondo de mueble.
+
+Qué hace el motor:
+
+1. **Pesa la puerta**: suma el área de sus piezas (en las de marco y vidrio, los listones y el vidrio) por el **peso por m²** de cada material. Si el material no tiene peso cargado (Bibliotecas → material → **Peso por m²**), lo estima por el espesor: 0,7 kg por m² y por mm en tableros (aglomerado o MDF, unos 700 kg/m³) y 2,5 kg por m² y por mm en vidrios. Melamina de 18 → 12,6 kg/m².
+2. **Elige el herraje**: el primero de la biblioteca que abre para ese lado y aguanta ese peso y ese alto (el de menor capacidad que alcance). Se puede elegir uno a mano en **Pistón o brazo** / **Compás**.
+3. **Avisa** si ninguno la aguanta, si el elegido no la aguanta o es para el otro lado, o si el mueble tiene menos fondo del que pide.
+4. Suma a la lista de herrajes los que lleva la puerta, con su peso (por ejemplo, «2 unidades · Pistón a gas 80 N · puerta de 4,5 kg»).
+
+Ejemplos (método argentino, melamina de 18 y 3 mm de holgura):
+
+| Mueble | Puerta | Peso | Herraje |
+| --- | --- | --- | --- |
+| Alacena 900 × 400 × 330, hacia arriba | 897 × 397 | 0,897 × 0,397 × 12,6 = 4,49 → 4,5 kg | 2 pistones de 80 N y 2 bisagras arriba |
+| La misma con una melamina de 20 kg/m² | 897 × 397 | 7,1 kg | 2 pistones de 120 N |
+| Alacena 1200 × 600 × 330, hacia arriba | 1197 × 597 | 9 kg | ninguno: aviso |
+| Escritorio 800 × 400 × 400, hacia abajo | 797 × 397 | 4 kg | 2 compases y 2 bisagras abajo |
+
+Dónde se ven: en el 3D, con **Frentes abiertos**, la puerta gira sobre su canto de arriba (o de abajo); en el dibujo del frente, el tirador va horizontal del lado contrario a las bisagras; en las vistas del PDF con puertas abiertas; en el STL de juguete van en un archivo aparte, sin bisagra impresa; y en el ambiente, una puerta hacia arriba avisa si golpea el techo (ver [Ambientes](ambientes.md)).
+
 ## Código
 
 - Motor: [`packages/engine/src/hardware.ts`](../packages/engine/src/hardware.ts) (tipos, herrajes de partida, validación, `hingeCount`, `pickLength`) y `compute(diseño, método, materiales, herrajes)`, que devuelve además `hardware`: la lista de herrajes. Pruebas en `test/herrajes.test.ts`, con cifras calculadas a mano.
 - Patas: [`packages/engine/src/legs.ts`](../packages/engine/src/legs.ts) (`legCount`, `placeLegs`, `legsOverhang`); `compute` devuelve además `legs`. Malla para los STL: `packages/exporters/src/legmesh.ts`. Pruebas en `packages/engine/test/legs.test.ts` y `packages/exporters/test/legs.test.ts` (volúmenes exactos de patas rectas, inclinadas y cónicas).
-- Datos: tabla `hardware` en Supabase (migraciones `20261118000001_herrajes.sql` y `20261121000002_patas.sql`, que agrega el tipo `leg`) y `hardware` en el navegador (formato versión 6). Las cuentas sin herrajes reciben los de partida la primera vez; las que ya tenían y no tienen ninguna pata reciben las 5 patas de partida.
+- Pistones, brazos y compases: tipo `lift` (`LiftSpec`, `liftFits`) en `hardware.ts`; el peso, `weightPerM2` en `types.ts`; la elección y los avisos, en `compute.ts`. Pruebas en `packages/engine/test/lift.test.ts`.
+- Datos: tabla `hardware` en Supabase (migraciones `20261118000001_herrajes.sql`, `20261121000002_patas.sql`, que agrega el tipo `leg`, y `20261123000000_apertura_hacia_arriba.sql`, que agrega `lift` y el peso de los materiales) y `hardware` en el navegador (formato versión 6). Las cuentas sin herrajes reciben los de partida la primera vez; las que ya tenían y no tienen ninguna pata reciben las 5 patas de partida, y las que no tienen pistones, brazos ni compases reciben los 6 de partida (en el navegador, al pasar al formato versión 8).
 - Pantallas: Bibliotecas → Herrajes (`components/libraries/HardwareDialog.tsx`); Método → Herrajes por defecto; Mueble completo → Herrajes; Despiece → Herrajes, con su costo.
 
 ## Fuentes

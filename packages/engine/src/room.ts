@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { defaultIdGen, type IdGen } from './edit';
-import { mm, type Len } from './units';
+import { mm, toMm, type Len } from './units';
 
 /**
  * Ambientes: la planta de una habitación (piso y paredes), sus aberturas y los muebles colocados.
@@ -345,9 +345,10 @@ export interface CabinetSize {
   legHeight?: Len;
   /**
    * Puertas de bisagra, para saber si golpean algo al abrirse. x0 desde el costado izquierdo,
-   * width = ancho de la hoja; y0 y y1 desde abajo del mueble.
+   * width = ancho de la hoja; y0 y y1 desde abajo del mueble. hinge 'top' / 'bottom': abre hacia
+   * arriba / hacia abajo, hasta `angle` grados (90 si falta).
    */
-  doors?: { x0: Len; width: Len; y0: Len; y1: Len; hinge: 'left' | 'right' }[];
+  doors?: { x0: Len; width: Len; y0: Len; y1: Len; hinge: 'left' | 'right' | 'top' | 'bottom'; angle?: number }[];
 }
 
 /** Vectores del mueble en la planta: `u` a lo ancho (izquierda → derecha) y `f` hacia su frente. */
@@ -393,9 +394,21 @@ export function placementSolids(p: Placement, size: CabinetSize): Solid[] {
   return out;
 }
 
-/** Zona que barre una puerta al abrirse 90°: un cuarto de círculo (aproximado con 8 tramos) en la planta. */
+/**
+ * Zona que barre una puerta al abrirse, en la planta. Al costado (90°): un cuarto de círculo
+ * (aproximado con 8 tramos). Hacia arriba o abajo: un rectángulo del ancho de la puerta que sale
+ * del frente lo que mide la puerta de alto.
+ */
 export function doorSwing(p: Placement, size: CabinetSize, door: NonNullable<CabinetSize['doors']>[number]): Pt[] {
   const { u, f } = placementAxes(p.rotation);
+  if (door.hinge === 'top' || door.hinge === 'bottom') {
+    const h = door.y1 - door.y0;
+    const a = Math.min(door.angle ?? 90, 90);
+    const reach = h * Math.sin(rad(a));
+    const fl = add(add({ x: p.x, y: p.y }, mul(u, door.x0)), mul(f, size.d));
+    const fr = add(fl, mul(u, door.width));
+    return [fl, fr, add(fr, mul(f, reach)), add(fl, mul(f, reach))];
+  }
   const left = door.hinge === 'left';
   const hingeX = left ? door.x0 : door.x0 + door.width;
   const hp = add(add({ x: p.x, y: p.y }, mul(u, hingeX)), mul(f, size.d));
@@ -406,6 +419,18 @@ export function doorSwing(p: Placement, size: CabinetSize, door: NonNullable<Cab
     pts.push(add(hp, add(mul(toward, Math.cos(a) * door.width), mul(f, Math.sin(a) * door.width))));
   }
   return pts;
+}
+
+/**
+ * Alto (desde el piso) que ocupa una puerta mientras se abre. Al costado, el de la puerta. Hacia
+ * arriba, pasado los 90° sube por encima de la bisagra; hacia abajo, baja por debajo.
+ */
+export function doorSweepHeight(p: Placement, door: NonNullable<CabinetSize['doors']>[number]): { z0: Len; z1: Len } {
+  const h = door.y1 - door.y0;
+  const over = Math.max(0, h * Math.sin(rad((door.angle ?? 90) - 90)));
+  const z0 = p.elevation + door.y0 - (door.hinge === 'bottom' ? over : 0);
+  const z1 = p.elevation + door.y1 + (door.hinge === 'top' ? over : 0);
+  return { z0: Math.round(z0), z1: Math.round(z1) };
 }
 
 const solidsOverlap = (A: Solid[], B: Solid[]) => A.some((a) => B.some((b) => a.z0 < b.z1 && b.z0 < a.z1 && convexOverlap(a.poly, b.poly)));
@@ -650,14 +675,16 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
   for (const A of placed) {
     for (const door of A.size.doors ?? []) {
       const swing = doorSwing(A.p, A.size, door);
-      const z0 = A.p.elevation + door.y0;
-      const z1 = A.p.elevation + door.y1;
+      const { z0, z1 } = doorSweepHeight(A.p, door);
+      const ceiling = door.hinge === 'top' && z1 > plan.wallHeight;
       const wall = swing.some((q) => !pointInPolygon(q, poly) && ws.every((w) => distToSegment(q, w.a, w.b) > 50));
       const other = placed.find((B) => B !== A && placementSolids(B.p, B.size).some((s) => s.z0 < z1 && z0 < s.z1 && convexOverlap(swing, s.poly)));
-      if (wall || other) {
+      if (ceiling || wall || other) {
         out.push({
           code: 'door_swing',
-          message: `Una puerta de ${A.name} golpea ${wall ? 'la pared' : `a ${other!.name}`} al abrirse.`,
+          message: ceiling
+            ? `La puerta de ${A.name} golpea el techo al abrirse hacia arriba: le faltan ${Math.ceil(toMm(z1 - plan.wallHeight))} mm.`
+            : `Una puerta de ${A.name} golpea ${wall ? 'la pared' : `a ${other!.name}`} al abrirse.`,
           placementId: A.p.id,
         });
         break; // un aviso por mueble

@@ -16,13 +16,18 @@ export function Label({ htmlFor, children }: { htmlFor: string; children: ReactN
   );
 }
 
-export function TextField({ label, id, ...rest }: ComponentProps<'input'> & { label: string }) {
+export function TextField({ label, id, hint, ...rest }: ComponentProps<'input'> & { label: string; hint?: string }) {
   const auto = useId();
   const fid = id ?? auto;
   return (
     <div>
       <Label htmlFor={fid}>{label}</Label>
-      <input id={fid} className={inputClass} {...rest} />
+      <input id={fid} className={inputClass} aria-describedby={hint ? `${fid}-hint` : undefined} {...rest} />
+      {hint && (
+        <p id={`${fid}-hint`} className="mt-1 text-xs text-muted">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

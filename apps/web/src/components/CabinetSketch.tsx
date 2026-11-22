@@ -79,6 +79,12 @@ function Handle({ p, y }: { p: Part; y: number }) {
     const len = Math.min(dx * 0.35, 25000);
     return <line x1={p.box.x + dx / 2 - len / 2} x2={p.box.x + dx / 2 + len / 2} y1={y + dy * 0.28} y2={y + dy * 0.28} stroke="var(--text)" strokeOpacity={0.6} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" />;
   }
+  if (p.hinge === 'top' || p.hinge === 'bottom') {
+    // Hacia arriba: tirador abajo; hacia abajo: arriba. Horizontal y centrado.
+    const len = Math.min(dx * 0.3, 25000);
+    const ty = p.hinge === 'top' ? y + dy * 0.88 : y + dy * 0.12;
+    return <line x1={p.box.x + dx / 2 - len / 2} x2={p.box.x + dx / 2 + len / 2} y1={ty} y2={ty} stroke="var(--text)" strokeOpacity={0.6} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" />;
+  }
   const hx = p.hinge === 'right' ? p.box.x + dx * 0.1 : p.box.x + dx * 0.9;
   const len = Math.min(dy * 0.15, 20000);
   return <line x1={hx} x2={hx} y1={y + dy * 0.5 - len / 2} y2={y + dy * 0.5 + len / 2} stroke="var(--text)" strokeOpacity={0.6} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" />;

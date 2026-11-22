@@ -14,6 +14,7 @@ import {
   setFront,
   snapToNeighbor,
   type CabinetSize,
+  type Design,
   type Placement,
   type RoomPlan,
 } from '../src';
@@ -110,7 +111,7 @@ describe('puertas que golpean al abrirse', () => {
 describe('medidas para el ambiente a partir del motor', () => {
   const ar = PRESET_METHODS.find((m) => m.id === 'ar-18-ranura')!;
   it('patas que suman al alto (1010), su alto y una puerta por hoja (las de marco y vidrio, una sola)', () => {
-    let d = { ...newDesign({ w: mm(800), h: mm(860), d: mm(560) }, gen), legs: { hardwareId: 'hw-pata-recta-cuadrada', includeInHeight: false } };
+    let d: Design = { ...newDesign({ w: mm(800), h: mm(860), d: mm(560) }, gen), legs: { hardwareId: 'hw-pata-recta-cuadrada', includeInHeight: false } };
     d = setFront(d, d.root.id, { kind: 'door', leaves: 2, hinge: 'left', mount: 'overlay', glass: { type: 'frame', glassId: 'ar-vidrio-incoloro-4', frameWidth: mm(60), rebate: mm(8), clearance: mm(1.5) } });
     const s = roomSize(d, compute(d, ar, PRESET_MATERIALS, PRESET_HARDWARE));
     expect([s.h, s.legHeight]).toEqual([mm(1010), mm(150)]);

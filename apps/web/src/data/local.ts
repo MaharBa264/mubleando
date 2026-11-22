@@ -4,6 +4,7 @@ import {
   hardwareSchema,
   PRESET_GLASS,
   PRESET_GLASS_HINGE_IDS,
+  PRESET_LIFT_IDS,
   PRESET_HARDWARE,
   materialSchema,
   methodSchema,
@@ -33,7 +34,7 @@ const KEY = 'mueblesweb:v1';
  * Versión del formato guardado. Al subirla, `migrate` pone al día los datos antiguos.
  * 1: fase 1 · 2: métodos con frentes y cajones, tablero de 16 para cajones · 3: precios en pesos · 4: ambientes · 5: herrajes.
  */
-const SCHEMA = 7;
+const SCHEMA = 8;
 
 interface State {
   schema?: number;
@@ -130,6 +131,10 @@ function migrate(s: State): State {
     if (!s.materials.some((m) => m.kind === 'glass')) s.materials = [...s.materials, ...structuredClone(PRESET_GLASS)];
     const hw = s.hardware ?? [];
     if (!hw.some((h) => h.kind === 'hinge' && h.spec.forGlass)) s.hardware = [...hw, ...structuredClone(PRESET_HARDWARE.filter((h) => PRESET_GLASS_HINGE_IDS.includes(h.id)))];
+  }
+  if ((s.schema ?? 1) < 8 && !(s.hardware ?? []).some((h) => h.kind === 'lift')) {
+    // Pistones, brazos con freno y compases de partida.
+    s.hardware = [...(s.hardware ?? []), ...structuredClone(PRESET_HARDWARE.filter((h) => PRESET_LIFT_IDS.includes(h.id)))];
   }
   s.hardware = (s.hardware ?? []).filter((h) => hardwareSchema.safeParse(h).success);
   s.schema = SCHEMA;

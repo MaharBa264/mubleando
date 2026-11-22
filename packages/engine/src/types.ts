@@ -27,9 +27,16 @@ export interface DoorFront {
   kind: 'door';
   /** Una hoja o dos. */
   leaves: 1 | 2;
-  /** Lado de las bisagras si es de una hoja. */
+  /** Lado de las bisagras si es de una hoja y abre al costado. */
   hinge: 'left' | 'right';
   mount: FrontMount;
+  /**
+   * Hacia dónde abre: 'side' al costado (por defecto), 'up' hacia arriba (bisagras arriba, con
+   * pistón o brazo) o 'down' hacia abajo (bisagras abajo, con compás). Hacia arriba o abajo, una hoja.
+   */
+  opens?: 'side' | 'up' | 'down';
+  /** Herraje de apertura elegido (pistón, brazo o compás). Ausente = el primero de la biblioteca que aguanta la puerta. */
+  liftId?: string;
   /** Vidrio: una «ventana» con marco, o la puerta entera de vidrio templado. Ausente = puerta de tablero. */
   glass?: DoorGlass;
 }
@@ -139,6 +146,8 @@ const frontSchema = z.discriminatedUnion('kind', [
     leaves: z.union([z.literal(1), z.literal(2)]),
     hinge: z.enum(['left', 'right']),
     mount: z.enum(['overlay', 'inset']),
+    opens: z.enum(['side', 'up', 'down']).optional(),
+    liftId: z.string().min(1).optional(),
     glass: z
       .discriminatedUnion('type', [
         z.object({ type: z.literal('frame'), glassId: z.string().min(1), frameWidth: lenSchema.positive(), rebate: lenSchema.nonnegative(), clearance: lenSchema.nonnegative() }),
@@ -219,6 +228,18 @@ export interface Material {
   tempered?: boolean;
   /** Medida de la placa que se compra (tableros). Sin ella, la de partida según el espesor (ver cutting.ts). */
   sheet?: { length: Len; width: Len };
+  /** Peso en kg por m² (tableros y vidrios). Sin él, se estima por el espesor (ver `weightPerM2`). */
+  weight?: number;
+}
+
+/**
+ * Peso por m² de un material, en kg: el que tenga cargado o, si no, una estimación por el espesor:
+ * tableros, 0,7 kg por m² y por mm (aglomerado y MDF, unos 700 kg/m³; melamina de 18: 12,6 kg/m²);
+ * vidrios, 2,5 kg por m² y por mm.
+ */
+export function weightPerM2(m: Pick<Material, 'kind' | 'thickness' | 'weight'>): number {
+  if (m.weight && m.weight > 0) return m.weight;
+  return (m.thickness / 100) * (m.kind === 'glass' ? 2.5 : 0.7);
 }
 
 export interface Method {
@@ -347,8 +368,8 @@ export interface Part {
   assembly?: PartAssembly;
   /** La pieza tiene cambios hechos a mano (material o cantos). */
   overridden?: boolean;
-  /** Solo puertas: lado de las bisagras (para abrirla en el visor y, más adelante, taladrar). */
-  hinge?: 'left' | 'right';
+  /** Solo puertas: lado de las bisagras (para abrirla en el visor y, más adelante, taladrar). Arriba o abajo en las que abren hacia arriba o hacia abajo. */
+  hinge?: 'left' | 'right' | 'top' | 'bottom';
   /** Solo puertas corredizas: riel en el que va la hoja. */
   track?: 'front' | 'back';
   /**
@@ -418,6 +439,7 @@ export const materialSchema: z.ZodType<Material> = z.object({
   color: z.string().min(1),
   sheet: z.object({ length: lenSchema.positive(), width: lenSchema.positive() }).optional(),
   tempered: z.boolean().optional(),
+  weight: z.number().positive().max(500).optional(),
 });
 
 export const methodSchema: z.ZodType<Method> = z.object({

@@ -38,6 +38,7 @@ Lo tiene que hacer el dueño de la cuenta de Supabase. La app no crea cuentas ni
    - `20261122000000_vidrios.sql`: la biblioteca de materiales acepta vidrios (y si son templados). Mientras no esté, la app funciona sin vidrios en la nube.
    - `20261121000002_patas.sql`: la tabla de herrajes acepta patas. Mientras no esté, la app funciona sin patas en la nube.
    - `20261121000001_medida_de_placa.sql`: medida de la placa de cada tablero, para el plano de cortes. Mientras no esté, el plano usa las placas de partida.
+   - `20261123000000_apertura_hacia_arriba.sql`: la tabla de herrajes acepta pistones, brazos y compases (tipo `lift`) y los materiales pueden tener su peso por m². Mientras no esté, el motor usa igual los de partida y el peso estimado por el espesor, pero no se pueden guardar pistones propios ni pesos.
    - `20261121000000_registro_con_lista.sql`: el registro pasa a ser **solo para los mails de una lista** que edita el administrador. La cuenta más antigua del proyecto pasa a ser la administradora. Ver [Quién puede registrarse](#quién-puede-registrarse).
 
 Cada archivo se aplica **una sola vez**. Cuando salga una migración nueva, pega solo esa.

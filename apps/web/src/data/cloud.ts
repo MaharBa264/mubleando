@@ -12,6 +12,7 @@ import {
   hardwareSchema,
   PRESET_GLASS,
   PRESET_GLASS_HINGE_IDS,
+  PRESET_LIFT_IDS,
   PRESET_HARDWARE,
   roomPlanSchema,
   type Hardware,
@@ -62,6 +63,8 @@ interface MaterialRow {
   sheet_width?: number | null;
   /** Vidrios (migración 20261122000000). */
   tempered?: boolean | null;
+  /** Peso en kg/m² (migración 20261123000000; puede no existir todavía). */
+  weight?: number | string | null;
 }
 interface MethodRow {
   id: string;
@@ -97,6 +100,7 @@ const toMaterial = (r: MaterialRow): Material => ({
   color: r.color,
   ...(r.sheet_length && r.sheet_width ? { sheet: { length: r.sheet_length, width: r.sheet_width } } : {}),
   ...(r.tempered ? { tempered: true } : {}),
+  ...(r.weight != null && Number(r.weight) > 0 ? { weight: Number(r.weight) } : {}),
 });
 // Las columnas de la placa solo se mandan si el tablero tiene medida propia: así se puede seguir
 // guardando sin la migración de la medida de placa. Al guardar varios juntos, las que una fila no
@@ -113,6 +117,8 @@ const fromMaterial = (m: Material, userId: string) => ({
   ...(m.sheet ? { sheet_length: m.sheet.length, sheet_width: m.sheet.width } : {}),
   // Solo los vidrios mandan «templado» (así los demás se guardan aunque falte la migración de vidrios).
   ...(m.kind === 'glass' ? { tempered: !!m.tempered } : {}),
+  // El peso, solo si tiene (así se guarda aunque falte la migración de la apertura hacia arriba).
+  ...(m.weight ? { weight: m.weight } : {}),
 });
 
 const toMethod = (r: MethodRow): Method => normalizeMethod({ ...r.spec, id: r.id, name: r.name });
@@ -185,8 +191,9 @@ async function ensureHardware() {
   const legs = PRESET_HARDWARE.filter((h) => h.kind === 'leg');
   if (!count) {
     let r = await sb.from('hardware').upsert(PRESET_HARDWARE.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
-    // Sin la migración de las patas, la base no acepta el tipo 'leg': se crean los demás.
-    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'leg').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    // Sin la migración de los herrajes de apertura (o de las patas), la base no acepta esos tipos: se crean los demás.
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'lift').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'leg' && h.kind !== 'lift').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (r.error) fail(r.error, 'crear los herrajes de partida');
   } else {
     // Cuentas que ya tenían herrajes: las patas de partida, una vez (si no tienen ninguna).
@@ -201,6 +208,12 @@ async function ensureHardware() {
       const glass = PRESET_HARDWARE.filter((h) => PRESET_GLASS_HINGE_IDS.includes(h.id));
       const r = await sb.from('hardware').upsert(glass.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
       if (r.error) fail(r.error, 'crear las bisagras para vidrio');
+    }
+    // Y los pistones, brazos y compases, si no tienen ninguno (sin la migración, se sigue sin ellos).
+    const lifts = await sb.from('hardware').select('id', { count: 'exact', head: true }).eq('kind', 'lift');
+    if (!lifts.error && !lifts.count) {
+      const r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => PRESET_LIFT_IDS.includes(h.id)).map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      if (r.error && r.error.code !== '23514') fail(r.error, 'crear los herrajes de apertura');
     }
   }
   hardwareChecked = uid;
@@ -389,9 +402,17 @@ export const cloudData: DataLayer = {
     const m = materialSchema.parse({ ...material, name: material.name.trim() });
     const row = fromMaterial(m, await userId());
     // Con la columna de la placa, sin medida propia se guarda vacía (vuelve a la de partida).
+    // Con la columna del peso, sin peso propio se guarda vacío (vuelve al estimado por el espesor).
     let { error } = await supabase()
       .from('materials')
-      .upsert({ ...row, sheet_length: m.sheet?.length ?? null, sheet_width: m.sheet?.width ?? null }, { onConflict: 'user_id,id' });
+      .upsert({ ...row, sheet_length: m.sheet?.length ?? null, sheet_width: m.sheet?.width ?? null, weight: m.weight ?? null }, { onConflict: 'user_id,id' });
+    if (error?.code === 'PGRST204' && /weight/.test(error.message ?? '')) {
+      // Falta la migración del peso.
+      if (m.weight) throw new Error('Para guardar el peso del material falta aplicar en Supabase la migración 20261123000000_apertura_hacia_arriba.sql (ver docs/nube.md).');
+      ({ error } = await supabase()
+        .from('materials')
+        .upsert({ ...row, sheet_length: m.sheet?.length ?? null, sheet_width: m.sheet?.width ?? null }, { onConflict: 'user_id,id' }));
+    }
     if (error?.code === 'PGRST204') {
       // Falta la migración de la medida de placa.
       if (m.sheet) throw new Error('Para guardar la medida de la placa falta aplicar en Supabase la migración 20261121000001_medida_de_placa.sql (ver docs/nube.md).');
