@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AuthGate, AuthProvider, useAuth } from '@/components/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
 import { TooltipLayer } from '@/components/ui/TooltipLayer';
@@ -10,7 +10,11 @@ import { isAdmin } from '@/lib/admin';
 import { useAsync } from '@/lib/useAsync';
 
 const NAV = [
-  { href: '/', label: 'Proyectos', match: (p: string) => p === '/' || p.startsWith('/proyectos') || p.startsWith('/muebles') },
+  {
+    href: '/',
+    label: 'Proyectos',
+    match: (p: string) => p === '/' || p.startsWith('/proyectos') || p.startsWith('/muebles') || p.startsWith('/ambientes'),
+  },
   { href: '/bibliotecas', label: 'Bibliotecas', match: (p: string) => p.startsWith('/bibliotecas') },
 ];
 const ADMIN_NAV = { href: '/admin', label: 'Administración', match: (p: string) => p.startsWith('/admin') };
@@ -27,9 +31,38 @@ function Shell({ children }: { children: ReactNode }) {
   const path = usePathname() ?? '/';
   const { mode, session } = useAuth();
   const email = session?.user.email ?? '';
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    setOnline(navigator.onLine);
+    const up = () => setOnline(true);
+    const down = () => setOnline(false);
+    window.addEventListener('online', up);
+    window.addEventListener('offline', down);
+    return () => {
+      window.removeEventListener('online', up);
+      window.removeEventListener('offline', down);
+    };
+  }, []);
+
   // Administración solo aparece para las cuentas administradoras (lo decide la base de datos).
   const admin = useAsync(() => (mode === 'cloud' && session ? isAdmin() : Promise.resolve(false)), [mode, session?.user.id]);
   const nav = admin.status === 'ready' && admin.data ? [...NAV, ADMIN_NAV] : NAV;
+
+  const accountTitle =
+    mode === 'cloud'
+      ? online
+        ? `Conectado a Supabase · ${email}`
+        : `Sin conexión · ${email}`
+      : 'Modo local · datos guardados en este navegador';
+
+  const statusDot =
+    mode === 'cloud'
+      ? online
+        ? 'bg-success'
+        : 'bg-warning'
+      : 'bg-border-strong';
+
   return (
     <div className="flex min-h-dvh flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2">
@@ -78,13 +111,16 @@ function Shell({ children }: { children: ReactNode }) {
             <Link
               href="/cuenta"
               aria-current={path.startsWith('/cuenta') ? 'page' : undefined}
-              title={mode === 'cloud' ? email : 'Datos guardados en este navegador'}
+              title={accountTitle}
               className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 text-sm text-muted hover:bg-surface-2 hover:text-text sm:pr-3"
             >
-              <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent">
+              <span aria-hidden className="relative grid h-7 w-7 place-items-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent">
                 {mode === 'cloud' ? email.slice(0, 1) || '?' : '⌂'}
+                <span className={`absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-bg ${statusDot}`} />
               </span>
-              <span className="hidden sm:inline">{mode === 'cloud' ? 'Cuenta' : 'En este navegador'}</span>
+              <span className="hidden sm:inline">
+                {mode === 'cloud' ? (online ? 'Nube' : 'Sin conexión') : 'Local'}
+              </span>
             </Link>
           )}
         </div>
@@ -93,19 +129,6 @@ function Shell({ children }: { children: ReactNode }) {
         <AuthGate>{children}</AuthGate>
       </main>
       <TooltipLayer />
-    </div>
-  );
-}
-
-export function Page({ title, actions, back, children }: { title: ReactNode; actions?: ReactNode; back?: ReactNode; children: ReactNode }) {
-  return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
-      {back && <div className="no-print mb-3 text-sm text-muted">{back}</div>}
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight sm:text-[32px]">{title}</h1>
-        {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
-      </div>
-      {children}
     </div>
   );
 }
