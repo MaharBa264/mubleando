@@ -103,3 +103,6 @@ Si tienes un dominio gestionado en Cloudflare: **Workers & Pages → mubleando �
 **Los enlaces de los correos llevan a `localhost`.** Falta el paso 4.
 
 **Avisos de `npm audit` en `glob` y `minimatch`.** Vienen de las herramientas de compilación del adaptador (minimizar y buscar archivos del propio proyecto). No se ejecutan en la app publicada ni procesan datos de usuarios. Se revisarán al actualizar el adaptador.
+## Publicación automática (Cloudflare Workers Builds)
+Cada cambio en la rama `main` dispara automáticamente la compilación y el despliegue mediante **Cloudflare Workers Builds**.
+Las variables de build `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` deben estar configuradas en Cloudflare.
