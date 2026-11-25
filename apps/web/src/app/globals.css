@@ -2,7 +2,7 @@
 
 /*
  * Tokens de diseño · ver docs/diseno.md.
- * Los componentes SOLO usan estas variables (vía las clases de Tailwind de @theme o var(--x)).
+ * Los componentes SOLO usan estas variables (via las clases de Tailwind de @theme o var(--x)).
  * Nunca escribir un color, una sombra o un radio a mano en un componente: si falta uno, se agrega acá.
  *
  * Dirección: "taller luminoso". Fondo hueso cálido como un estudio fotográfico, superficies blancas
@@ -28,6 +28,8 @@
   --accent-contrast: #ffffff;
 
   /* estados */
+  --success: #1f7a4c;
+  --success-soft: #e3f4ea;
   --danger: #b42a20;
   --danger-soft: #fbe8e6;
   --warning: #865300;
@@ -77,6 +79,8 @@
     --accent-hover: #8cb9ff;
     --accent-soft: #172a4c;
     --accent-contrast: #08142b;
+    --success: #5cc98f;
+    --success-soft: #163324;
     --danger: #f2867e;
     --danger-soft: #3b1d1b;
     --warning: #eec06a;
@@ -106,6 +110,8 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
   --color-accent-contrast: var(--accent-contrast);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
