@@ -2,9 +2,10 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import { compute, type Hardware, type Material, type Method } from '@mw/engine';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { buttonClass, Button } from '@/components/ui/Button';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { Icon, type IconName } from '@/components/ui/Icon';
@@ -26,10 +27,16 @@ const CabinetViewer = dynamic(() => import('@/components/viewer/CabinetViewer'),
 const NEXT_FRONTS = { closed: 'open', open: 'hidden', hidden: 'closed' } as const;
 const FRONTS_LABEL = { closed: 'Frentes cerrados', open: 'Frentes abiertos', hidden: 'Sin frentes' } as const;
 
-type SaveState = { kind: 'saved' } | { kind: 'saving' } | { kind: 'error'; message: string } | { kind: 'conflict' };
+type SaveState =
+  | { kind: 'saved'; at: Date | null }
+  | { kind: 'saving' }
+  | { kind: 'offline' }
+  | { kind: 'error'; message: string }
+  | { kind: 'conflict' };
 
-/** S03 · Editor de mueble: estructura + visor 3D + propiedades. */
+/** S03 · Editor de mueble: lienzo 3D protagonista + inspectores flotantes colapsables + estado Supabase/Local. */
 export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cabinet; materials: Material[]; methods: Method[]; hardware: Hardware[] }) {
+  const { mode } = useAuth();
   const storeRef = useRef<ReturnType<typeof createEditorStore>>(null);
   storeRef.current ??= createEditorStore({
     name: cabinet.name,
@@ -54,6 +61,12 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
   const labels = useMemo(() => zoneLabels(design), [design]);
   const hasFronts = result.parts.some((p) => p.role === 'door' || p.role === 'drawer-front');
 
+  // Inspectores laterales colapsables en escritorio (Tab alterna modo foco).
+  const [treeOpen, setTreeOpen] = useState(true);
+  const [propsOpen, setPropsOpen] = useState(true);
+  const [mobileTab, setMobileTab] = useState<'props' | 'tree'>('props');
+  const [stlOpen, setStlOpen] = useState(false);
+
   // Si lo seleccionado desaparece (p. ej. al quitar divisiones), volver al mueble.
   useEffect(() => {
     const s = store.getState().selection;
@@ -61,28 +74,75 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
     if (s.kind === 'part' && !result.parts.some((p) => p.key === s.key)) store.getState().select({ kind: 'cabinet' });
   }, [result, store]);
 
-  // ── guardado automático con control de versión ──
+  // — guardado automático con control de versión (rev) y detección de conexión —
   const rev = useRef(cabinet.rev);
-  const [save, setSave] = useState<SaveState>({ kind: 'saved' });
-  const [stlOpen, setStlOpen] = useState(false);
+  const [save, setSave] = useState<SaveState>({ kind: 'saved', at: null });
+  const [saveTick, setSaveTick] = useState(0);
   const first = useRef(true);
+
+  const persistNow = useCallback(async () => {
+    if (mode === 'cloud' && typeof navigator !== 'undefined' && !navigator.onLine) {
+      setSave({ kind: 'offline' });
+      return;
+    }
+    setSave({ kind: 'saving' });
+    try {
+      rev.current = await data.saveCabinet(cabinet.id, rev.current, {
+        design,
+        methodId,
+        quantity,
+        name: name.trim() || cabinet.name,
+      });
+      setSave({ kind: 'saved', at: new Date() });
+    } catch (e) {
+      if (e instanceof ConflictError) {
+        setSave({ kind: 'conflict' });
+      } else if (mode === 'cloud' && typeof navigator !== 'undefined' && !navigator.onLine) {
+        setSave({ kind: 'offline' });
+      } else {
+        setSave({ kind: 'error', message: e instanceof Error ? e.message : 'Error al guardar' });
+      }
+    }
+  }, [cabinet.id, cabinet.name, design, methodId, mode, name, quantity]);
+
   useEffect(() => {
     if (first.current) {
       first.current = false;
       return;
     }
+    if (mode === 'cloud' && typeof navigator !== 'undefined' && !navigator.onLine) {
+      setSave({ kind: 'offline' });
+      return;
+    }
     setSave({ kind: 'saving' });
-    const t = setTimeout(async () => {
-      try {
-        rev.current = await data.saveCabinet(cabinet.id, rev.current, { design, methodId, quantity, name: name.trim() || cabinet.name });
-        setSave({ kind: 'saved' });
-      } catch (e) {
-        if (e instanceof ConflictError) setSave({ kind: 'conflict' });
-        else setSave({ kind: 'error', message: e instanceof Error ? e.message : 'Error al guardar' });
-      }
+    const t = setTimeout(() => {
+      void persistNow();
     }, 600);
     return () => clearTimeout(t);
-  }, [design, methodId, quantity, name, cabinet.id, cabinet.name]);
+  }, [design, methodId, quantity, name, mode, saveTick, persistNow]);
+
+  // Reintento automático cuando vuelve la conexión en modo Supabase.
+  useEffect(() => {
+    if (mode !== 'cloud') return;
+    const onOnline = () => {
+      setSave((prev) => {
+        if (prev.kind === 'offline' || prev.kind === 'error') {
+          setSaveTick((n) => n + 1);
+          return { kind: 'saving' };
+        }
+        return prev;
+      });
+    };
+    const onOffline = () => {
+      setSave((prev) => (prev.kind === 'saving' ? { kind: 'offline' } : prev));
+    };
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, [mode]);
 
   // Aviso al cerrar con cambios sin guardar.
   useEffect(() => {
@@ -92,11 +152,12 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
     return () => window.removeEventListener('beforeunload', h);
   }, [save.kind]);
 
-  // ── atajos de teclado ──
+  // — atajos de teclado (Ctrl+Z, Ctrl+Y, Esc, Tab para modo foco) —
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA')) return;
+      if (document.querySelector('dialog[open]')) return;
       const mod = e.ctrlKey || e.metaKey;
       if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
@@ -104,23 +165,27 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
       } else if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
         e.preventDefault();
         store.getState().redo();
-      } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      } else if (e.key === 'Escape') {
         store.getState().select({ kind: 'cabinet' });
+      } else if (e.key === 'Tab' && !mod && !e.altKey) {
+        e.preventDefault();
+        const bothClosed = !treeOpen && !propsOpen;
+        setTreeOpen(bothClosed);
+        setPropsOpen(bothClosed);
       }
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [store]);
+  }, [store, treeOpen, propsOpen]);
 
   const env: EditorEnv = { store, result, materials, methods, method, hardware, labels };
-  const [mobileTab, setMobileTab] = useState<'props' | 'tree'>('props');
 
   return (
     <EditorContext.Provider value={env}>
       <div className="flex min-h-0 flex-1 flex-col bg-viewer lg:h-[calc(100dvh-3rem)] lg:flex-none">
-        {/* barra superior */}
+        {/* barra superior del editor */}
         <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
-          <Link href={`/proyectos/${cabinet.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto">
+          <Link href={`/proyectos/${cabinet.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto" title="Volver al proyecto">
             <Icon name="back" />
           </Link>
           <input
@@ -128,10 +193,49 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
             value={name}
             maxLength={120}
             onChange={(e) => store.getState().setName(e.target.value)}
-            className="font-display h-8 min-w-[9rem] flex-1 rounded-control border border-transparent bg-transparent px-2 text-[15px] font-semibold tracking-tight hover:border-border focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 sm:max-w-sm"
+            className="font-display h-8 min-w-[8rem] flex-1 rounded-control border border-transparent bg-transparent px-2 text-[15px] font-semibold tracking-tight hover:border-border focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 sm:max-w-xs"
           />
-          <SaveBadge state={save} />
+          <SaveBadge state={save} mode={mode} />
+
+          {/* conmutador contextual de proyecto: Mueble | Despiece | Proyecto */}
+          <nav aria-label="Vistas del mueble" className="hidden items-center gap-0.5 rounded-full bg-surface-2 p-0.5 md:flex">
+            <span aria-current="page" className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-text shadow-1">
+              Mueble 3D
+            </span>
+            <Link href={`/muebles/${cabinet.id}/despiece`} className="rounded-full px-3 py-1 text-xs text-muted transition-colors hover:text-text">
+              Despiece
+            </Link>
+            <Link href={`/proyectos/${cabinet.projectId}/despiece`} className="rounded-full px-3 py-1 text-xs text-muted transition-colors hover:text-text">
+              Cortes proyecto
+            </Link>
+          </nav>
+
           <div className="ml-auto flex items-center gap-1">
+            {/* controles de inspectores en escritorio */}
+            <div className="hidden items-center gap-0.5 lg:flex">
+              <button
+                type="button"
+                onClick={() => setTreeOpen((v) => !v)}
+                aria-pressed={treeOpen}
+                aria-label="Mostrar u ocultar panel de estructura"
+                title={treeOpen ? 'Ocultar estructura (Tab oculta ambos)' : 'Mostrar estructura (Tab)'}
+                className={`flex h-8 w-8 items-center justify-center rounded-control transition-colors ${treeOpen ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-text'}`}
+              >
+                <PanelIcon side="left" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPropsOpen((v) => !v)}
+                aria-pressed={propsOpen}
+                aria-label="Mostrar u ocultar panel de propiedades"
+                title={propsOpen ? 'Ocultar propiedades (Tab oculta ambos)' : 'Mostrar propiedades (Tab)'}
+                className={`flex h-8 w-8 items-center justify-center rounded-control transition-colors ${propsOpen ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-surface-2 hover:text-text'}`}
+              >
+                <PanelIcon side="right" />
+              </button>
+              <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+            </div>
+
             <Button size="icon-sm" variant="ghost" onClick={() => store.getState().undo()} disabled={!canUndo} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
               <Icon name="undo" />
             </Button>
@@ -143,18 +247,36 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               <Icon name="download" size={16} className="-ml-0.5" />
               STL
             </Button>
-            <Link href={`/muebles/${cabinet.id}/despiece`} className={buttonClass('primary', 'sm')}>
+            <Link href={`/muebles/${cabinet.id}/despiece`} className={buttonClass('primary', 'sm', 'md:hidden')}>
               Despiece
             </Link>
           </div>
         </div>
+
         <StlExportDialog open={stlOpen} onClose={() => setStlOpen(false)} parts={result.parts} zones={result.zones} legs={result.legs} size={design.size} name={name} />
+
+        {/* alertas de sincronización / conflicto de concurrencia optimista (rev) */}
         {save.kind === 'conflict' && (
           <div className="px-3 pt-2">
-            <Alert tone="danger" title="Otro dispositivo o pestaña guardó este mueble mientras lo editabas">
-              Tus últimos cambios no se han guardado.{' '}
-              <button type="button" className="font-medium underline" onClick={() => window.location.reload()}>
-                Recargar la versión guardada
+            <Alert tone="danger" title="Este mueble se modificó desde otro dispositivo o pestaña">
+              Para evitar pisar trabajo, tus últimos cambios quedaron en pantalla sin subir a Supabase.{' '}
+              <span className="mt-1.5 flex flex-wrap items-center gap-3">
+                <button type="button" className="font-medium underline" onClick={() => window.location.reload()}>
+                  Recargar versión de la nube
+                </button>
+                <button type="button" className="font-medium underline" onClick={() => setStlOpen(true)}>
+                  Exportar STL de respaldo
+                </button>
+              </span>
+            </Alert>
+          </div>
+        )}
+        {save.kind === 'offline' && (
+          <div className="px-3 pt-2">
+            <Alert tone="warning" title="Sin conexión a internet">
+              Podés seguir editando con normalidad; los cambios se guardarán en Supabase automáticamente cuando vuelva la señal.{' '}
+              <button type="button" className="font-medium underline" onClick={() => void persistNow()}>
+                Reintentar ahora
               </button>
             </Alert>
           </div>
@@ -162,22 +284,23 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
         {save.kind === 'error' && (
           <div className="px-3 pt-2">
             <Alert tone="danger" title="No se ha podido guardar">
-              {save.message}
+              {save.message}{' '}
+              <button type="button" className="font-medium underline" onClick={() => void persistNow()}>
+                Reintentar
+              </button>
             </Alert>
           </div>
         )}
 
-        {/* cuerpo: estructura | visor | propiedades (apilado en móvil) */}
         {/*
-          Escritorio: la escena (bg-viewer) es el fondo de todo y los paneles flotan encima como tarjetas,
-          así el mueble se lee como protagonista. Móvil: visor arriba y panel con pestañas debajo.
+          Cuerpo del editor:
+          - Escritorio (lg+): el visor 3D ocupa el 100% del área disponible y los paneles flotan
+            encima con opción de colapsarse para maximizar el lienzo.
+          - Móvil (<lg): visor 3D arriba y panel con pestañas debajo.
         */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[264px_minmax(0,1fr)_348px] lg:grid-rows-[minmax(0,1fr)] lg:gap-3 lg:p-3">
-          <aside className="hidden overflow-y-auto rounded-card border border-border bg-surface shadow-float lg:block" aria-label="Estructura">
-            <StructureTree />
-          </aside>
-
-          <section className="relative h-[46dvh] min-h-[280px] bg-viewer lg:h-auto" aria-label="Vista 3D">
+        <div className="relative flex min-h-0 flex-1 flex-col lg:block">
+          {/* Lienzo 3D protagonista */}
+          <section className="relative h-[46dvh] min-h-[280px] bg-viewer lg:h-full lg:w-full" aria-label="Vista 3D">
             <CabinetViewer
               size={design.size}
               parts={result.parts}
@@ -190,23 +313,75 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               onSelect={(s) => store.getState().select(s)}
               onHover={(h) => store.getState().setHover(h)}
             />
-            <div className="pointer-events-none absolute inset-x-3 top-3 flex flex-wrap items-start gap-2">
-              <span className="measure rounded-full bg-surface/95 px-3 py-1.5 text-xs font-medium shadow-float">{fmtDims(design.size.w, design.size.h, design.size.d)} mm</span>
+
+            {/* Chip de dimensiones + herramientas rápidas, respetando el inspector izquierdo */}
+            <div
+              className={`pointer-events-none absolute top-3 right-3 left-3 flex flex-wrap items-start gap-2 transition-[left,right] duration-200 ${
+                treeOpen ? 'lg:left-[288px]' : 'lg:left-14'
+              } ${propsOpen ? 'lg:right-[372px]' : 'lg:right-14'}`}
+            >
+              <span className="measure rounded-full bg-surface/95 px-3 py-1.5 text-xs font-medium shadow-float backdrop-blur">
+                {fmtDims(design.size.w, design.size.h, design.size.d)} mm
+              </span>
               <QuickTools />
             </div>
-            <div className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur" role="toolbar" aria-label="Vista">
+
+            {/* Botones rápidos en los bordes para reabrir inspectores colapsados (escritorio) */}
+            {!treeOpen && (
+              <button
+                type="button"
+                onClick={() => setTreeOpen(true)}
+                aria-label="Abrir panel de estructura"
+                title="Abrir estructura (Tab)"
+                className="absolute top-3 left-3 hidden h-9 w-9 items-center justify-center rounded-full border border-border bg-surface/95 text-muted shadow-float backdrop-blur transition-colors hover:text-text lg:flex"
+              >
+                <PanelIcon side="left" />
+              </button>
+            )}
+            {!propsOpen && (
+              <button
+                type="button"
+                onClick={() => setPropsOpen(true)}
+                aria-label="Abrir panel de propiedades"
+                title="Abrir propiedades (Tab)"
+                className="absolute top-3 right-3 hidden h-9 w-9 items-center justify-center rounded-full border border-border bg-surface/95 text-muted shadow-float backdrop-blur transition-colors hover:text-text lg:flex"
+              >
+                <PanelIcon side="right" />
+              </button>
+            )}
+
+            {/* Barra flotante de cámara */}
+            <div
+              className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur"
+              role="toolbar"
+              aria-label="Vista"
+            >
               <ToggleBtn
                 icon={view.ortho ? 'square' : 'cube'}
                 pressed={!view.ortho}
                 onClick={() => store.getState().setView({ ortho: !view.ortho })}
-                title={view.ortho ? 'Vista ortogonal, sin perspectiva: para ver las medidas de frente. Tocá para pasar a perspectiva' : 'Vista en perspectiva. Tocá para pasar a ortogonal (sin perspectiva)'}
+                title={
+                  view.ortho
+                    ? 'Vista ortogonal, sin perspectiva: para ver las medidas de frente. Tocá para pasar a perspectiva'
+                    : 'Vista en perspectiva. Tocá para pasar a ortogonal (sin perspectiva)'
+                }
               >
                 {view.ortho ? 'Ortogonal' : 'Perspectiva'}
               </ToggleBtn>
-              <ToggleBtn icon="wire" pressed={view.wire} onClick={() => store.getState().setView({ wire: !view.wire })} title="Ver solo los bordes de las piezas, para ver lo de adentro">
+              <ToggleBtn
+                icon="wire"
+                pressed={view.wire}
+                onClick={() => store.getState().setView({ wire: !view.wire })}
+                title="Ver solo los bordes de las piezas, para ver lo de adentro"
+              >
                 Alámbrico
               </ToggleBtn>
-              <ToggleBtn icon="ruler" pressed={view.dims} onClick={() => store.getState().setView({ dims: !view.dims })} title="Mostrar u ocultar las medidas sobre el dibujo">
+              <ToggleBtn
+                icon="ruler"
+                pressed={view.dims}
+                onClick={() => store.getState().setView({ dims: !view.dims })}
+                title="Mostrar u ocultar las medidas sobre el dibujo"
+              >
                 Cotas
               </ToggleBtn>
               {hasFronts && (
@@ -219,16 +394,38 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
                   {FRONTS_LABEL[view.fronts]}
                 </ToggleBtn>
               )}
-              <ToggleBtn icon="focus" onClick={() => store.getState().resetCamera()} title="Volver a encuadrar el mueble entero. Girá con el mouse o un dedo; zoom con la rueda o dos dedos">
+              <ToggleBtn
+                icon="focus"
+                onClick={() => store.getState().resetCamera()}
+                title="Volver a encuadrar el mueble entero. Girá con el mouse o un dedo; zoom con la rueda o dos dedos"
+              >
                 Centrar
               </ToggleBtn>
             </div>
+
             <p className="sr-only" aria-live="polite">
-              {selection.kind === 'zone' ? `Seleccionado: ${labels.get(selection.id)?.full}` : selection.kind === 'part' ? `Seleccionada una pieza` : ''}
+              {selection.kind === 'zone' ? `Seleccionado: ${labels.get(selection.id)?.full}` : selection.kind === 'part' ? 'Seleccionada una pieza' : ''}
             </p>
           </section>
 
-          <aside className="border-t border-border bg-surface lg:overflow-y-auto lg:rounded-card lg:border lg:shadow-float" aria-label="Propiedades">
+          {/* Inspector izquierdo flotante: Estructura (escritorio) */}
+          <aside
+            aria-label="Estructura"
+            aria-hidden={!treeOpen}
+            className={`hidden overflow-y-auto rounded-card border border-border bg-surface/95 shadow-float backdrop-blur-md transition-transform duration-200 lg:absolute lg:top-3 lg:bottom-3 lg:left-3 lg:z-10 lg:block lg:w-[264px] ${
+              treeOpen ? 'lg:translate-x-0' : 'lg:pointer-events-none lg:-translate-x-[284px]'
+            }`}
+          >
+            <StructureTree />
+          </aside>
+
+          {/* Inspector derecho flotante (escritorio) / panel inferior con pestañas (móvil) */}
+          <aside
+            aria-label="Propiedades"
+            className={`border-t border-border bg-surface transition-transform duration-200 lg:absolute lg:top-3 lg:right-3 lg:bottom-3 lg:z-10 lg:w-[348px] lg:overflow-y-auto lg:rounded-card lg:border lg:bg-surface/95 lg:shadow-float lg:backdrop-blur-md ${
+              propsOpen ? 'lg:translate-x-0' : 'lg:pointer-events-none lg:translate-x-[368px]'
+            }`}
+          >
             <div className="sticky top-0 z-10 m-2 flex gap-0.5 rounded-full bg-surface-2 p-0.5 lg:hidden" role="tablist" aria-label="Panel">
               {(
                 [
@@ -283,14 +480,63 @@ function ToggleBtn({ pressed, onClick, children, title, icon }: { pressed?: bool
   );
 }
 
-function SaveBadge({ state }: { state: SaveState }) {
-  const text = { saved: 'Guardado', saving: 'Guardando…', error: 'Sin guardar', conflict: 'Conflicto' }[state.kind];
-  const tone = state.kind === 'saved' ? 'text-muted' : state.kind === 'saving' ? 'text-muted' : 'text-danger';
-  const dot = state.kind === 'saved' ? 'bg-border-strong' : state.kind === 'saving' ? 'animate-pulse bg-accent' : 'bg-danger';
+/** Icono minimalista para alternar los paneles laterales sin depender de nuevos nombres en IconName. */
+function PanelIcon({ side }: { side: 'left' | 'right' }) {
   return (
-    <span className={`flex items-center gap-1.5 text-xs ${tone}`} role="status" aria-live="polite">
-      <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${dot}`} />
-      {text}
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="2.5" y="3.5" width="15" height="13" rx="2.5" />
+      <line x1={side === 'left' ? '7.5' : '12.5'} y1="3.5" x2={side === 'left' ? '7.5' : '12.5'} y2="16.5" />
+    </svg>
+  );
+}
+
+function SaveBadge({ state, mode }: { state: SaveState; mode: 'cloud' | 'local' | string }) {
+  const isCloud = mode === 'cloud';
+  const timeStr =
+    state.kind === 'saved' && state.at
+      ? state.at.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+      : null;
+
+  let text = isCloud ? 'En la nube' : 'En este navegador';
+  let tone = isCloud ? 'bg-success-soft text-success' : 'bg-surface-2 text-muted';
+  let dot = isCloud ? 'bg-success' : 'bg-border-strong';
+  let title = isCloud
+    ? timeStr
+      ? `Sincronizado en Supabase a las ${timeStr}`
+      : 'Sincronizado en Supabase'
+    : 'Guardado localmente en este navegador';
+
+  if (state.kind === 'saving') {
+    text = 'Guardando…';
+    tone = 'bg-accent-soft text-accent';
+    dot = 'animate-pulse bg-accent';
+    title = isCloud ? 'Guardando cambios en Supabase…' : 'Guardando cambios localmente…';
+  } else if (state.kind === 'offline') {
+    text = 'Sin conexión';
+    tone = 'bg-warning-soft text-warning';
+    dot = 'bg-warning';
+    title = 'Sin conexión: se sincronizará automáticamente al reconectar';
+  } else if (state.kind === 'conflict') {
+    text = 'Conflicto';
+    tone = 'bg-danger-soft text-danger';
+    dot = 'bg-danger';
+    title = 'Otra sesión modificó este mueble en Supabase';
+  } else if (state.kind === 'error') {
+    text = 'Sin guardar';
+    tone = 'bg-danger-soft text-danger';
+    dot = 'bg-danger';
+    title = state.message;
+  }
+
+  return (
+    <span
+      title={title}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tone}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+      <span className="hidden sm:inline">{text}</span>
     </span>
   );
 }
