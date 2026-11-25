@@ -132,3 +132,15 @@ function Shell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+export function Page({ title, actions, back, children }: { title: ReactNode; actions?: ReactNode; back?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
+      {back && <div className="no-print mb-3 text-sm text-muted">{back}</div>}
+      <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
+        <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight sm:text-[32px]">{title}</h1>
+        {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
+      </div>
+      {children}
+    </div>
+  );
+}
