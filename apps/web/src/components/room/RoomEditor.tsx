@@ -231,8 +231,8 @@ export function RoomEditor({
         if (!o) return;
         const w = walls(s.plan).find((x) => x.id === o.wallId);
         if (!w) return;
-        const v = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key as 'ArrowRight']!;
-        const along = v[0] * w.dir.x + v[1] * w.dir.y;
+        const [vx, vy] = ({ ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] } as const)[e.key as 'ArrowRight'];
+        const along = vx * w.dir.x + vy * w.dir.y;
         if (Math.abs(along) < 0.3) return;
         const step = (e.shiftKey ? 10000 : 1000) * Math.sign(along);
         s.apply((p) => slideOpening(p, id, o.offset + step));
