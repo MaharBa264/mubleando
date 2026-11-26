@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { glassRows, groupedRows, individualRows, totals, type CutItem, type HardwareItem, type LegOut, type Material } from '@mw/engine';
 import { cutListCsv } from '@mw/exporters';
 import { CuttingPlanView } from '@/components/CuttingPlanView';
@@ -9,10 +10,9 @@ import { LabelsDialog } from '@/components/LabelsDialog';
 import { Button } from '@/components/ui/Button';
 import { Alert, EmptyState } from '@/components/ui/feedback';
 import { downloadBlob } from '@/lib/download';
-import Link from 'next/link';
 import { fmtMm, fmtMoney, fmtNum } from '@/lib/format';
 
-/** S24 · Lista de corte (agrupada o pieza a pieza), totales y descarga CSV. */
+/** S24 · Lista de corte (agrupada o pieza a pieza), modo taller con checklist, filtros por tablero, totales y exportación. */
 export function CutListView({
   items,
   materials,
@@ -37,11 +37,38 @@ export function CutListView({
   const [decimal, setDecimal] = useState<',' | '.'>(',');
   const [labelsOpen, setLabelsOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
+  const [materialFilter, setMaterialFilter] = useState<string>('all');
+  const [onlyPending, setOnlyPending] = useState(false);
+
+  // Avance de piezas cortadas en taller (persistido en localStorage por despiece).
+  const storageKey = `mw:cut-progress:${fileName}`;
+  const [doneKeys, setDoneKeys] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) setDoneKeys(JSON.parse(raw) as Record<string, boolean>);
+      else setDoneKeys({});
+    } catch {
+      setDoneKeys({});
+    }
+  }, [storageKey]);
+
+  const persistDone = (next: Record<string, boolean>) => {
+    setDoneKeys(next);
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // Ignorar si el navegador bloquea almacenamiento local.
+    }
+  };
+
   // Los vidrios van aparte, a la vidriería: la lista de corte (y el CSV para la maderera) es de tablero.
   const woodItems = useMemo(() => items.filter((i) => materials.find((m) => m.id === i.part.materialId)?.kind !== 'glass'), [items, materials]);
   const glass = useMemo(() => glassRows(items, materials), [items, materials]);
   const rows = useMemo(() => (mode === 'grouped' ? groupedRows(woodItems) : individualRows(woodItems)), [woodItems, mode]);
   const sum = useMemo(() => totals(items, materials), [items, materials]);
+
   // Herrajes iguales (mismo herraje y mismo detalle) en una línea.
   const hw = useMemo(() => {
     const m = new Map<string, HardwareItem>();
@@ -57,6 +84,47 @@ export function CutListView({
   const matName = (id: string | null) => (id ? (materials.find((m) => m.id === id)?.name ?? id) : '');
   const showSources = items.some((i) => i.source) && new Set(items.map((i) => i.source)).size > 1;
   const pieces = items.reduce((s, i) => s + (i.qty ?? 1), 0);
+  const totalBoardM2 = sum.panels.reduce((s, p) => s + p.areaM2, 0);
+
+  // Materiales de tablero presentes para el filtro rápido.
+  const boardMaterials = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of rows) {
+      counts.set(r.materialId, (counts.get(r.materialId) ?? 0) + r.qty);
+    }
+    return [...counts.entries()].map(([id, qty]) => ({ id, name: matName(id), qty }));
+  }, [rows, materials]);
+
+  // Si cambia el proyecto/despiece y el filtro ya no existe, volver a todos.
+  useEffect(() => {
+    if (materialFilter !== 'all' && !boardMaterials.some((m) => m.id === materialFilter)) {
+      setMaterialFilter('all');
+    }
+  }, [boardMaterials, materialFilter]);
+
+  const rowKey = (r: (typeof rows)[number]) => `${r.materialId}|${r.cutLength}x${r.cutWidth}|${r.keys.join(',')}`;
+
+  const toggleRowDone = (key: string) => {
+    const next = { ...doneKeys };
+    if (next[key]) delete next[key];
+    else next[key] = true;
+    persistDone(next);
+  };
+
+  const woodPiecesTotal = useMemo(() => rows.reduce((s, r) => s + r.qty, 0), [rows]);
+  const woodPiecesDone = useMemo(() => rows.reduce((s, r) => s + (doneKeys[rowKey(r)] ? r.qty : 0), 0), [rows, doneKeys]);
+  const progressPct = woodPiecesTotal > 0 ? Math.round((woodPiecesDone / woodPiecesTotal) * 100) : 0;
+
+  const visibleRows = useMemo(
+    () =>
+      rows.filter((r) => {
+        if (materialFilter !== 'all' && r.materialId !== materialFilter) return false;
+        if (onlyPending && doneKeys[rowKey(r)]) return false;
+        return true;
+      }),
+    [rows, materialFilter, onlyPending, doneKeys],
+  );
+
   // Materiales usados que no tienen precio cargado: el total saldría incompleto.
   const unpriced = useMemo(() => {
     const used = new Set<string>();
@@ -88,6 +156,23 @@ export function CutListView({
         </Alert>
       )}
 
+      {/* Resumen superior compacto */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-card border border-border bg-surface px-3 py-2.5 shadow-1 sm:px-4">
+          <p className="text-xs text-muted">Piezas totales</p>
+          <p className="tabular mt-0.5 text-lg font-semibold sm:text-xl">{pieces}</p>
+        </div>
+        <div className="rounded-card border border-border bg-surface px-3 py-2.5 shadow-1 sm:px-4">
+          <p className="text-xs text-muted">Superficie tablero</p>
+          <p className="tabular mt-0.5 text-lg font-semibold sm:text-xl">{fmtNum(totalBoardM2, 2)} m²</p>
+        </div>
+        <div className="rounded-card border border-border bg-accent-soft px-3 py-2.5 text-accent sm:px-4">
+          <p className="text-xs opacity-85">Costo estimado</p>
+          <p className="tabular mt-0.5 text-lg font-semibold sm:text-xl">{fmtMoney(sum.totalCents + hwCents)}</p>
+        </div>
+      </div>
+
+      {/* Barra de modo y exportaciones */}
       <div className="no-print flex flex-wrap items-end justify-between gap-3">
         <div role="radiogroup" aria-label="Tipo de lista" className="inline-flex gap-1 rounded-control bg-surface-2 p-1">
           {(
@@ -135,75 +220,194 @@ export function CutListView({
         </div>
       </div>
 
-      {/* Móvil: tarjetas con la medida de corte bien visible */}
-      <ul className="space-y-2 sm:hidden print:hidden" aria-label="Lista de corte">
-        {rows.map((r) => {
-          const edges = (['L1', 'L2', 'W1', 'W2'] as const).filter((k) => r.edges[k]);
-          return (
-            <li key={r.ref + r.keys.join()} className="rounded-card border border-border bg-surface p-3 shadow-1">
-              <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 text-sm">
-                  <span className="mr-1 text-muted">{r.ref}</span>
-                  {r.name}
-                </p>
-                <span className="tabular shrink-0 rounded-control bg-surface-2 px-2 py-0.5 text-sm font-semibold">×{r.qty}</span>
-              </div>
-              <p className="tabular mt-1 text-xl font-semibold">
-                {fmtMm(r.cutLength)} × {fmtMm(r.cutWidth)} <span className="text-sm font-normal text-muted">mm</span>
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {matName(r.materialId)} · {fmtMm(r.thickness)} mm{r.grain === 'length' ? ' · con veta' : ''}
-                {showSources && ` · ${r.sources.join(', ')}`}
-              </p>
-              {edges.length > 0 && (
-                <p className="mt-1 text-xs text-muted">Cantos: {edges.map((k) => `${k.replace('W', 'A')} ${matName(r.edges[k])}`).join(' · ')}</p>
+      {/* Modo taller: progreso de cortes + filtros por tablero */}
+      {rows.length > 0 && (
+        <div className="no-print space-y-3 rounded-card border border-border bg-surface p-3.5 shadow-1">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 text-sm">
+              <span className="font-medium">Avance de corte en taller</span>
+              <span className={`tabular rounded-full px-2.5 py-0.5 text-xs font-medium ${progressPct === 100 ? 'bg-success-soft text-success' : 'bg-surface-2 text-muted'}`}>
+                {woodPiecesDone} / {woodPiecesTotal} piezas ({progressPct}%)
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <label className="flex cursor-pointer items-center gap-1.5 text-muted hover:text-text">
+                <input
+                  type="checkbox"
+                  checked={onlyPending}
+                  onChange={(e) => setOnlyPending(e.target.checked)}
+                  className="h-4 w-4 rounded accent-[var(--accent)]"
+                />
+                Solo pendientes
+              </label>
+              {woodPiecesDone > 0 && (
+                <button
+                  type="button"
+                  onClick={() => persistDone({})}
+                  className="font-medium text-muted underline hover:text-text"
+                >
+                  Reiniciar tildes
+                </button>
               )}
-            </li>
-          );
-        })}
-      </ul>
+            </div>
+          </div>
 
-      <div className="hidden overflow-x-auto rounded-card border border-border bg-surface shadow-1 sm:block print:block">
-        <table className="tabular w-full min-w-[720px] text-sm">
-          <caption className="sr-only">Lista de corte, medidas en milímetros</caption>
-          <thead className="bg-surface-2 text-left text-xs text-muted">
-            <tr>
-              <th scope="col" className="px-3 py-2 font-medium">Ref</th>
-              <th scope="col" className="px-3 py-2 font-medium">Pieza</th>
-              {showSources && <th scope="col" className="px-3 py-2 font-medium">Mueble</th>}
-              <th scope="col" className="px-3 py-2 font-medium">Material</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Largo</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Ancho</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Esp.</th>
-              <th scope="col" className="px-3 py-2 text-right font-medium">Cant.</th>
-              <th scope="col" className="px-3 py-2 font-medium">Cantos</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {rows.map((r) => {
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
+            <div
+              className={`h-full rounded-full transition-[width] duration-200 ${progressPct === 100 ? 'bg-success' : 'bg-accent'}`}
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+
+          {boardMaterials.length > 1 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1" role="group" aria-label="Filtrar por tablero">
+              <button
+                type="button"
+                onClick={() => setMaterialFilter('all')}
+                aria-pressed={materialFilter === 'all'}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  materialFilter === 'all' ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted hover:text-text'
+                }`}
+              >
+                Todos ({woodPiecesTotal})
+              </button>
+              {boardMaterials.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMaterialFilter(m.id)}
+                  aria-pressed={materialFilter === m.id}
+                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    materialFilter === m.id ? 'bg-accent-soft text-accent' : 'bg-surface-2 text-muted hover:text-text'
+                  }`}
+                >
+                  {m.name} ({m.qty})
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {visibleRows.length === 0 ? (
+        <div className="rounded-card border border-dashed border-border-strong bg-surface px-5 py-8 text-center text-sm text-muted">
+          {onlyPending && woodPiecesDone === woodPiecesTotal ? (
+            <p className="font-medium text-success">¡Todas las piezas de tablero ya están marcadas como cortadas!</p>
+          ) : (
+            <p>No hay piezas que coincidan con el filtro actual.</p>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Móvil: tarjetas con medida grande y casilla táctil para taller */}
+          <ul className="space-y-2 sm:hidden print:hidden" aria-label="Lista de corte">
+            {visibleRows.map((r) => {
+              const key = rowKey(r);
+              const done = Boolean(doneKeys[key]);
               const edges = (['L1', 'L2', 'W1', 'W2'] as const).filter((k) => r.edges[k]);
               return (
-                <tr key={r.ref + r.keys.join()} className="hover:bg-surface-2">
-                  <td className="px-3 py-2 text-muted">{r.ref}</td>
-                  <td className="max-w-[16rem] px-3 py-2">{r.name}</td>
-                  {showSources && <td className="max-w-[12rem] truncate px-3 py-2 text-muted" title={r.sources.join(', ')}>{r.sources.join(', ')}</td>}
-                  <td className="px-3 py-2">
-                    {matName(r.materialId)}
-                    {r.grain === 'length' && <span className="ml-1 text-xs text-muted">(veta)</span>}
-                  </td>
-                  <td className="px-3 py-2 text-right font-medium">{fmtMm(r.cutLength)}</td>
-                  <td className="px-3 py-2 text-right font-medium">{fmtMm(r.cutWidth)}</td>
-                  <td className="px-3 py-2 text-right">{fmtMm(r.thickness)}</td>
-                  <td className="px-3 py-2 text-right">{r.qty}</td>
-                  <td className="px-3 py-2 text-xs text-muted">
-                    {edges.length === 0 ? '—' : edges.map((k) => `${k.replace('W', 'A')}: ${matName(r.edges[k])}`).join(' · ')}
-                  </td>
-                </tr>
+                <li
+                  key={r.ref + r.keys.join()}
+                  className={`rounded-card border bg-surface p-3 shadow-1 transition-opacity ${
+                    done ? 'border-success/40 opacity-65' : 'border-border'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={done}
+                      onChange={() => toggleRowDone(key)}
+                      aria-label={`Marcar ${r.name} como cortada`}
+                      className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer rounded accent-[var(--accent)]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className={`min-w-0 text-sm ${done ? 'line-through' : ''}`}>
+                          <span className="mr-1 text-muted">{r.ref}</span>
+                          {r.name}
+                        </p>
+                        <span className="tabular shrink-0 rounded-control bg-surface-2 px-2 py-0.5 text-sm font-semibold">×{r.qty}</span>
+                      </div>
+                      <p className={`tabular mt-1 text-xl font-semibold ${done ? 'line-through' : ''}`}>
+                        {fmtMm(r.cutLength)} × {fmtMm(r.cutWidth)} <span className="text-sm font-normal text-muted">mm</span>
+                      </p>
+                      <p className="mt-1 text-xs text-muted">
+                        {matName(r.materialId)} · {fmtMm(r.thickness)} mm{r.grain === 'length' ? ' · con veta' : ''}
+                        {showSources && ` · ${r.sources.join(', ')}`}
+                      </p>
+                      {edges.length > 0 && (
+                        <p className="mt-1 text-xs text-muted">Cantos: {edges.map((k) => `${k.replace('W', 'A')} ${matName(r.edges[k])}`).join(' · ')}</p>
+                      )}
+                    </div>
+                  </div>
+                </li>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </ul>
+
+          {/* Escritorio e impresión: tabla completa */}
+          <div className="hidden overflow-x-auto rounded-card border border-border bg-surface shadow-1 sm:block print:block">
+            <table className="tabular w-full min-w-[740px] text-sm">
+              <caption className="sr-only">Lista de corte, medidas en milímetros</caption>
+              <thead className="bg-surface-2 text-left text-xs text-muted">
+                <tr>
+                  <th scope="col" className="no-print w-10 px-3 py-2 text-center font-medium" aria-label="Cortada">
+                    ✓
+                  </th>
+                  <th scope="col" className="px-3 py-2 font-medium">Ref</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Pieza</th>
+                  {showSources && <th scope="col" className="px-3 py-2 font-medium">Mueble</th>}
+                  <th scope="col" className="px-3 py-2 font-medium">Material</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Largo</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Ancho</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Esp.</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Cant.</th>
+                  <th scope="col" className="px-3 py-2 font-medium">Cantos</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {visibleRows.map((r) => {
+                  const key = rowKey(r);
+                  const done = Boolean(doneKeys[key]);
+                  const edges = (['L1', 'L2', 'W1', 'W2'] as const).filter((k) => r.edges[k]);
+                  return (
+                    <tr key={r.ref + r.keys.join()} className={`hover:bg-surface-2 ${done ? 'opacity-60' : ''}`}>
+                      <td className="no-print px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={done}
+                          onChange={() => toggleRowDone(key)}
+                          aria-label={`Marcar ${r.name} como cortada`}
+                          className="h-4 w-4 cursor-pointer rounded accent-[var(--accent)]"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-muted">{r.ref}</td>
+                      <td className={`max-w-[16rem] px-3 py-2 ${done ? 'line-through' : ''}`}>{r.name}</td>
+                      {showSources && (
+                        <td className="max-w-[12rem] truncate px-3 py-2 text-muted" title={r.sources.join(', ')}>
+                          {r.sources.join(', ')}
+                        </td>
+                      )}
+                      <td className="px-3 py-2">
+                        {matName(r.materialId)}
+                        {r.grain === 'length' && <span className="ml-1 text-xs text-muted">(veta)</span>}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-medium ${done ? 'line-through' : ''}`}>{fmtMm(r.cutLength)}</td>
+                      <td className={`px-3 py-2 text-right font-medium ${done ? 'line-through' : ''}`}>{fmtMm(r.cutWidth)}</td>
+                      <td className="px-3 py-2 text-right">{fmtMm(r.thickness)}</td>
+                      <td className="px-3 py-2 text-right">{r.qty}</td>
+                      <td className="px-3 py-2 text-xs text-muted">
+                        {edges.length === 0 ? '—' : edges.map((k) => `${k.replace('W', 'A')}: ${matName(r.edges[k])}`).join(' · ')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
       <p className="text-xs text-muted">
         Medidas de corte en mm, ya descontado el espesor del canto. L1 es el canto delantero; A1 y A2 son los cantos de los extremos.
       </p>
