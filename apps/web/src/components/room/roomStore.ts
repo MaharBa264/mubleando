@@ -7,7 +7,8 @@ export type RoomSelection =
   | { kind: 'none' }
   | { kind: 'wall'; index: number }
   | { kind: 'opening'; id: string }
-  | { kind: 'placement'; id: string };
+  | { kind: 'placement'; id: string }
+  | { kind: 'block'; id: string };
 
 export interface RoomState {
   name: string;
