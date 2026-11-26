@@ -2,11 +2,13 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from 'zustand';
 import { compute, type Hardware, type Material, type Method } from '@mw/engine';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { buttonClass, Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
 import { Alert, Skeleton } from '@/components/ui/feedback';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { StlExportDialog } from '@/components/StlExportDialog';
@@ -34,8 +36,11 @@ type SaveState =
   | { kind: 'error'; message: string }
   | { kind: 'conflict' };
 
-/** S03 · Editor de mueble: lienzo 3D protagonista + inspectores flotantes colapsables + estado Supabase/Local. */
+type MobileSheetSnap = 'peek' | 'half' | 'full';
+
+/** S03 · Editor de mueble: lienzo 3D protagonista + inspectores colapsables + bottom sheet móvil + resolución de conflictos Supabase. */
 export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cabinet; materials: Material[]; methods: Method[]; hardware: Hardware[] }) {
+  const router = useRouter();
   const { mode } = useAuth();
   const storeRef = useRef<ReturnType<typeof createEditorStore>>(null);
   storeRef.current ??= createEditorStore({
@@ -64,8 +69,16 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
   // Inspectores laterales colapsables en escritorio (Tab alterna modo foco).
   const [treeOpen, setTreeOpen] = useState(true);
   const [propsOpen, setPropsOpen] = useState(true);
+
+  // Panel deslizable móvil en 3 alturas (peek | half | full).
   const [mobileTab, setMobileTab] = useState<'props' | 'tree'>('props');
+  const [sheetSnap, setSheetSnap] = useState<MobileSheetSnap>('half');
+  const touchStartY = useRef<number | null>(null);
+
   const [stlOpen, setStlOpen] = useState(false);
+  const [conflictModalOpen, setConflictModalOpen] = useState(false);
+  const [savingCopy, setSavingCopy] = useState(false);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   // Si lo seleccionado desaparece (p. ej. al quitar divisiones), volver al mueble.
   useEffect(() => {
@@ -97,6 +110,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
     } catch (e) {
       if (e instanceof ConflictError) {
         setSave({ kind: 'conflict' });
+        setConflictModalOpen(true);
       } else if (mode === 'cloud' && typeof navigator !== 'undefined' && !navigator.onLine) {
         setSave({ kind: 'offline' });
       } else {
@@ -104,6 +118,28 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
       }
     }
   }, [cabinet.id, cabinet.name, design, methodId, mode, name, quantity]);
+
+  const handleSaveAsCopy = async () => {
+    setSavingCopy(true);
+    setCopyError(null);
+    try {
+      const baseName = (name.trim() || cabinet.name).slice(0, 108);
+      const created = await data.createCabinet({
+        projectId: cabinet.projectId,
+        name: `${baseName} (copia)`,
+        methodId,
+        design,
+        quantity,
+      });
+      setConflictModalOpen(false);
+      setSave({ kind: 'saved', at: new Date() });
+      router.push(`/muebles/${created.id}`);
+    } catch (e) {
+      setCopyError(e instanceof Error ? e.message : 'No se pudo crear la copia en este proyecto.');
+    } finally {
+      setSavingCopy(false);
+    }
+  };
 
   useEffect(() => {
     if (first.current) {
@@ -178,13 +214,45 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
     return () => window.removeEventListener('keydown', h);
   }, [store, treeOpen, propsOpen]);
 
+  const cycleSheetSnap = () => {
+    setSheetSnap((s) => (s === 'half' ? 'peek' : s === 'peek' ? 'full' : 'half'));
+  };
+
+  const handleSheetTouchStart = (y: number) => {
+    touchStartY.current = y;
+  };
+
+  const handleSheetTouchEnd = (y: number) => {
+    if (touchStartY.current === null) return;
+    const dy = y - touchStartY.current;
+    touchStartY.current = null;
+    if (Math.abs(dy) < 32) return;
+    if (dy < 0) {
+      // Deslizar hacia arriba: expandir
+      setSheetSnap((s) => (s === 'peek' ? 'half' : 'full'));
+    } else {
+      // Deslizar hacia abajo: contraer
+      setSheetSnap((s) => (s === 'full' ? 'half' : 'peek'));
+    }
+  };
+
+  const mobileSheetHeightClass =
+    sheetSnap === 'peek' ? 'h-[76px]' : sheetSnap === 'half' ? 'h-[48dvh]' : 'h-[80dvh]';
+
+  const mobileCameraBottomClass =
+    sheetSnap === 'peek'
+      ? 'bottom-[88px] lg:bottom-3'
+      : sheetSnap === 'half'
+        ? 'bottom-[calc(48dvh+12px)] lg:bottom-3'
+        : 'pointer-events-none opacity-0 lg:pointer-events-auto lg:bottom-3 lg:opacity-100';
+
   const env: EditorEnv = { store, result, materials, methods, method, hardware, labels };
 
   return (
     <EditorContext.Provider value={env}>
-      <div className="flex min-h-0 flex-1 flex-col bg-viewer lg:h-[calc(100dvh-3rem)] lg:flex-none">
+      <div className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-viewer">
         {/* barra superior del editor */}
-        <div className="flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
+        <div className="z-20 flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
           <Link href={`/proyectos/${cabinet.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto" title="Volver al proyecto">
             <Icon name="back" />
           </Link>
@@ -195,7 +263,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
             onChange={(e) => store.getState().setName(e.target.value)}
             className="font-display h-8 min-w-[8rem] flex-1 rounded-control border border-transparent bg-transparent px-2 text-[15px] font-semibold tracking-tight hover:border-border focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 sm:max-w-xs"
           />
-          <SaveBadge state={save} mode={mode} />
+          <SaveBadge state={save} mode={mode} onConflictClick={() => setConflictModalOpen(true)} />
 
           {/* conmutador contextual de proyecto: Mueble | Despiece | Proyecto */}
           <nav aria-label="Vistas del mueble" className="hidden items-center gap-0.5 rounded-full bg-surface-2 p-0.5 md:flex">
@@ -255,26 +323,63 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
 
         <StlExportDialog open={stlOpen} onClose={() => setStlOpen(false)} parts={result.parts} zones={result.zones} legs={result.legs} size={design.size} name={name} />
 
-        {/* alertas de sincronización / conflicto de concurrencia optimista (rev) */}
-        {save.kind === 'conflict' && (
-          <div className="px-3 pt-2">
+        {/* Modal interactivo de resolución de ConflictError (concurrencia optimista rev en Supabase) */}
+        <Dialog
+          open={conflictModalOpen}
+          onClose={() => setConflictModalOpen(false)}
+          title="Conflicto de guardado en la nube"
+          footer={
+            <div className="flex w-full flex-wrap items-center justify-end gap-2">
+              <Button onClick={() => setStlOpen(true)} disabled={savingCopy}>
+                Exportar STL
+              </Button>
+              <Button onClick={() => window.location.reload()} disabled={savingCopy}>
+                Recargar versión nube
+              </Button>
+              <Button variant="primary" onClick={() => void handleSaveAsCopy()} disabled={savingCopy}>
+                {savingCopy ? 'Guardando copia…' : 'Guardar como copia'}
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-3 text-sm text-muted">
+            <p>
+              Este mueble se actualizó en Supabase desde otro dispositivo o pestaña mientras lo editabas. Para no pisar ningún cambio, el autoguardado quedó en pausa.
+            </p>
+            <ul className="list-disc space-y-1.5 pl-5 text-text">
+              <li>
+                <strong>Guardar como copia:</strong> crea un mueble nuevo en este proyecto con tus cambios actuales y lo abre al instante.
+              </li>
+              <li>
+                <strong>Recargar versión nube:</strong> descarta tus últimos cambios locales y trae la versión más reciente de Supabase.
+              </li>
+              <li>
+                <strong>Exportar STL:</strong> descarga el modelo actual como respaldo antes de decidir.
+              </li>
+            </ul>
+            {copyError && (
+              <Alert tone="danger" title="No se pudo guardar la copia">
+                {copyError}
+              </Alert>
+            )}
+          </div>
+        </Dialog>
+
+        {/* alertas inline de sincronización */}
+        {save.kind === 'conflict' && !conflictModalOpen && (
+          <div className="z-20 px-3 pt-2">
             <Alert tone="danger" title="Este mueble se modificó desde otro dispositivo o pestaña">
-              Para evitar pisar trabajo, tus últimos cambios quedaron en pantalla sin subir a Supabase.{' '}
-              <span className="mt-1.5 flex flex-wrap items-center gap-3">
-                <button type="button" className="font-medium underline" onClick={() => window.location.reload()}>
-                  Recargar versión de la nube
-                </button>
-                <button type="button" className="font-medium underline" onClick={() => setStlOpen(true)}>
-                  Exportar STL de respaldo
-                </button>
-              </span>
+              Tus últimos cambios no se subieron a Supabase.{' '}
+              <button type="button" className="font-medium underline" onClick={() => setConflictModalOpen(true)}>
+                Elegir cómo resolver el conflicto
+              </button>
             </Alert>
           </div>
         )}
         {save.kind === 'offline' && (
-          <div className="px-3 pt-2">
+          <div className="z-20 px-3 pt-2">
             <Alert tone="warning" title="Sin conexión a internet">
-              Podés seguir editando con normalidad; los cambios se guardarán en Supabase automáticamente cuando vuelva la señal.{' '}
+              Podés seguir editando; los cambios se sincronizarán en Supabase automáticamente cuando vuelva la señal.{' '}
               <button type="button" className="font-medium underline" onClick={() => void persistNow()}>
                 Reintentar ahora
               </button>
@@ -282,7 +387,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
           </div>
         )}
         {save.kind === 'error' && (
-          <div className="px-3 pt-2">
+          <div className="z-20 px-3 pt-2">
             <Alert tone="danger" title="No se ha podido guardar">
               {save.message}{' '}
               <button type="button" className="font-medium underline" onClick={() => void persistNow()}>
@@ -294,13 +399,12 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
 
         {/*
           Cuerpo del editor:
-          - Escritorio (lg+): el visor 3D ocupa el 100% del área disponible y los paneles flotan
-            encima con opción de colapsarse para maximizar el lienzo.
-          - Móvil (<lg): visor 3D arriba y panel con pestañas debajo.
+          - Escritorio (lg+): visor 3D a pantalla completa + inspectores flotantes colapsables.
+          - Móvil (<lg): visor 3D a pantalla completa + bottom sheet deslizable de 3 alturas.
         */}
-        <div className="relative flex min-h-0 flex-1 flex-col lg:block">
+        <div className="relative min-h-0 flex-1 overflow-hidden">
           {/* Lienzo 3D protagonista */}
-          <section className="relative h-[46dvh] min-h-[280px] bg-viewer lg:h-full lg:w-full" aria-label="Vista 3D">
+          <section className="relative h-full w-full bg-viewer" aria-label="Vista 3D">
             <CabinetViewer
               size={design.size}
               parts={result.parts}
@@ -314,7 +418,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               onHover={(h) => store.getState().setHover(h)}
             />
 
-            {/* Chip de dimensiones + herramientas rápidas, respetando el inspector izquierdo */}
+            {/* Chip de dimensiones + herramientas rápidas, respetando inspectores flotantes en escritorio */}
             <div
               className={`pointer-events-none absolute top-3 right-3 left-3 flex flex-wrap items-start gap-2 transition-[left,right] duration-200 ${
                 treeOpen ? 'lg:left-[288px]' : 'lg:left-14'
@@ -350,9 +454,9 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               </button>
             )}
 
-            {/* Barra flotante de cámara */}
+            {/* Barra flotante de cámara (se adapta automáticamente a la altura del bottom sheet en móvil) */}
             <div
-              className="absolute bottom-3 left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur"
+              className={`absolute left-1/2 flex max-w-[calc(100%-1.5rem)] -translate-x-1/2 gap-0.5 rounded-full border border-border bg-surface/95 p-1 shadow-float backdrop-blur transition-all duration-200 ${mobileCameraBottomClass}`}
               role="toolbar"
               aria-label="Vista"
             >
@@ -419,37 +523,81 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
             <StructureTree />
           </aside>
 
-          {/* Inspector derecho flotante (escritorio) / panel inferior con pestañas (móvil) */}
+          {/* Inspector derecho flotante (escritorio) / Bottom sheet deslizable de 3 alturas (móvil) */}
           <aside
             aria-label="Propiedades"
-            className={`border-t border-border bg-surface transition-transform duration-200 lg:absolute lg:top-3 lg:right-3 lg:bottom-3 lg:z-10 lg:w-[348px] lg:overflow-y-auto lg:rounded-card lg:border lg:bg-surface/95 lg:shadow-float lg:backdrop-blur-md ${
+            className={`absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-sheet border-t border-border bg-surface/95 shadow-2 backdrop-blur-md transition-[height,transform] duration-200 ${mobileSheetHeightClass} lg:inset-x-auto lg:top-3 lg:right-3 lg:bottom-3 lg:h-auto lg:w-[348px] lg:rounded-card lg:border lg:shadow-float ${
               propsOpen ? 'lg:translate-x-0' : 'lg:pointer-events-none lg:translate-x-[368px]'
             }`}
           >
-            <div className="sticky top-0 z-10 m-2 flex gap-0.5 rounded-full bg-surface-2 p-0.5 lg:hidden" role="tablist" aria-label="Panel">
-              {(
-                [
-                  ['props', 'Propiedades'],
-                  ['tree', 'Estructura'],
-                ] as const
-              ).map(([k, label]) => (
+            {/* Cabecera táctil del bottom sheet en móvil */}
+            <div
+              className="shrink-0 touch-none px-3 pt-2 pb-1.5 lg:hidden"
+              onTouchStart={(e) => {
+                const t = e.touches[0];
+                if (t) handleSheetTouchStart(t.clientY);
+              }}
+              onTouchEnd={(e) => {
+                const t = e.changedTouches[0];
+                if (t) handleSheetTouchEnd(t.clientY);
+              }}
+            >
+              <button
+                type="button"
+                onClick={cycleSheetSnap}
+                aria-label={
+                  sheetSnap === 'peek'
+                    ? 'Expandir panel inferior'
+                    : sheetSnap === 'half'
+                      ? 'Minimizar panel para ver el 3D'
+                      : 'Volver el panel a altura media'
+                }
+                title="Tocá o deslizá para cambiar la altura del panel"
+                className="mx-auto mb-2 flex w-full items-center justify-center py-1"
+              >
+                <span className="h-1 w-10 rounded-full bg-border-strong" aria-hidden />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="flex flex-1 gap-0.5 rounded-full bg-surface-2 p-0.5" role="tablist" aria-label="Panel">
+                  {(
+                    [
+                      ['props', 'Propiedades'],
+                      ['tree', 'Estructura'],
+                    ] as const
+                  ).map(([k, label]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      role="tab"
+                      aria-selected={mobileTab === k}
+                      onClick={() => {
+                        setMobileTab(k);
+                        if (sheetSnap === 'peek') setSheetSnap('half');
+                      }}
+                      className={`flex-1 rounded-full px-3 py-1.5 text-sm transition-colors ${mobileTab === k ? 'bg-surface font-medium text-text shadow-1' : 'text-muted'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  key={k}
                   type="button"
-                  role="tab"
-                  aria-selected={mobileTab === k}
-                  onClick={() => setMobileTab(k)}
-                  className={`flex-1 rounded-full px-3 py-2 text-sm transition-colors ${mobileTab === k ? 'bg-surface font-medium text-text shadow-1' : 'text-muted'}`}
+                  onClick={() => setSheetSnap((s) => (s === 'peek' ? 'half' : 'peek'))}
+                  aria-label={sheetSnap === 'peek' ? 'Mostrar panel' : 'Ver 3D completo'}
+                  className="shrink-0 rounded-full border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:text-text"
                 >
-                  {label}
+                  {sheetSnap === 'peek' ? 'Editar' : 'Ver 3D'}
                 </button>
-              ))}
+              </div>
             </div>
-            <div className={mobileTab === 'props' ? '' : 'hidden lg:block'}>
-              <PropertiesPanel />
-            </div>
-            <div className={mobileTab === 'tree' ? 'lg:hidden' : 'hidden'}>
-              <StructureTree />
+
+            <div className={`min-h-0 flex-1 overflow-y-auto ${sheetSnap === 'peek' ? 'hidden lg:block' : ''}`}>
+              <div className={mobileTab === 'props' ? '' : 'hidden lg:block'}>
+                <PropertiesPanel />
+              </div>
+              <div className={mobileTab === 'tree' ? 'lg:hidden' : 'hidden'}>
+                <StructureTree />
+              </div>
             </div>
           </aside>
         </div>
@@ -490,7 +638,15 @@ function PanelIcon({ side }: { side: 'left' | 'right' }) {
   );
 }
 
-function SaveBadge({ state, mode }: { state: SaveState; mode: 'cloud' | 'local' | string }) {
+function SaveBadge({
+  state,
+  mode,
+  onConflictClick,
+}: {
+  state: SaveState;
+  mode: 'cloud' | 'local';
+  onConflictClick: () => void;
+}) {
   const isCloud = mode === 'cloud';
   const timeStr =
     state.kind === 'saved' && state.at
@@ -520,12 +676,28 @@ function SaveBadge({ state, mode }: { state: SaveState; mode: 'cloud' | 'local' 
     text = 'Conflicto';
     tone = 'bg-danger-soft text-danger';
     dot = 'bg-danger';
-    title = 'Otra sesión modificó este mueble en Supabase';
+    title = 'Otra sesión modificó este mueble en Supabase. Tocá para resolverlo';
   } else if (state.kind === 'error') {
     text = 'Sin guardar';
     tone = 'bg-danger-soft text-danger';
     dot = 'bg-danger';
     title = state.message;
+  }
+
+  if (state.kind === 'conflict') {
+    return (
+      <button
+        type="button"
+        onClick={onConflictClick}
+        title={title}
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${tone} hover:underline`}
+        role="status"
+        aria-live="polite"
+      >
+        <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
+        <span>{text}</span>
+      </button>
+    );
   }
 
   return (
