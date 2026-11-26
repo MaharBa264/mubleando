@@ -13,7 +13,7 @@ import { Alert, Skeleton } from '@/components/ui/feedback';
 import { Icon } from '@/components/ui/Icon';
 import { ConflictError, data, type Cabinet, type Room } from '@/data';
 import { PlanView } from './PlanView';
-import { RoomPanel } from './RoomPanel';
+import { RoomPanel, type UnderStairModuleSpec } from './RoomPanel';
 import { createRoomStore } from './roomStore';
 import type { WallsMode } from './RoomViewer3D';
 import { WallElevationView } from './WallElevationView';
@@ -29,7 +29,7 @@ type SaveState =
 
 type MobileSheetSnap = 'peek' | 'half' | 'full';
 
-/** Editor de un ambiente: planta, alzado por pared y 3D + geometrías de obra + panel colapsable + estado Supabase. */
+/** Editor de un ambiente: planta, alzado por pared y 3D + geometrías de obra + generador bajo escalera + estado Supabase. */
 export function RoomEditor({
   room,
   cabinets: initialCabinets,
@@ -157,6 +157,38 @@ export function RoomEditor({
       setCopyError(e instanceof Error ? e.message : 'No se pudo guardar la copia del ambiente.');
     } finally {
       setSavingCopy(false);
+    }
+  };
+
+  /** Crea y ubica los módulos escalonados generados por el asistente de bajo escalera. */
+  const handleGenerateUnderStair = async (modules: UnderStairModuleSpec[]) => {
+    const createdCabinets: Cabinet[] = [];
+    const newPlacements: Room['plan']['placements'] = [];
+    for (const m of modules) {
+      const cab = await data.createCabinet({
+        projectId: room.projectId,
+        name: m.name,
+        methodId: m.methodId,
+        design: m.design,
+      });
+      createdCabinets.push(cab);
+      newPlacements.push({
+        id: globalThis.crypto.randomUUID(),
+        cabinetId: cab.id,
+        x: m.x,
+        y: m.y,
+        rotation: m.rotation,
+        elevation: m.elevation,
+      });
+    }
+    setCabinets((prev) => [...prev, ...createdCabinets]);
+    store.getState().apply((p) => ({
+      ...p,
+      placements: [...p.placements, ...newPlacements],
+    }));
+    const firstPlaced = newPlacements[0];
+    if (firstPlaced) {
+      store.getState().select({ kind: 'placement', id: firstPlaced.id });
     }
   };
 
@@ -308,7 +340,7 @@ export function RoomEditor({
               if (sheetSnap === 'peek') setSheetSnap('half');
             }}
             className="inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning hover:underline"
-            title="Ver avisos del ambiente en el panel"
+            title="Ver avisos de colisión, puertas o pendientes en el panel"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-warning" aria-hidden />
             {warnings.length === 1 ? '1 aviso' : `${warnings.length} avisos`}
@@ -317,13 +349,13 @@ export function RoomEditor({
 
         <div className="ml-auto flex items-center gap-1">
           <div role="radiogroup" aria-label="Vista" className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">
-            <button type="button" role="radio" aria-checked={view === 'plan'} className={toggle(view === 'plan')} onClick={() => store.getState().setView('plan')}>
+            <button type="button" role="radio" aria-checked={view === 'plan'} className={toggle(view === 'plan')} onClick={() => store.getState().setView('plan')} title="Vista cenital de planta para distribuir paredes, obra y muebles">
               Planta
             </button>
-            <button type="button" role="radio" aria-checked={view === 'elevation'} className={toggle(view === 'elevation')} onClick={() => store.getState().setView('elevation')}>
+            <button type="button" role="radio" aria-checked={view === 'elevation'} className={toggle(view === 'elevation')} onClick={() => store.getState().setView('elevation')} title="Vista lateral de frente a una pared: ideal para bajo escalera y mover con eje bloqueado">
               Alzado
             </button>
-            <button type="button" role="radio" aria-checked={view === '3d'} className={toggle(view === '3d')} onClick={() => store.getState().setView('3d')}>
+            <button type="button" role="radio" aria-checked={view === '3d'} className={toggle(view === '3d')} onClick={() => store.getState().setView('3d')} title="Vista 3D interactiva del ambiente con paredes, obra y muebles">
               3D
             </button>
           </div>
@@ -347,7 +379,7 @@ export function RoomEditor({
           <Button size="icon-sm" variant="ghost" onClick={() => store.getState().redo()} disabled={!canRedo} aria-label="Rehacer" title="Rehacer (Ctrl+Y)">
             <Icon name="redo" />
           </Button>
-          <Link href={`/proyectos/${room.projectId}/despiece`} className={buttonClass('ghost', 'sm', 'hidden md:inline-flex')}>
+          <Link href={`/proyectos/${room.projectId}/despiece`} className={buttonClass('ghost', 'sm', 'hidden md:inline-flex')} title="Abrir lista de corte y plano de cortes consolidado del proyecto">
             Cortes
           </Link>
         </div>
@@ -530,7 +562,16 @@ export function RoomEditor({
           </div>
 
           <div className={`min-h-0 flex-1 overflow-y-auto ${sheetSnap === 'peek' ? 'hidden lg:block' : ''}`}>
-            <RoomPanel store={store} plan={plan} selection={selection} cabinets={cabinets} warnings={warnings} onSetQuantity={setQuantity} />
+            <RoomPanel
+              store={store}
+              plan={plan}
+              selection={selection}
+              cabinets={cabinets}
+              methods={methods}
+              warnings={warnings}
+              onSetQuantity={setQuantity}
+              onGenerateUnderStair={handleGenerateUnderStair}
+            />
           </div>
         </aside>
       </div>

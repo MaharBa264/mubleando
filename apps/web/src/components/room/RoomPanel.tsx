@@ -1,10 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   analyzeRoom,
   floorAreaM2,
+  LIMITS,
   mm,
   nearestWall,
   OPENING_NAME,
@@ -14,8 +15,12 @@ import {
   setWallLength,
   snapToWall,
   splitWall,
+  TEMPLATES,
   walls,
   type CabinetSize,
+  type Design,
+  type Len,
+  type Method,
   type OpeningKind,
   type Placement,
   type RoomBlock,
@@ -26,6 +31,7 @@ import {
   type RoomWarning,
 } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { Label, MmField, SelectField, TextField } from '@/components/ui/fields';
 import type { Cabinet } from '@/data';
@@ -35,21 +41,35 @@ import type { RoomSelection, RoomStore } from './roomStore';
 const uid = () => globalThis.crypto.randomUUID();
 type Tab = 'walls' | 'openings' | 'blocks' | 'cabinets' | 'warnings';
 
+export interface UnderStairModuleSpec {
+  name: string;
+  methodId: string;
+  design: Design;
+  x: Len;
+  y: Len;
+  rotation: number;
+  elevation: Len;
+}
+
 /** Panel lateral del editor de ambientes: paredes, aberturas, obra, muebles y avisos. */
 export function RoomPanel({
   store,
   plan,
   selection,
   cabinets,
+  methods = [],
   warnings,
   onSetQuantity,
+  onGenerateUnderStair,
 }: {
   store: RoomStore;
   plan: RoomPlan;
   selection: RoomSelection;
   cabinets: Cabinet[];
+  methods?: Method[];
   warnings: RoomWarning[];
   onSetQuantity: (cabinetId: string, quantity: number) => Promise<void>;
+  onGenerateUnderStair?: (modules: UnderStairModuleSpec[]) => Promise<void>;
 }) {
   const [tab, setTab] = useState<Tab>('walls');
   useEffect(() => {
@@ -59,23 +79,24 @@ export function RoomPanel({
     if (selection.kind === 'placement') setTab('cabinets');
   }, [selection]);
 
-  const tabs: [Tab, string][] = [
-    ['walls', 'Paredes'],
-    ['openings', 'Aberturas'],
-    ['blocks', 'Obra'],
-    ['cabinets', 'Muebles'],
-    ['warnings', warnings.length ? `Avisos (${warnings.length})` : 'Avisos'],
+  const tabs: [Tab, string, string][] = [
+    ['walls', 'Paredes', 'Medidas de obra, alto, espesor y ángulos de cada esquina'],
+    ['openings', 'Aberturas', 'Puertas, ventanas y vanos en cada pared'],
+    ['blocks', 'Obra', 'Mampostería, pies de mesada, islas y losas inclinadas de bajo escalera'],
+    ['cabinets', 'Muebles', 'Colocar, girar, elevar y ajustar los muebles del proyecto'],
+    ['warnings', warnings.length ? `Avisos (${warnings.length})` : 'Avisos', 'Colisiones, puertas y esquinas fuera de escuadra'],
   ];
 
   return (
     <div>
       <div role="tablist" aria-label="Panel del ambiente" className="sticky top-0 z-10 flex border-b border-border bg-surface">
-        {tabs.map(([k, label]) => (
+        {tabs.map(([k, label, tip]) => (
           <button
             key={k}
             type="button"
             role="tab"
             aria-selected={tab === k}
+            title={tip}
             onClick={() => setTab(k)}
             className={`flex-1 px-1.5 py-2.5 text-xs sm:text-sm ${tab === k ? 'border-b-2 border-accent font-medium text-accent' : 'text-muted'} ${k === 'warnings' && warnings.length ? 'text-warning' : ''}`}
           >
@@ -86,7 +107,7 @@ export function RoomPanel({
       <div className="space-y-5 p-4">
         {tab === 'walls' && <WallsTab store={store} plan={plan} selection={selection} />}
         {tab === 'openings' && <OpeningsTab store={store} plan={plan} selection={selection} />}
-        {tab === 'blocks' && <BlocksTab store={store} plan={plan} selection={selection} />}
+        {tab === 'blocks' && <BlocksTab store={store} plan={plan} selection={selection} methods={methods} onGenerateUnderStair={onGenerateUnderStair} />}
         {tab === 'cabinets' && <CabinetsTab store={store} plan={plan} selection={selection} cabinets={cabinets} onSetQuantity={onSetQuantity} />}
         {tab === 'warnings' && <WarningsTab store={store} warnings={warnings} />}
       </div>
@@ -160,7 +181,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
 
       <Section title="Paredes, como se miden en obra">
         <p className="text-xs text-muted">
-          Cargá el largo de cada pared (por la cara de adentro) y el ángulo de cada esquina. La última pared cierra sola: si la mediste, poné su medida para ver el error de cierre.
+          Cargá el largo de cada pared (cara interior) y el ángulo de cada esquina. Desde cualquier pared podés abrir su <strong>Alzado</strong> para ver muebles, aberturas y pendientes de frente.
         </p>
         <ol className="space-y-3">
           {ws.map((w, i) => {
@@ -172,10 +193,24 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
                 className={`rounded-card border p-3 ${active ? 'border-accent bg-accent-soft' : 'border-border'}`}
                 onFocus={() => store.getState().select({ kind: 'wall', index: i })}
               >
-                <p className="mb-2 text-sm font-medium">
-                  Pared {i + 1}
-                  {isClosing && <span className="ml-1 text-xs font-normal text-muted">· cierra el ambiente</span>}
-                </p>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">
+                    Pared {i + 1}
+                    {isClosing && <span className="ml-1 text-xs font-normal text-muted">· cierra el ambiente</span>}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      store.getState().setElevationWall(i);
+                      store.getState().select({ kind: 'wall', index: i });
+                      store.getState().setView('elevation');
+                    }}
+                    title="Abrir la vista lateral (alzado) de frente a esta pared"
+                    className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-accent hover:bg-accent-soft"
+                  >
+                    Ver alzado
+                  </button>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {isClosing ? (
                     <MmField
@@ -198,7 +233,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
                   />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => apply((p) => splitWall(p, i))} title="Agrega una esquina en el medio">
+                  <Button size="sm" variant="ghost" onClick={() => apply((p) => splitWall(p, i))} title="Agrega una esquina en el medio para hacer una L, una ochava o un quiebre">
                     Partir
                   </Button>
                   {n > 3 && (
@@ -246,15 +281,15 @@ function OpeningsTab({ store, plan, selection }: { store: RoomStore; plan: RoomP
   return (
     <>
       <Section title={`Agregar en la pared ${wallIndex + 1}`}>
-        <p className="text-xs text-muted">Tocá una pared en la planta para elegir dónde. Se agrega centrada; después ajustás la distancia.</p>
+        <p className="text-xs text-muted">Tocá una pared en la planta para elegir dónde. También podés arrastrar aberturas desde la vista <strong>Alzado</strong> con eje bloqueado.</p>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => add('door')}>
+          <Button size="sm" onClick={() => add('door')} title="Agregar una puerta centrada en esta pared">
             + Puerta
           </Button>
-          <Button size="sm" onClick={() => add('window')}>
+          <Button size="sm" onClick={() => add('window')} title="Agregar una ventana con antepecho centrada en esta pared">
             + Ventana
           </Button>
-          <Button size="sm" onClick={() => add('opening')}>
+          <Button size="sm" onClick={() => add('opening')} title="Agregar un vano sin hoja">
             + Abertura sin hoja
           </Button>
         </div>
@@ -297,9 +332,21 @@ function OpeningsTab({ store, plan, selection }: { store: RoomStore; plan: RoomP
   );
 }
 
-// ────────────────────────── obra (geometrías 3D) ──────────────────────────
+// ────────────────────────── obra (geometrías 3D + asistente bajo escalera) ──────────────────────────
 
-function BlocksTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan; selection: RoomSelection }) {
+function BlocksTab({
+  store,
+  plan,
+  selection,
+  methods,
+  onGenerateUnderStair,
+}: {
+  store: RoomStore;
+  plan: RoomPlan;
+  selection: RoomSelection;
+  methods: Method[];
+  onGenerateUnderStair?: (modules: UnderStairModuleSpec[]) => Promise<void>;
+}) {
   const apply = store.getState().apply;
   const blocks = plan.blocks ?? [];
   const ws = walls(plan);
@@ -341,22 +388,22 @@ function BlocksTab({ store, plan, selection }: { store: RoomStore; plan: RoomPla
     <>
       <Section title="Agregar geometría de obra">
         <p className="text-xs text-muted">
-          Modelá pies de mampostería, mesadas, columnas o la losa inclinada de un bajo escalera para verificar encajes y alturas libres en 3D.
+          Modelá pies de mampostería, mesadas o la losa inclinada de un bajo escalera. Al elegir una losa inclinada podés <strong>generar los módulos escalonados automáticamente</strong>.
         </p>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" onClick={() => addPreset('pier')}>
+          <Button size="sm" onClick={() => addPreset('pier')} title="Agrega un murete o pie de mampostería de 150 × 600 × 850 mm">
             + Pie / murete
           </Button>
-          <Button size="sm" onClick={() => addPreset('countertop')}>
+          <Button size="sm" onClick={() => addPreset('countertop')} title="Agrega una mesada o isla elevada a 850 mm del piso">
             + Mesada / isla
           </Button>
-          <Button size="sm" onClick={() => addPreset('stair')}>
+          <Button size="sm" onClick={() => addPreset('stair')} title="Agrega una losa inclinada de escalera para diseñar muebles bajo escalera">
             + Bajo escalera
           </Button>
         </div>
       </Section>
 
-      {selected && <BlockForm store={store} plan={plan} block={selected} />}
+      {selected && <BlockForm store={store} plan={plan} block={selected} methods={methods} onGenerateUnderStair={onGenerateUnderStair} />}
 
       <Section title="Elementos en el ambiente">
         {blocks.length === 0 ? (
@@ -392,8 +439,22 @@ function BlocksTab({ store, plan, selection }: { store: RoomStore; plan: RoomPla
   );
 }
 
-function BlockForm({ store, plan, block: b }: { store: RoomStore; plan: RoomPlan; block: RoomBlock }) {
+function BlockForm({
+  store,
+  plan,
+  block: b,
+  methods,
+  onGenerateUnderStair,
+}: {
+  store: RoomStore;
+  plan: RoomPlan;
+  block: RoomBlock;
+  methods: Method[];
+  onGenerateUnderStair?: (modules: UnderStairModuleSpec[]) => Promise<void>;
+}) {
   const apply = store.getState().apply;
+  const [wizardOpen, setWizardOpen] = useState(false);
+
   const update = (patch: Partial<RoomBlock>) =>
     apply((pl) => ({ ...pl, blocks: (pl.blocks ?? []).map((x) => (x.id === b.id ? { ...x, ...patch } : x)) }));
 
@@ -456,15 +517,39 @@ function BlockForm({ store, plan, block: b }: { store: RoomStore; plan: RoomPlan
           <MmField compact label="Y" value={b.y} onCommit={(v) => v !== null && update({ y: v })} />
         </div>
         <AngleField label="Giro" value={b.rotation} onCommit={(v) => update({ rotation: v })} />
+
+        {/* Botón asistente Opción A: generar módulos escalonados bajo escalera */}
+        {b.kind === 'slope' && onGenerateUnderStair && methods.length > 0 && (
+          <div className="rounded-control bg-accent-soft p-2.5">
+            <p className="mb-2 text-xs text-accent">
+              Creá automáticamente los muebles escalonados con la altura exacta de cada tramo debajo de esta losa.
+            </p>
+            <Button
+              size="sm"
+              variant="primary"
+              className="w-full"
+              onClick={() => setWizardOpen(true)}
+              title="Abre el asistente para calcular, crear y ubicar módulos escalonados bajo esta pendiente"
+            >
+              Generar módulos bajo escalera
+            </Button>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-1 pt-1">
-          <Button size="sm" variant="ghost" onClick={() => rotate(90)}>
+          <Button size="sm" variant="ghost" onClick={() => rotate(90)} title="Gira el bloque 90° en sentido horario">
             Girar 90°
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => rotate(-90)}>
+          <Button size="sm" variant="ghost" onClick={() => rotate(-90)} title="Gira el bloque 90° en sentido antihorario">
             Girar -90°
           </Button>
           {b.kind === 'slope' && (
-            <Button size="sm" variant="ghost" onClick={() => update({ heightStart: b.heightEnd ?? mm(2600), heightEnd: b.heightStart ?? 0 })}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => update({ heightStart: b.heightEnd ?? mm(2600), heightEnd: b.heightStart ?? 0 })}
+              title="Intercambia la altura izquierda y derecha de la rampa"
+            >
               Invertir pendiente
             </Button>
           )}
@@ -480,7 +565,173 @@ function BlockForm({ store, plan, block: b }: { store: RoomStore; plan: RoomPlan
           </Button>
         </div>
       </div>
+
+      {b.kind === 'slope' && onGenerateUnderStair && methods.length > 0 && (
+        <UnderStairWizardDialog
+          open={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          block={b}
+          methods={methods}
+          onConfirm={onGenerateUnderStair}
+        />
+      )}
     </Section>
+  );
+}
+
+/** Asistente Opción A: calcula y genera módulos rectangulares escalonados debajo de una losa inclinada. */
+function UnderStairWizardDialog({
+  open,
+  onClose,
+  block,
+  methods,
+  onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  block: RoomBlock;
+  methods: Method[];
+  onConfirm: (modules: UnderStairModuleSpec[]) => Promise<void>;
+}) {
+  const [count, setCount] = useState(4);
+  const [depth, setDepth] = useState<Len>(Math.min(block.depth, mm(600)));
+  const [clearance, setClearance] = useState<Len>(mm(20));
+  const [templateId, setTemplateId] = useState(TEMPLATES[0]!.id);
+  const [methodId, setMethodId] = useState(methods[0]?.id ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const template = TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0]!;
+  const method = methods.find((m) => m.id === methodId) ?? methods[0];
+
+  const planPreview = useMemo(() => {
+    const W = block.width;
+    const h0 = block.elevation + (block.heightStart ?? 0);
+    const h1 = block.elevation + (block.heightEnd ?? block.height);
+    const segW = Math.floor(W / count / 100) * 100;
+    const clampedW = Math.min(Math.max(segW, LIMITS.w.min), LIMITS.w.max);
+    const clampedD = Math.min(Math.max(depth, LIMITS.d.min), LIMITS.d.max);
+    const { u } = placementAxes(block.rotation);
+
+    const items: { index: number; width: Len; height: Len; skipped: boolean; x: Len; y: Len }[] = [];
+    for (let i = 0; i < count; i++) {
+      const u0 = i * segW;
+      const u1 = u0 + segW;
+      const z0 = h0 + (h1 - h0) * (u0 / (W || 1));
+      const z1 = h0 + (h1 - h0) * (u1 / (W || 1));
+      const minClear = Math.min(z0, z1);
+      const rawH = Math.floor((minClear - clearance) / 100) * 100;
+      const skipped = rawH < LIMITS.h.min || segW < LIMITS.w.min;
+      const clampedH = Math.min(Math.max(rawH, LIMITS.h.min), LIMITS.h.max);
+      items.push({
+        index: i + 1,
+        width: clampedW,
+        height: clampedH,
+        skipped,
+        x: Math.round(block.x + u.x * u0),
+        y: Math.round(block.y + u.y * u0),
+      });
+    }
+    return { items, clampedD };
+  }, [block, count, depth, clearance]);
+
+  const validItems = planPreview.items.filter((x) => !x.skipped);
+
+  const submit = async () => {
+    if (!method || validItems.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const specs: UnderStairModuleSpec[] = validItems.map((it) => ({
+        name: `${block.name} · M${it.index}`.slice(0, 120),
+        methodId: method.id,
+        design: template.build({ w: it.width, h: it.height, d: planPreview.clampedD }),
+        x: it.x,
+        y: it.y,
+        rotation: block.rotation,
+        elevation: 0,
+      }));
+      await onConfirm(specs);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudieron crear los módulos.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Generar módulos bajo escalera"
+      wide
+      footer={
+        <>
+          <Button onClick={onClose} disabled={busy}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={() => void submit()} disabled={busy || validItems.length === 0 || !method}>
+            {busy ? 'Creando módulos…' : `Crear y colocar ${validItems.length} ${validItems.length === 1 ? 'módulo' : 'módulos'}`}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-muted">
+          Dividimos los <strong>{fmtMm(block.width)} mm</strong> de <strong>{block.name}</strong> en módulos independientes calculando la altura libre más baja de cada tramo menos la luz de montaje. Luego podés abrir cada mueble para ajustarlo y sacar su despiece.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <SelectField label="Cantidad de tramos" value={String(count)} onChange={(e) => setCount(Number(e.target.value))}>
+            {[2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <option key={n} value={n}>
+                {n} tramos ({fmtMm(Math.floor(block.width / n / 100) * 100)} mm c/u)
+              </option>
+            ))}
+          </SelectField>
+          <MmField compact label="Profundidad muebles" value={depth} min={LIMITS.d.min} max={Math.min(LIMITS.d.max, block.depth)} onCommit={(v) => v !== null && setDepth(v)} />
+          <MmField compact label="Luz libre superior" value={clearance} min={0} max={mm(200)} onCommit={(v) => v !== null && setClearance(v)} />
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <SelectField label="Plantilla base" value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
+            {TEMPLATES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </SelectField>
+          <SelectField label="Método de fabricación" value={method?.id ?? ''} onChange={(e) => setMethodId(e.target.value)}>
+            {methods.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </SelectField>
+        </div>
+
+        <div className="rounded-card border border-border bg-surface-2 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Vista previa de los módulos</p>
+          <ul className="space-y-1.5 text-sm">
+            {planPreview.items.map((it) => (
+              <li key={it.index} className={`tabular flex items-center justify-between rounded-control px-2.5 py-1.5 ${it.skipped ? 'bg-surface/60 text-muted' : 'bg-surface text-text shadow-1'}`}>
+                <span className="font-medium">Tramo {it.index}</span>
+                {it.skipped ? (
+                  <span className="text-xs">Muy bajo (&lt; {fmtMm(LIMITS.h.min)} mm) · se omite</span>
+                ) : (
+                  <span className="text-xs text-muted">
+                    {fmtMm(it.width)} ancho × <strong className="text-text">{fmtMm(it.height)} alto</strong> × {fmtMm(planPreview.clampedD)} fondo mm
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {error && <Alert tone="danger">{error}</Alert>}
+      </div>
+    </Dialog>
   );
 }
 
@@ -539,12 +790,12 @@ function CabinetsTab({
       {!selected && cabinets.length > 0 && (
         <p className="rounded-control bg-surface-2 px-3 py-2 text-xs text-muted">
           {plan.placements.length === 0
-            ? 'Tocá Colocar en un mueble: aparece contra una pared y después lo arrastrás en la planta hasta su lugar.'
-            : 'Arrastrá un mueble en la planta para moverlo. Tocalo para girarlo, subirlo (alacenas) o arrimarlo a la pared.'}
+            ? 'Tocá Colocar en un mueble: aparece contra una pared y después lo movés en Planta o en Alzado (con eje bloqueado).'
+            : 'Arrastrá un mueble en Planta o en Alzado. Tocalo para girarlo, subirlo o arrimarlo a la pared.'}
         </p>
       )}
       <Section title="Muebles del proyecto">
-        {cabinets.length === 0 && <p className="text-sm text-muted">El proyecto todavía no tiene muebles. Crealos desde la página del proyecto.</p>}
+        {cabinets.length === 0 && <p className="text-sm text-muted">El proyecto todavía no tiene muebles. Crealos desde la página del proyecto o con el asistente de Bajo escalera en Obra.</p>}
         <ul className="space-y-2">
           {cabinets.map((c) => {
             const placed = plan.placements.filter((p) => p.cabinetId === c.id).length;
@@ -607,8 +858,8 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
       </div>
       <div className="flex flex-wrap gap-1">
         {size && (
-          <Button size="sm" onClick={() => update(snapToWall(plan, p, size, nearestWall(plan, p, size)))}>
-            Arrimar a la pared más cercana
+          <Button size="sm" onClick={() => update(snapToWall(plan, p, size, nearestWall(plan, p, size)))} title="Alinea la espalda del mueble contra la pared más cercana">
+            Arrimar a la pared
           </Button>
         )}
         <Button size="sm" variant="ghost" onClick={() => rotate(90)}>
@@ -618,7 +869,7 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
           Girar -90°
         </Button>
         {cabinet && (
-          <Link href={`/muebles/${cabinet.id}`} className="inline-flex h-8 items-center rounded-control px-3 text-sm hover:bg-surface-2">
+          <Link href={`/muebles/${cabinet.id}`} className="inline-flex h-8 items-center rounded-control px-3 text-sm hover:bg-surface-2" title="Abrir este mueble en el editor 3D para modificar puertas, estantes o cajones">
             Abrir el mueble
           </Link>
         )}
@@ -633,7 +884,7 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
           Quitar del ambiente
         </Button>
       </div>
-      <p className="text-xs text-muted">Arrastralo en la planta; si lo soltás a menos de 15 cm de una pared, se arrima solo.</p>
+      <p className="text-xs text-muted">En Alzado podés arrastrarlo solo en horizontal o solo en vertical (eje bloqueado).</p>
     </Section>
   );
 }
