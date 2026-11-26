@@ -147,8 +147,84 @@ function CabinetProps() {
           <MmField compact label="Fondo" value={d} min={LIMITS.d.min} max={LIMITS.d.max} onCommit={(v) => v !== null && apply((x) => setSize(x, { d: v }))} />
         </div>
       </Section>
-
+      <Section title="Techo inclinado (bajo escalera)">
+        <label
+          className="flex cursor-pointer items-center gap-2 text-sm text-text"
+          title="Activa un corte diagonal superior para bajo escalera. La maderera corta el rectángulo completo y el despiece/PDF te dan las medidas del corte en ángulo."
+        >
+          <input
+            type="checkbox"
+            checked={Boolean(design.topSlope)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                const hMax = design.size.h;
+                const hMin = Math.max(LIMITS.h.min, Math.round((hMax * 0.5) / 100) * 100);
+                apply((x) => ({ ...x, topSlope: { heightLeft: hMin, heightRight: hMax } }));
+              } else {
+                apply((x) => {
+                  const next = { ...x };
+                  delete next.topSlope;
+                  return next;
+                });
+              }
+            }}
+            className="h-4 w-4 rounded accent-[var(--accent)]"
+          />
+          Activar corte diagonal superior
+        </label>
+        {design.topSlope && (
+          <div className="space-y-2 rounded-card border border-border bg-surface-2/60 p-3">
+            <div className="grid grid-cols-2 gap-2">
+              <MmField
+                compact
+                label="Alto izquierdo"
+                value={design.topSlope.heightLeft}
+                min={LIMITS.h.min}
+                max={LIMITS.h.max}
+                onCommit={(v) =>
+                  v !== null &&
+                  apply((x) => {
+                    const hR = x.topSlope?.heightRight ?? x.size.h;
+                    return { ...x, size: { ...x.size, h: Math.max(v, hR) }, topSlope: { heightLeft: v, heightRight: hR } };
+                  })
+                }
+              />
+              <MmField
+                compact
+                label="Alto derecho"
+                value={design.topSlope.heightRight}
+                min={LIMITS.h.min}
+                max={LIMITS.h.max}
+                onCommit={(v) =>
+                  v !== null &&
+                  apply((x) => {
+                    const hL = x.topSlope?.heightLeft ?? x.size.h;
+                    return { ...x, size: { ...x.size, h: Math.max(hL, v) }, topSlope: { heightLeft: hL, heightRight: v } };
+                  })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-muted">La maderera corta el rectángulo completo; el corte diagonal se hace en taller.</p>
+              <Button
+                size="sm"
+                variant="ghost"
+                title="Intercambia el alto izquierdo y el alto derecho"
+                onClick={() =>
+                  apply((x) =>
+                    x.topSlope ? { ...x, topSlope: { heightLeft: x.topSlope.heightRight, heightRight: x.topSlope.heightLeft } } : x,
+                  )
+                }
+              >
+                Invertir
+              </Button>
+            </div>
+          </div>
+        )}
+      </Section>
       <BaseSection />
+
+
 
       <ConstructionSection />
 
