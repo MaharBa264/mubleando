@@ -2,8 +2,8 @@
 
 import { Canvas, useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Edges, OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { useMemo, useRef, useState } from 'react';
-import { DoubleSide, Shape } from 'three';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DoubleSide, ExtrudeGeometry, Shape } from 'three';
 import { wallPieces, walls, type LegOut, type Material, type Part, type PlanPoint, type RoomBlock, type RoomBlockMaterial, type RoomPlan } from '@mw/engine';
 import { LegMesh } from '@/components/viewer/LegMesh';
 
@@ -16,6 +16,42 @@ function resolveColor(value: string | undefined, fallback = '#cccccc'): string {
   if (!m) return value;
   if (typeof window === 'undefined') return fallback;
   return getComputedStyle(document.documentElement).getPropertyValue(m[1]!).trim() || fallback;
+}
+
+/** Geometría de una pieza de mueble en 3D: caja normal, tapa inclinada o trapecio extruido para corte diagonal. */
+function CabinetPartGeometry({ part }: { part: Part }) {
+  const dc = part.diagonalCut;
+  const extrudeGeo = useMemo(() => {
+    if (!dc) return null;
+    const w = Math.max(part.box.dx, 1) * S;
+    const h = Math.max(part.box.dy, 1) * S;
+    const d = Math.max(part.box.dz, 1) * S;
+    const hl = Math.max(dc.heightLeft, 1) * S;
+    const hr = Math.max(dc.heightRight, 1) * S;
+    const shape = new Shape();
+    shape.moveTo(-w / 2, -h / 2);
+    shape.lineTo(w / 2, -h / 2);
+    shape.lineTo(w / 2, -h / 2 + hr);
+    shape.lineTo(-w / 2, -h / 2 + hl);
+    shape.closePath();
+    const geo = new ExtrudeGeometry(shape, { depth: d, bevelEnabled: false });
+    geo.translate(0, 0, -d / 2);
+    return geo;
+  }, [dc, part.box]);
+
+  useEffect(() => {
+    return () => {
+      extrudeGeo?.dispose();
+    };
+  }, [extrudeGeo]);
+
+  if (extrudeGeo) {
+    return <primitive object={extrudeGeo} attach="geometry" />;
+  }
+  if (part.slopeDeg) {
+    return <boxGeometry args={[Math.max(part.length, 1) * S, Math.max(part.box.dy, 1) * S, Math.max(part.box.dz, 1) * S]} />;
+  }
+  return <boxGeometry args={[Math.max(part.box.dx, 1) * S, Math.max(part.box.dy, 1) * S, Math.max(part.box.dz, 1) * S]} />;
 }
 
 /** Planta (x, y) → forma de three.js en el plano XY (se gira después para que quede horizontal). */
@@ -238,8 +274,12 @@ function Scene({ plan, placed, materials, selectedId, selectedBlockId = null, wa
             }}
           >
             {c.parts.map((p) => (
-              <mesh key={p.key} position={[(p.box.x + p.box.dx / 2) * S, (p.box.y + p.box.dy / 2) * S, (p.box.z + p.box.dz / 2) * S]}>
-                <boxGeometry args={[Math.max(p.box.dx, 1) * S, Math.max(p.box.dy, 1) * S, Math.max(p.box.dz, 1) * S]} />
+              <mesh
+                key={p.key}
+                position={[(p.box.x + p.box.dx / 2) * S, (p.box.y + p.box.dy / 2) * S, (p.box.z + p.box.dz / 2) * S]}
+                rotation={p.slopeDeg ? [0, 0, (p.slopeDeg * Math.PI) / 180] : [0, 0, 0]}
+              >
+                <CabinetPartGeometry part={p} />
                 <meshStandardMaterial
                   color={isSel ? colors.sel : colors.mat(p.materialId)}
                   emissive={isSel ? colors.sel : '#000000'}

@@ -2,7 +2,8 @@
 
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Edges, Html, Line, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { ExtrudeGeometry, Shape } from 'three';
 import type { Box, LegOut, Material, Part, ZoneOut } from '@mw/engine';
 import { LegMesh } from './LegMesh';
 import type { FrontsView, Selection } from '@/components/editor/store';
@@ -25,6 +26,40 @@ const size = (b: Box, inset = 0): [number, number, number] => [
   Math.max(b.dy - inset, 1) * S,
   Math.max(b.dz - inset, 1) * S,
 ];
+
+/** Geometría de una pieza: caja normal, tapa inclinada (largo hipotenusa) o trapecio extruido para corte diagonal. */
+function PartGeometry({ part }: { part: Part }) {
+  const dc = part.diagonalCut;
+  const extrudeGeo = useMemo(() => {
+    if (!dc) return null;
+    const [w, h, d] = size(part.box);
+    const hl = Math.max(dc.heightLeft, 1) * S;
+    const hr = Math.max(dc.heightRight, 1) * S;
+    const shape = new Shape();
+    shape.moveTo(-w / 2, -h / 2);
+    shape.lineTo(w / 2, -h / 2);
+    shape.lineTo(w / 2, -h / 2 + hr);
+    shape.lineTo(-w / 2, -h / 2 + hl);
+    shape.closePath();
+    const geo = new ExtrudeGeometry(shape, { depth: d, bevelEnabled: false });
+    geo.translate(0, 0, -d / 2);
+    return geo;
+  }, [dc, part.box]);
+
+  useEffect(() => {
+    return () => {
+      extrudeGeo?.dispose();
+    };
+  }, [extrudeGeo]);
+
+  if (extrudeGeo) {
+    return <primitive object={extrudeGeo} attach="geometry" />;
+  }
+  if (part.slopeDeg) {
+    return <boxGeometry args={[Math.max(part.length, 1) * S, Math.max(part.box.dy, 1) * S, Math.max(part.box.dz, 1) * S]} />;
+  }
+  return <boxGeometry args={size(part.box)} />;
+}
 
 type Hit = { kind: 'part'; key: string } | { kind: 'zone'; id: string };
 
@@ -177,21 +212,22 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
           const isSel = p.key === selectedPart;
           const isHover = hover === `part:${p.key}`;
           const pl = placement(p, view.fronts, drawerDepth);
+          const meshRot: V3 = p.slopeDeg ? [0, 0, (p.slopeDeg * Math.PI) / 180] : Y0;
           return (
             <group key={p.key} position={pl.group} rotation={pl.rot}>
-            <mesh position={pl.mesh} userData={{ kind: 'part', key: p.key }}>
-              <boxGeometry args={size(p.box)} />
-              <meshStandardMaterial
-                color={isSel ? colors.sel : colors.mat(p.materialId)}
-                emissive={isSel ? colors.sel : '#000000'}
-                emissiveIntensity={isSel ? 0.25 : 0}
-                wireframe={view.wire}
-                transparent={view.wire || p.role === 'glass'}
-                opacity={p.role === 'glass' ? 0.4 : isHover && !isSel ? 0.85 : 1}
-                roughness={0.8}
-              />
-              {!view.wire && <Edges color={isSel ? colors.sel : colors.line} threshold={15} />}
-            </mesh>
+              <mesh position={pl.mesh} rotation={meshRot} userData={{ kind: 'part', key: p.key }}>
+                <PartGeometry part={p} />
+                <meshStandardMaterial
+                  color={isSel ? colors.sel : colors.mat(p.materialId)}
+                  emissive={isSel ? colors.sel : '#000000'}
+                  emissiveIntensity={isSel ? 0.25 : 0}
+                  wireframe={view.wire}
+                  transparent={view.wire || p.role === 'glass'}
+                  opacity={p.role === 'glass' ? 0.4 : isHover && !isSel ? 0.85 : 1}
+                  roughness={0.8}
+                />
+                {!view.wire && <Edges color={isSel ? colors.sel : colors.line} threshold={15} />}
+              </mesh>
             </group>
           );
         })}

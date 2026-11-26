@@ -25,7 +25,7 @@ function readInclude(): DocInclude {
 }
 
 const OPTIONS: { key: keyof DocInclude; label: string; hint: string }[] = [
-  { key: 'cutList', label: 'Lista de corte', hint: 'La lista agrupada, con medidas de corte y cantos.' },
+  { key: 'cutList', label: 'Lista de corte', hint: 'Lista agrupada con medidas y cantos. Si hay muebles bajo escalera, suma los croquis de cortes en ángulo.' },
   { key: 'plan', label: 'Plano de cortes', hint: 'Cada placa con sus piezas numeradas, dos placas por página.' },
   { key: 'closed', label: 'Mueble armado, frentes cerrados', hint: 'Vista isométrica.' },
   { key: 'open', label: 'Mueble armado, frentes abiertos', hint: 'Puertas abiertas y cajones afuera.' },

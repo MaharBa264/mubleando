@@ -129,7 +129,8 @@ function coverPage(doc: jsPDF, o: DocOptions) {
     y += 8;
   }
   const parts: string[] = [];
-  if (o.include.cutList) parts.push('Lista de corte');
+  const hasDiagonal = o.items.some((it) => !!it.part.diagonalCut);
+  if (o.include.cutList) parts.push(hasDiagonal ? 'Lista de corte y croquis de cortes en ángulo' : 'Lista de corte');
   if (o.include.plan) parts.push('Plano de cortes');
   if (o.include.closed || o.include.open) parts.push('Vista del mueble armado');
   if (o.include.exploded) parts.push('Vista explotada');
@@ -203,6 +204,152 @@ function cutListPages(doc: jsPDF, o: DocOptions) {
     doc.setDrawColor(225);
     doc.setLineWidth(0.1);
     doc.line(PAGE.m, y - 3.4, PAGE.w - PAGE.m, y - 3.4);
+  }
+}
+
+
+/** Croquis acotados para los cortes diagonales en taller (bajo escalera / techos inclinados). */
+function diagonalCutPages(doc: jsPDF, o: DocOptions) {
+  const mats = new Map(o.materials.map((m) => [m.id, m]));
+  const bySig = new Map<string, string>();
+  for (const row of groupedRows(o.items)) bySig.set(sigOf(row), row.ref);
+
+  type DiagEntry = { ref: string; name: string; material: string; thickness: number; width: number; heightMax: number; qty: number; dc: NonNullable<Part['diagonalCut']> };
+  const map = new Map<string, DiagEntry>();
+  for (const it of o.items) {
+    const p = it.part;
+    if (!p.diagonalCut) continue;
+    const dc = p.diagonalCut;
+    const ref = bySig.get(sigOf(p)) ?? '—';
+    const key = `${ref}|${p.name}|${dc.heightLeft}|${dc.heightRight}|${p.box.dx}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      map.set(key, {
+        ref,
+        name: it.source && o.cabinets.length > 1 ? `${it.source} · ${p.name}` : p.name,
+        material: mats.get(p.materialId)?.name ?? p.materialId,
+        thickness: p.thickness,
+        width: p.box.dx,
+        heightMax: Math.max(p.box.dy, dc.heightLeft, dc.heightRight),
+        qty: 1,
+        dc,
+      });
+    }
+  }
+  const entries = [...map.values()];
+  if (!entries.length) return;
+
+  doc.addPage('a4', 'portrait');
+  let y = heading(
+    doc,
+    'Cortes en ángulo en taller',
+    'La maderera entrega el rectángulo completo (con el triángulo sobrante). Trazá y cortá cada diagonal en taller con estas cotas.',
+  );
+
+  for (const e of entries) {
+    const blockH = 82;
+    if (y + blockH > PAGE.h - 18) {
+      doc.addPage('a4', 'portrait');
+      y = heading(doc, 'Cortes en ángulo en taller (sigue)');
+    }
+    const wMm = toMm(e.width);
+    const hMaxMm = toMm(e.heightMax);
+    const hLMm = toMm(e.dc.heightLeft);
+    const hRMm = toMm(e.dc.heightRight);
+    const diagMm = toMm(e.dc.diagonalLength);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(20);
+    doc.text(`${e.ref} · ${e.name}${e.qty > 1 ? ` (× ${e.qty})` : ''}`, PAGE.m, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(80);
+    doc.text(
+      `${e.material} (${num(toMm(e.thickness))} mm) · Pedir a maderera: ${num(wMm)} × ${num(hMaxMm)} mm · Diagonal: ${num(diagMm)} mm (${num(e.dc.angleDeg)}°)`,
+      PAGE.m,
+      y + 4.8,
+    );
+
+    // Croquis vectorial a escala (izquierda) + pasos de taller (derecha)
+    const boxX = PAGE.m + 14;
+    const boxY = y + 10;
+    const maxW = 68;
+    const maxH = 52;
+    const k = Math.min(maxW / Math.max(wMm, 1), maxH / Math.max(hMaxMm, 1));
+    const rw = wMm * k;
+    const rh = hMaxMm * k;
+    const ox = boxX + (maxW - rw) / 2;
+    const oy = boxY + (maxH - rh) / 2;
+    const yBottom = oy + rh;
+    const yTopL = yBottom - hLMm * k;
+    const yTopR = yBottom - hRMm * k;
+
+    // 1) Triángulo de descarte (rectángulo completo de maderera)
+    doc.setFillColor('#f8e5d8');
+    doc.setDrawColor(190, 150, 125);
+    doc.setLineWidth(0.2);
+    doc.rect(ox, oy, rw, rh, 'FD');
+
+    // 2) Pieza útil (trapecio)
+    doc.setDrawColor(60, 100, 170);
+    doc.setLineWidth(0.35);
+    polygon(
+      doc,
+      [
+        [ox, yBottom],
+        [ox + rw, yBottom],
+        [ox + rw, yTopR],
+        [ox, yTopL],
+      ],
+      '#dde7f6',
+    );
+
+    // 3) Línea de corte diagonal destacada
+    doc.setDrawColor(194, 94, 26);
+    doc.setLineWidth(0.6);
+    doc.line(ox, yTopL, ox + rw, yTopR);
+
+    // 4) Cotas en el croquis
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(30);
+    doc.text(`${num(hLMm)} mm`, ox - 2, (yBottom + yTopL) / 2 + 1, { align: 'right' });
+    doc.text(`${num(hRMm)} mm`, ox + rw + 2, (yBottom + yTopR) / 2 + 1, { align: 'left' });
+    doc.text(`${num(wMm)} mm`, ox + rw / 2, yBottom + 4.5, { align: 'center' });
+    doc.setTextColor(194, 94, 26);
+    doc.text(`${num(diagMm)} mm · ${num(e.dc.angleDeg)}°`, ox + rw / 2, Math.min(yTopL, yTopR) - 2, { align: 'center' });
+
+    // Instrucciones paso a paso a la derecha
+    const tx = PAGE.m + 100;
+    const tw = PAGE.w - PAGE.m - tx;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(30);
+    doc.text('Cómo cortar en taller (vista de frente):', tx, boxY + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(60);
+    const steps = [
+      `1. Apoyá la placa de ${num(wMm)} × ${num(hMaxMm)} mm con la cara vista hacia arriba.`,
+      `2. Medí ${num(hLMm)} mm desde la base en el borde izquierdo y ${num(hRMm)} mm en el derecho.`,
+      `3. Uní ambas marcas (diagonal de ${num(diagMm)} mm a ${num(e.dc.angleDeg)}°) y retirá el triángulo sombreado.`,
+      '4. Si lleva tapacanto en el borde superior, pegalo después de hacer el corte.',
+    ];
+    let sy = boxY + 10;
+    for (const st of steps) {
+      const wrapped = doc.splitTextToSize(st, tw) as string[];
+      doc.text(wrapped, tx, sy);
+      sy += wrapped.length * 3.8 + 2.2;
+    }
+
+    y += blockH - 6;
+    doc.setDrawColor(225);
+    doc.setLineWidth(0.1);
+    doc.line(PAGE.m, y - 3, PAGE.w - PAGE.m, y - 3);
+    y += 3;
   }
 }
 
@@ -353,7 +500,10 @@ export function cabinetPdf(o: DocOptions): { bytes: ArrayBuffer; pages: number }
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
   doc.setProperties({ title: o.title, creator: 'mubleando' });
   coverPage(doc, o);
-  if (o.include.cutList) cutListPages(doc, o);
+  if (o.include.cutList) {
+    cutListPages(doc, o);
+    diagonalCutPages(doc, o);
+  }
   if (o.include.plan) planPages(doc, o);
   if (o.include.cutList) glassPages(doc, o);
   if (o.include.closed || o.include.open || o.include.exploded) viewPages(doc, o);

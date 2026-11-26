@@ -72,7 +72,7 @@ export default function ProjectsPage() {
         {tipsOpen && (
           <ul className="mt-3 grid gap-2.5 border-t border-border pt-3 text-xs text-muted sm:grid-cols-2">
             <li>
-              <strong className="text-text">Obra 3D y Bajo escalera (Ambientes → Obra):</strong> agregá pies de mampostería, mesadas o una losa inclinada, y usá <em>Generar módulos bajo escalera</em> para crear los muebles escalonados automáticamente.
+              <strong className="text-text">Obra 3D y Bajo escalera diagonal (Ambientes → Obra):</strong> agregá muretes, mesadas o una losa inclinada y usá <em>Generar módulos bajo escalera</em> para crear muebles con corte diagonal automático.
             </li>
             <li>
               <strong className="text-text">Vista Alzado por pared (Ambientes → Alzado):</strong> elegí cualquier pared para ver muebles y pendientes de frente, y arrastrá con bloqueo de eje (solo horizontal o solo vertical).
@@ -81,7 +81,7 @@ export default function ProjectsPage() {
               <strong className="text-text">Modo foco en 3D (tecla Tab):</strong> en el editor de muebles y de ambientes podés ocultar los paneles laterales para aprovechar el 100% de la pantalla.
             </li>
             <li>
-              <strong className="text-text">Modo taller en Despiece:</strong> filtrá por tablero y tildá las piezas cortadas con barra de avance guardada en tu dispositivo.
+              <strong className="text-text">Cortes en ángulo y Modo taller (Despiece y PDF):</strong> la maderera recibe el rectángulo completo y el PDF incluye croquis acotados para hacer el corte diagonal en taller; además podés tildar piezas cortadas.
             </li>
           </ul>
         )}

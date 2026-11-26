@@ -51,6 +51,37 @@ export const project = (p: Vec3): Pt2 => [dot(p, R), dot(p, U)];
 function corners(p: Part): Vec3[] {
   const b = p.box;
   const out: Vec3[] = [];
+  if (p.diagonalCut) {
+    const dc = p.diagonalCut;
+    for (const i of [0, 1]) {
+      const topH = i === 0 ? dc.heightLeft : dc.heightRight;
+      for (const j of [0, 1]) {
+        for (const k of [0, 1]) {
+          out.push([b.x + i * b.dx, b.y + (j === 0 ? 0 : topH), b.z + k * b.dz]);
+        }
+      }
+    }
+    return out;
+  }
+  if (p.slopeDeg) {
+    const rad = (p.slopeDeg * Math.PI) / 180;
+    const c = Math.cos(rad);
+    const s = Math.sin(rad);
+    const cx = b.x + b.dx / 2;
+    const cy = b.y + b.dy / 2;
+    const halfW = p.length / 2;
+    const halfH = b.dy / 2;
+    for (const i of [0, 1]) {
+      const lx = i === 0 ? -halfW : halfW;
+      for (const j of [0, 1]) {
+        const ly = j === 0 ? -halfH : halfH;
+        const rx = cx + lx * c - ly * s;
+        const ry = cy + lx * s + ly * c;
+        for (const k of [0, 1]) out.push([rx, ry, b.z + k * b.dz]);
+      }
+    }
+    return out;
+  }
   for (const i of [0, 1]) for (const j of [0, 1]) for (const k of [0, 1]) out.push([b.x + i * b.dx, b.y + j * b.dy, b.z + k * b.dz]);
   return out;
 }
@@ -350,7 +381,14 @@ export function cabinetView(partsIn: readonly Part[], opts: ViewOptions): Cabine
     const base = COLORS[p.role] ?? (p.assembly ? DRAWER_BOX : BASE);
     const faces: { area: number; pts: Pt2[] }[] = [];
     for (const f of FACES) {
-      const n = rotN(f.n, t);
+      let baseN = f.n;
+      if (p.slopeDeg) {
+        const rad = (p.slopeDeg * Math.PI) / 180;
+        const c = Math.cos(rad);
+        const sn = Math.sin(rad);
+        baseN = [f.n[0] * c - f.n[1] * sn, f.n[0] * sn + f.n[1] * c, f.n[2]];
+      }
+      const n = rotN(baseN, t);
       const facing = dot(n, V);
       if (facing <= 1e-9) continue;
       const pts = f.c.map((i) => project(s.pts[i]!));

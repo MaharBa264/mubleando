@@ -28,20 +28,29 @@ export const HELP_STEPS: HelpStep[] = [
     how: [
       'Las medidas de lo elegido se cambian en Propiedades (a la derecha, o abajo en el celular).',
       'Tocá una pieza para cambiarle el material, los cantos o el retranqueo.',
-      'Ctrl+Z deshace y Ctrl+Y rehace.',
+      'En Propiedades del mueble podés activar Techo inclinado (bajo escalera) para dar corte diagonal real a puertas, fondo y tapa.',
+      'Ctrl+Z deshace y Ctrl+Y rehace; Tab oculta los paneles laterales para ver en pantalla completa.',
     ],
     art: 'cabinet',
   },
   {
     title: 'Mirá el despiece y el costo',
     text: 'Cada pieza con su medida de corte (descontando cantos), sus cantos, los herrajes que lleva y el costo total en pesos.',
-    how: ['En el mueble o en el proyecto, tocá Despiece.', 'Descargar CSV para mandarlo a la maderera, o Imprimir.', 'STL exporta el mueble para imprimirlo en 3D, también como juguete que funciona.'],
+    how: [
+      'En el mueble o en el proyecto, tocá Despiece. Filtrá por tablero y tildá piezas cortadas en Modo taller.',
+      'En muebles con techo inclinado, la maderera recibe el rectángulo completo y el PDF incluye los croquis acotados para cortar la diagonal en taller.',
+      'Descargar CSV para la maderera, Documento PDF para taller/cliente, o STL para imprimir en 3D.',
+    ],
     art: 'cutlist',
   },
   {
     title: 'Armá el ambiente',
     text: 'Dibujá la planta de la habitación con sus medidas reales (también fuera de escuadra), sus puertas y ventanas, y colocá los muebles.',
-    how: ['En el proyecto, tocá Nuevo ambiente.', 'Arrastrá las esquinas para ajustar las paredes y los muebles para ubicarlos.', 'La vista 3D transparenta las paredes que tapan.'],
+    how: [
+      'En el proyecto, tocá Nuevo ambiente. Usá Planta, Alzado (por pared, con arrastre de eje bloqueado) y 3D.',
+      'En la pestaña Obra agregá muretes, mesadas o una losa inclinada y usá «Generar módulos bajo escalera» para crear muebles con corte diagonal automático.',
+      'La vista 3D transparenta las paredes que tapan.',
+    ],
     art: 'room',
   },
   {

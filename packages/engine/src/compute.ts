@@ -1010,7 +1010,7 @@ function applyTopSlope(parts: Part[], design: Design, warnings: Warning[]) {
       p.length = hyp;
       p.cutLength = Math.max(1000, p.cutLength + delta);
       p.slopeDeg = Math.round(((Math.atan2(yR - yL, p.box.dx) * 180) / Math.PI) * 10) / 10;
-      p.box = { ...p.box, y: Math.round((yL + yR) / 2 - p.box.dy / 2) };
+      p.box = { ...p.box, y: Math.round((yL + yR) / 2 - p.box.dy) };
     } else if (p.role === 'back' || p.role === 'door') {
       const margin = p.role === 'back' ? topThick : 0;
       const cL = Math.max(1000, Math.round(topAt(p.box.x) - margin - p.box.y));

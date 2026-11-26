@@ -388,7 +388,7 @@ function BlocksTab({
     <>
       <Section title="Agregar geometría de obra">
         <p className="text-xs text-muted">
-          Modelá pies de mampostería, mesadas o la losa inclinada de un bajo escalera. Al elegir una losa inclinada podés <strong>generar los módulos escalonados automáticamente</strong>.
+          Modelá pies de mampostería, mesadas o la losa inclinada de un bajo escalera. Al elegir una losa inclinada podés <strong>generar los módulos con corte diagonal automáticamente</strong>.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => addPreset('pier')} title="Agrega un murete o pie de mampostería de 150 × 600 × 850 mm">
@@ -518,18 +518,17 @@ function BlockForm({
         </div>
         <AngleField label="Giro" value={b.rotation} onCommit={(v) => update({ rotation: v })} />
 
-        {/* Botón asistente Opción A: generar módulos escalonados bajo escalera */}
         {b.kind === 'slope' && onGenerateUnderStair && methods.length > 0 && (
           <div className="rounded-control bg-accent-soft p-2.5">
             <p className="mb-2 text-xs text-accent">
-              Creá automáticamente los muebles escalonados con la altura exacta de cada tramo debajo de esta losa.
+              Creá automáticamente los muebles debajo de esta losa (con corte diagonal siguiendo la pendiente o rectangulares escalonados).
             </p>
             <Button
               size="sm"
               variant="primary"
               className="w-full"
               onClick={() => setWizardOpen(true)}
-              title="Abre el asistente para calcular, crear y ubicar módulos escalonados bajo esta pendiente"
+              title="Abre el asistente para calcular, crear y ubicar módulos bajo esta pendiente"
             >
               Generar módulos bajo escalera
             </Button>
@@ -579,7 +578,7 @@ function BlockForm({
   );
 }
 
-/** Asistente Opción A: calcula y genera módulos rectangulares escalonados debajo de una losa inclinada. */
+/** Asistente bajo escalera: genera módulos con corte diagonal (topSlope) o escalonados rectangulares. */
 function UnderStairWizardDialog({
   open,
   onClose,
@@ -596,6 +595,7 @@ function UnderStairWizardDialog({
   const [count, setCount] = useState(4);
   const [depth, setDepth] = useState<Len>(Math.min(block.depth, mm(600)));
   const [clearance, setClearance] = useState<Len>(mm(20));
+  const [withDiagonal, setWithDiagonal] = useState(true);
   const [templateId, setTemplateId] = useState(TEMPLATES[0]!.id);
   const [methodId, setMethodId] = useState(methods[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
@@ -613,27 +613,32 @@ function UnderStairWizardDialog({
     const clampedD = Math.min(Math.max(depth, LIMITS.d.min), LIMITS.d.max);
     const { u } = placementAxes(block.rotation);
 
-    const items: { index: number; width: Len; height: Len; skipped: boolean; x: Len; y: Len }[] = [];
+    const items: { index: number; width: Len; heightLeft: Len; heightRight: Len; heightMax: Len; skipped: boolean; x: Len; y: Len }[] = [];
     for (let i = 0; i < count; i++) {
       const u0 = i * segW;
       const u1 = u0 + segW;
       const z0 = h0 + (h1 - h0) * (u0 / (W || 1));
       const z1 = h0 + (h1 - h0) * (u1 / (W || 1));
-      const minClear = Math.min(z0, z1);
-      const rawH = Math.floor((minClear - clearance) / 100) * 100;
-      const skipped = rawH < LIMITS.h.min || segW < LIMITS.w.min;
-      const clampedH = Math.min(Math.max(rawH, LIMITS.h.min), LIMITS.h.max);
+      const rawLeft = Math.floor((z0 - clearance) / 100) * 100;
+      const rawRight = Math.floor((z1 - clearance) / 100) * 100;
+      const minH = Math.min(rawLeft, rawRight);
+      const maxH = Math.max(rawLeft, rawRight);
+      const skipped = (withDiagonal ? minH < LIMITS.h.min : minH < LIMITS.h.min) || segW < LIMITS.w.min;
+      const hL = Math.min(Math.max(withDiagonal ? rawLeft : minH, LIMITS.h.min), LIMITS.h.max);
+      const hR = Math.min(Math.max(withDiagonal ? rawRight : minH, LIMITS.h.min), LIMITS.h.max);
       items.push({
         index: i + 1,
         width: clampedW,
-        height: clampedH,
+        heightLeft: hL,
+        heightRight: hR,
+        heightMax: Math.min(Math.max(withDiagonal ? maxH : minH, LIMITS.h.min), LIMITS.h.max),
         skipped,
         x: Math.round(block.x + u.x * u0),
         y: Math.round(block.y + u.y * u0),
       });
     }
     return { items, clampedD };
-  }, [block, count, depth, clearance]);
+  }, [block, count, depth, clearance, withDiagonal]);
 
   const validItems = planPreview.items.filter((x) => !x.skipped);
 
@@ -642,15 +647,22 @@ function UnderStairWizardDialog({
     setBusy(true);
     setError(null);
     try {
-      const specs: UnderStairModuleSpec[] = validItems.map((it) => ({
-        name: `${block.name} · M${it.index}`.slice(0, 120),
-        methodId: method.id,
-        design: template.build({ w: it.width, h: it.height, d: planPreview.clampedD }),
-        x: it.x,
-        y: it.y,
-        rotation: block.rotation,
-        elevation: 0,
-      }));
+      const specs: UnderStairModuleSpec[] = validItems.map((it) => {
+        const baseDesign = template.build({ w: it.width, h: it.heightMax, d: planPreview.clampedD });
+        const design: Design =
+          withDiagonal && it.heightLeft !== it.heightRight
+            ? { ...baseDesign, topSlope: { heightLeft: it.heightLeft, heightRight: it.heightRight } }
+            : baseDesign;
+        return {
+          name: `${block.name} · M${it.index}`.slice(0, 120),
+          methodId: method.id,
+          design,
+          x: it.x,
+          y: it.y,
+          rotation: block.rotation,
+          elevation: 0,
+        };
+      });
       await onConfirm(specs);
       onClose();
     } catch (e) {
@@ -679,8 +691,20 @@ function UnderStairWizardDialog({
     >
       <div className="space-y-4">
         <p className="text-sm text-muted">
-          Dividimos los <strong>{fmtMm(block.width)} mm</strong> de <strong>{block.name}</strong> en módulos independientes calculando la altura libre más baja de cada tramo menos la luz de montaje. Luego podés abrir cada mueble para ajustarlo y sacar su despiece.
+          Dividimos los <strong>{fmtMm(block.width)} mm</strong> de <strong>{block.name}</strong> en módulos independientes. En modo diagonal, la maderera corta las placas rectangulares con el triángulo de más y el despiece te da las medidas exactas del corte en ángulo.
         </p>
+
+        <label className="flex cursor-pointer items-center gap-2 rounded-control border border-border bg-surface-2 px-3 py-2 text-sm text-text">
+          <input
+            type="checkbox"
+            checked={withDiagonal}
+            onChange={(e) => setWithDiagonal(e.target.checked)}
+            className="h-4 w-4 rounded accent-[var(--accent)]"
+          />
+          <span>
+            <strong>Con corte diagonal superior</strong> (sigue la pendiente exacta de la escalera)
+          </span>
+        </label>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <SelectField label="Cantidad de tramos" value={String(count)} onChange={(e) => setCount(Number(e.target.value))}>
@@ -719,9 +743,13 @@ function UnderStairWizardDialog({
                 <span className="font-medium">Tramo {it.index}</span>
                 {it.skipped ? (
                   <span className="text-xs">Muy bajo (&lt; {fmtMm(LIMITS.h.min)} mm) · se omite</span>
+                ) : withDiagonal && it.heightLeft !== it.heightRight ? (
+                  <span className="text-xs text-muted">
+                    {fmtMm(it.width)} ancho · <strong className="text-text">{fmtMm(it.heightLeft)} → {fmtMm(it.heightRight)} mm</strong> (diagonal)
+                  </span>
                 ) : (
                   <span className="text-xs text-muted">
-                    {fmtMm(it.width)} ancho × <strong className="text-text">{fmtMm(it.height)} alto</strong> × {fmtMm(planPreview.clampedD)} fondo mm
+                    {fmtMm(it.width)} ancho × <strong className="text-text">{fmtMm(it.heightMax)} alto</strong> × {fmtMm(planPreview.clampedD)} fondo mm
                   </span>
                 )}
               </li>
