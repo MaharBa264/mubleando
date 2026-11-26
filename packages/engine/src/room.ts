@@ -53,6 +53,28 @@ export interface Placement {
   /** Altura desde el piso hasta la base del mueble: 0 en bajos y columnas, ~1450 mm en alacenas. */
   elevation: Len;
 }
+export type RoomBlockKind = 'box' | 'slope';
+export type RoomBlockMaterial = 'masonry' | 'concrete' | 'countertop' | 'wood';
+
+/** Geometría fija de obra (murete/pie de mampostería, mesada/isla o losa inclinada de bajo escalera). */
+export interface RoomBlock {
+  id: string;
+  name: string;
+  kind: RoomBlockKind;
+  material: RoomBlockMaterial;
+  x: Len;
+  y: Len;
+  rotation: number;
+  elevation: Len;
+  width: Len;
+  depth: Len;
+  /** Alto del prisma ('box') o espesor vertical de la losa inclinada ('slope'). */
+  height: Len;
+  /** Solo 'slope': altura libre bajo la losa en el extremo izquierdo (u = 0). */
+  heightStart?: Len;
+  /** Solo 'slope': altura libre bajo la losa en el extremo derecho (u = width). */
+  heightEnd?: Len;
+}
 
 export interface RoomPlan {
   v: 1;
@@ -61,6 +83,7 @@ export interface RoomPlan {
   wallHeight: Len;
   openings: RoomOpening[];
   placements: Placement[];
+  blocks?: RoomBlock[];
   /**
    * Largo medido en obra de la última pared (la que cierra el polígono). Solo sirve para mostrar
    * el error de cierre: la diferencia con la que sale de las demás medidas.
@@ -96,6 +119,25 @@ export const roomPlanSchema: z.ZodType<RoomPlan> = z.object({
       elevation: len.nonnegative(),
     }),
   ),
+  blocks: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().min(1).max(120),
+        kind: z.enum(['box', 'slope']),
+        material: z.enum(['masonry', 'concrete', 'countertop', 'wood']),
+        x: len,
+        y: len,
+        rotation: z.number().finite(),
+        elevation: len.nonnegative(),
+        width: len.positive(),
+        depth: len.positive(),
+        height: len.positive(),
+        heightStart: len.nonnegative().optional(),
+        heightEnd: len.nonnegative().optional(),
+      }),
+    )
+    .optional(),
   closingMeasured: len.positive().optional(),
 });
 
@@ -691,9 +733,69 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
       }
     }
   }
+  // Colisiones con geometrías de obra (muretes, mesadas y losas inclinadas de bajo escalera).
+  for (const b of plan.blocks ?? []) {
+    const bfp = blockFootprint(b);
+    for (const A of placed) {
+      const afp = footprint(A.p, A.size);
+      if (!convexOverlap(afp, bfp)) continue;
+      if (b.kind === 'box') {
+        const vertical = A.p.elevation < b.elevation + b.height && b.elevation < A.p.elevation + A.size.h;
+        if (vertical) {
+          out.push({ code: 'overlap', message: `${A.name} choca con ${b.name}.`, placementId: A.p.id });
+        } else {
+        const samples = [
+          ...afp,
+          { x: (afp[0].x + afp[1].x) / 2, y: (afp[0].y + afp[1].y) / 2 },
+          { x: (afp[2].x + afp[3].x) / 2, y: (afp[2].y + afp[3].y) / 2 },
+        ];
+        let maxExcess = 0;
+          for (const q of samples) {
+          const clearZ = slopeHeightAt(b, q);
+          if (clearZ === null) continue;
+          const topZ = A.p.elevation + A.size.h;
+          const slabTop = clearZ + b.height;
+            if (topZ > clearZ + 50 && A.p.elevation < slabTop) {
+            maxExcess = Math.max(maxExcess, topZ - clearZ);
+          }
+          }
+        if (maxExcess > 0) {
+          out.push({
+            code: 'overlap',
+            message: `${A.name} toca ${b.name} (sobresale ${Math.ceil(toMm(maxExcess))} mm por arriba de la pendiente).`,
+            placementId: A.p.id,
+            });
+        }
+      }
+    }
+    }
   return out;
 }
+/** Rectángulo en planta de un bloque de obra (mismo criterio que footprint). */
+export function blockFootprint(b: Pick<RoomBlock, 'x' | 'y' | 'rotation' | 'width' | 'depth'>): [PlanPoint, PlanPoint, PlanPoint, PlanPoint] {
+  const { u, f } = placementAxes(b.rotation);
+  const p0 = { x: b.x, y: b.y };
+  const p1 = { x: b.x + u.x * b.width, y: b.y + u.y * b.width };
+  const p2 = { x: p1.x + f.x * b.depth, y: p1.y + f.y * b.depth };
+  const p3 = { x: b.x + f.x * b.depth, y: b.y + f.y * b.depth };
+  return [p0, p1, p2, p3];
+}
 
+/** Altura libre bajo una losa inclinada ('slope') en un punto de planta, o null si está fuera. */
+export function slopeHeightAt(b: RoomBlock, pt: PlanPoint): number | null {
+  if (b.kind !== 'slope') return null;
+  const { u, f } = placementAxes(b.rotation);
+  const dx = pt.x - b.x;
+  const dy = pt.y - b.y;
+  const lu = dx * u.x + dy * u.y;
+  const lf = dx * f.x + dy * f.y;
+  if (lu < -50 || lu > b.width + 50 || lf < -50 || lf > b.depth + 50) return null;
+  const t = Math.min(1, Math.max(0, lu / (b.width || 1)));
+  const h0 = b.elevation + (b.heightStart ?? 0);
+  const h1 = b.elevation + (b.heightEnd ?? b.height);
+  return h0 + (h1 - h0) * t;
+}
+  
 export const OPENING_NAME: Record<OpeningKind, string> = { door: 'puerta', window: 'ventana', opening: 'abertura' };
 
 // ───────────────────────── para dibujar: paredes con espesor ─────────────────────────
