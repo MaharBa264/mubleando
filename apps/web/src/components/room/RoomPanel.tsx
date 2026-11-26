@@ -18,21 +18,24 @@ import {
   type CabinetSize,
   type OpeningKind,
   type Placement,
+  type RoomBlock,
+  type RoomBlockKind,
+  type RoomBlockMaterial,
   type RoomOpening,
   type RoomPlan,
   type RoomWarning,
 } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/feedback';
-import { Label, MmField, SelectField } from '@/components/ui/fields';
+import { Label, MmField, SelectField, TextField } from '@/components/ui/fields';
 import type { Cabinet } from '@/data';
 import { fmtDims, fmtMm, fmtNum } from '@/lib/format';
 import type { RoomSelection, RoomStore } from './roomStore';
 
 const uid = () => globalThis.crypto.randomUUID();
-type Tab = 'walls' | 'openings' | 'cabinets' | 'warnings';
+type Tab = 'walls' | 'openings' | 'blocks' | 'cabinets' | 'warnings';
 
-/** Panel lateral del editor de ambientes: paredes, aberturas, muebles y avisos. */
+/** Panel lateral del editor de ambientes: paredes, aberturas, obra, muebles y avisos. */
 export function RoomPanel({
   store,
   plan,
@@ -49,16 +52,17 @@ export function RoomPanel({
   onSetQuantity: (cabinetId: string, quantity: number) => Promise<void>;
 }) {
   const [tab, setTab] = useState<Tab>('walls');
-  // Al tocar algo en la planta, se abre la pestaña que le corresponde.
   useEffect(() => {
     if (selection.kind === 'wall') setTab('walls');
     if (selection.kind === 'opening') setTab('openings');
+    if (selection.kind === 'block') setTab('blocks');
     if (selection.kind === 'placement') setTab('cabinets');
   }, [selection]);
 
   const tabs: [Tab, string][] = [
     ['walls', 'Paredes'],
     ['openings', 'Aberturas'],
+    ['blocks', 'Obra'],
     ['cabinets', 'Muebles'],
     ['warnings', warnings.length ? `Avisos (${warnings.length})` : 'Avisos'],
   ];
@@ -73,7 +77,7 @@ export function RoomPanel({
             role="tab"
             aria-selected={tab === k}
             onClick={() => setTab(k)}
-            className={`flex-1 px-2 py-2.5 text-sm ${tab === k ? 'border-b-2 border-accent font-medium text-accent' : 'text-muted'} ${k === 'warnings' && warnings.length ? 'text-warning' : ''}`}
+            className={`flex-1 px-1.5 py-2.5 text-xs sm:text-sm ${tab === k ? 'border-b-2 border-accent font-medium text-accent' : 'text-muted'} ${k === 'warnings' && warnings.length ? 'text-warning' : ''}`}
           >
             {label}
           </button>
@@ -82,6 +86,7 @@ export function RoomPanel({
       <div className="space-y-5 p-4">
         {tab === 'walls' && <WallsTab store={store} plan={plan} selection={selection} />}
         {tab === 'openings' && <OpeningsTab store={store} plan={plan} selection={selection} />}
+        {tab === 'blocks' && <BlocksTab store={store} plan={plan} selection={selection} />}
         {tab === 'cabinets' && <CabinetsTab store={store} plan={plan} selection={selection} cabinets={cabinets} onSetQuantity={onSetQuantity} />}
         {tab === 'warnings' && <WarningsTab store={store} warnings={warnings} />}
       </div>
@@ -98,7 +103,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** Campo de ángulo en grados, con coma decimal. Aplica con Intro o al salir. */
 function AngleField({ label, value, disabled, onCommit }: { label: string; value: number; disabled?: boolean; onCommit: (v: number) => void }) {
   const shown = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(value);
   const [text, setText] = useState(shown);
@@ -106,7 +110,7 @@ function AngleField({ label, value, disabled, onCommit }: { label: string; value
   useEffect(() => setText(shown), [shown]);
   const commit = () => {
     const v = Number(text.trim().replace('°', '').replace(',', '.'));
-    if (!Number.isFinite(v) || v <= 0 || v >= 360) return setError(true);
+    if (!Number.isFinite(v) || v < 0 || v >= 360) return setError(true);
     setError(false);
     if (Math.abs(v - value) > 1e-6) onCommit(v);
   };
@@ -135,7 +139,7 @@ function AngleField({ label, value, disabled, onCommit }: { label: string; value
   );
 }
 
-// ───────────────────────── paredes ─────────────────────────
+// ────────────────────────── paredes ──────────────────────────
 
 function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan; selection: RoomSelection }) {
   const apply = store.getState().apply;
@@ -156,7 +160,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
 
       <Section title="Paredes, como se miden en obra">
         <p className="text-xs text-muted">
-          Cargá el largo de cada pared (por la cara de adentro) y el ángulo de cada esquina. La última pared cierra sola: si la mediste, poné su medida para ver el error de cierre. También podés arrastrar las esquinas en la planta.
+          Cargá el largo de cada pared (por la cara de adentro) y el ángulo de cada esquina. La última pared cierra sola: si la mediste, poné su medida para ver el error de cierre.
         </p>
         <ol className="space-y-3">
           {ws.map((w, i) => {
@@ -194,7 +198,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
                   />
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1">
-                  <Button size="sm" variant="ghost" onClick={() => apply((p) => splitWall(p, i))} title="Agrega una esquina en el medio (para hacer una L, una ochava o un quiebre)">
+                  <Button size="sm" variant="ghost" onClick={() => apply((p) => splitWall(p, i))} title="Agrega una esquina en el medio">
                     Partir
                   </Button>
                   {n > 3 && (
@@ -210,8 +214,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
         {closingError !== null && (
           <Alert tone={Math.abs(closingError) > 500 ? 'warning' : 'info'} title="Error de cierre">
             La pared {n} sale de {fmtMm(closing.length)} mm con las demás medidas y en obra midió {fmtMm(plan.closingMeasured!)} mm: {closingError > 0 ? '+' : ''}
-            {fmtMm(closingError)} mm.{' '}
-            {Math.abs(closingError) > 500 ? 'Revisá algún largo o algún ángulo.' : 'Diferencia chica: normal en obra.'}
+            {fmtMm(closingError)} mm.
           </Alert>
         )}
       </Section>
@@ -219,7 +222,7 @@ function WallsTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan
   );
 }
 
-// ───────────────────────── aberturas ─────────────────────────
+// ────────────────────────── aberturas ──────────────────────────
 
 const DEFAULTS: Record<OpeningKind, Pick<RoomOpening, 'width' | 'height' | 'sill'>> = {
   door: { width: mm(800), height: mm(2050), sill: 0 },
@@ -294,9 +297,195 @@ function OpeningsTab({ store, plan, selection }: { store: RoomStore; plan: RoomP
   );
 }
 
-// ───────────────────────── muebles ─────────────────────────
+// ────────────────────────── obra (geometrías 3D) ──────────────────────────
 
-/** ¿Parece un mueble de colgar? (poco fondo y no muy alto): se coloca a 1,45 m del piso. */
+function BlocksTab({ store, plan, selection }: { store: RoomStore; plan: RoomPlan; selection: RoomSelection }) {
+  const apply = store.getState().apply;
+  const blocks = plan.blocks ?? [];
+  const ws = walls(plan);
+  const w0 = ws[selection.kind === 'wall' ? selection.index : 0] ?? ws[0]!;
+
+  const addPreset = (preset: 'pier' | 'countertop' | 'stair') => {
+    const id = uid();
+    const rot = Math.round(((Math.atan2(w0.dir.y, w0.dir.x) * 180) / Math.PI + 360) % 360);
+    const base = {
+      id,
+      x: Math.round(w0.a.x + w0.inward.x * mm(50)),
+      y: Math.round(w0.a.y + w0.inward.y * mm(50)),
+      rotation: rot,
+    };
+    const item: RoomBlock =
+      preset === 'pier'
+        ? { ...base, name: 'Pie de mampostería', kind: 'box', material: 'masonry', elevation: 0, width: mm(150), depth: mm(600), height: mm(850) }
+        : preset === 'countertop'
+          ? { ...base, name: 'Mesada / isla', kind: 'box', material: 'countertop', elevation: mm(850), width: mm(1800), depth: mm(650), height: mm(40) }
+          : {
+              ...base,
+              name: 'Losa bajo escalera',
+              kind: 'slope',
+              material: 'concrete',
+              elevation: 0,
+              width: Math.min(w0.length, mm(2800)),
+              depth: mm(900),
+              height: mm(180),
+              heightStart: 0,
+              heightEnd: Math.min(plan.wallHeight, mm(2600)),
+            };
+    apply((p) => ({ ...p, blocks: [...(p.blocks ?? []), item] }));
+    store.getState().select({ kind: 'block', id });
+  };
+
+  const selected = selection.kind === 'block' ? blocks.find((b) => b.id === selection.id) : undefined;
+
+  return (
+    <>
+      <Section title="Agregar geometría de obra">
+        <p className="text-xs text-muted">
+          Modelá pies de mampostería, mesadas, columnas o la losa inclinada de un bajo escalera para verificar encajes y alturas libres en 3D.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => addPreset('pier')}>
+            + Pie / murete
+          </Button>
+          <Button size="sm" onClick={() => addPreset('countertop')}>
+            + Mesada / isla
+          </Button>
+          <Button size="sm" onClick={() => addPreset('stair')}>
+            + Bajo escalera
+          </Button>
+        </div>
+      </Section>
+
+      {selected && <BlockForm store={store} plan={plan} block={selected} />}
+
+      <Section title="Elementos en el ambiente">
+        {blocks.length === 0 ? (
+          <p className="text-sm text-muted">Todavía no agregaste mampostería ni rampas en este ambiente.</p>
+        ) : (
+          <ul className="space-y-2">
+            {blocks.map((b) => {
+              const active = selection.kind === 'block' && selection.id === b.id;
+              return (
+                <li
+                  key={b.id}
+                  onClick={() => store.getState().select({ kind: 'block', id: b.id })}
+                  className={`cursor-pointer rounded-card border p-3 text-sm transition-colors ${active ? 'border-accent bg-accent-soft' : 'border-border hover:bg-surface-2'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{b.name}</span>
+                    <span className="shrink-0 rounded-full bg-surface-2 px-2 py-0.5 text-[11px] text-muted">
+                      {b.kind === 'slope' ? 'Pendiente' : 'Bloque'}
+                    </span>
+                  </div>
+                  <p className="tabular mt-1 text-xs text-muted">
+                    {b.kind === 'slope'
+                      ? `${fmtMm(b.width)} × ${fmtMm(b.depth)} mm · sube ${fmtMm(b.heightStart ?? 0)} → ${fmtMm(b.heightEnd ?? b.height)} mm`
+                      : `${fmtDims(b.width, b.height, b.depth)} mm${b.elevation > 0 ? ` · a ${fmtMm(b.elevation)} mm` : ''}`}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Section>
+    </>
+  );
+}
+
+function BlockForm({ store, plan, block: b }: { store: RoomStore; plan: RoomPlan; block: RoomBlock }) {
+  const apply = store.getState().apply;
+  const update = (patch: Partial<RoomBlock>) =>
+    apply((pl) => ({ ...pl, blocks: (pl.blocks ?? []).map((x) => (x.id === b.id ? { ...x, ...patch } : x)) }));
+
+  const rotate = (deg: number) => {
+    const { u, f } = placementAxes(b.rotation);
+    const c = { x: b.x + (u.x * b.width) / 2 + (f.x * b.depth) / 2, y: b.y + (u.y * b.width) / 2 + (f.y * b.depth) / 2 };
+    const r = (((b.rotation + deg) % 360) + 360) % 360;
+    const a = placementAxes(r);
+    update({
+      rotation: r,
+      x: Math.round(c.x - (a.u.x * b.width) / 2 - (a.f.x * b.depth) / 2),
+      y: Math.round(c.y - (a.u.y * b.width) / 2 - (a.f.y * b.depth) / 2),
+    });
+  };
+
+  return (
+    <Section title={`Editando: ${b.name}`}>
+      <div className="space-y-3 rounded-card border border-accent/40 bg-surface p-3">
+        <TextField label="Nombre" value={b.name} maxLength={120} onChange={(e) => update({ name: e.target.value })} />
+        <div className="grid grid-cols-2 gap-2">
+          <SelectField
+            label="Geometría"
+            value={b.kind}
+            onChange={(e) => {
+              const kind = e.target.value as RoomBlockKind;
+              update(
+                kind === 'slope'
+                  ? { kind, heightStart: b.heightStart ?? 0, heightEnd: b.heightEnd ?? Math.min(plan.wallHeight, mm(2600)), height: Math.min(b.height, mm(250)) }
+                  : { kind },
+              );
+            }}
+          >
+            <option value="box">Bloque / mampostería</option>
+            <option value="slope">Losa inclinada / escalera</option>
+          </SelectField>
+          <SelectField label="Terminación" value={b.material} onChange={(e) => update({ material: e.target.value as RoomBlockMaterial })}>
+            <option value="masonry">Mampostería</option>
+            <option value="concrete">Hormigón</option>
+            <option value="countertop">Mesada / piedra</option>
+            <option value="wood">Madera</option>
+          </SelectField>
+          <MmField compact label="Largo" value={b.width} min={mm(20)} max={mm(20000)} onCommit={(v) => v !== null && update({ width: v })} />
+          <MmField compact label="Profundidad / espesor" value={b.depth} min={mm(20)} max={mm(10000)} onCommit={(v) => v !== null && update({ depth: v })} />
+          <MmField
+            compact
+            label={b.kind === 'slope' ? 'Espesor de losa' : 'Alto'}
+            value={b.height}
+            min={mm(10)}
+            max={plan.wallHeight}
+            onCommit={(v) => v !== null && update({ height: v })}
+          />
+          <MmField compact label="Altura desde el piso" value={b.elevation} min={0} max={plan.wallHeight} onCommit={(v) => v !== null && update({ elevation: v })} />
+          {b.kind === 'slope' && (
+            <>
+              <MmField compact label="Altura libre izq." value={b.heightStart ?? 0} min={0} max={plan.wallHeight} onCommit={(v) => v !== null && update({ heightStart: v })} />
+              <MmField compact label="Altura libre der." value={b.heightEnd ?? mm(2600)} min={0} max={plan.wallHeight} onCommit={(v) => v !== null && update({ heightEnd: v })} />
+            </>
+          )}
+          <MmField compact label="X" value={b.x} onCommit={(v) => v !== null && update({ x: v })} />
+          <MmField compact label="Y" value={b.y} onCommit={(v) => v !== null && update({ y: v })} />
+        </div>
+        <AngleField label="Giro" value={b.rotation} onCommit={(v) => update({ rotation: v })} />
+        <div className="flex flex-wrap gap-1 pt-1">
+          <Button size="sm" variant="ghost" onClick={() => rotate(90)}>
+            Girar 90°
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => rotate(-90)}>
+            Girar -90°
+          </Button>
+          {b.kind === 'slope' && (
+            <Button size="sm" variant="ghost" onClick={() => update({ heightStart: b.heightEnd ?? mm(2600), heightEnd: b.heightStart ?? 0 })}>
+              Invertir pendiente
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              apply((pl) => ({ ...pl, blocks: (pl.blocks ?? []).filter((x) => x.id !== b.id) }));
+              store.getState().select({ kind: 'none' });
+            }}
+          >
+            Quitar
+          </Button>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+// ────────────────────────── muebles ──────────────────────────
+
 const looksHung = (s: CabinetSize) => s.d <= mm(400) && s.h <= mm(1000);
 
 function CabinetsTab({
@@ -316,7 +505,6 @@ function CabinetsTab({
   const sizes = Object.fromEntries(cabinets.map((c) => [c.id, c.design.size]));
   const ws = walls(plan);
 
-  /** Coloca un mueble contra una pared, en el primer hueco libre (de 10 en 10 mm). */
   const place = (c: Cabinet) => {
     const size = c.design.size;
     const elevation = looksHung(size) ? mm(1450) : 0;
@@ -336,7 +524,6 @@ function CabinetsTab({
         }
       }
     }
-    // Sin lugar libre: se pone contra la primera pared y avisa del choque.
     const p = snapToWall(plan, { id, cabinetId: c.id, x: ws[0]!.a.x, y: ws[0]!.a.y, rotation: 0, elevation }, size, 0);
     apply((pl) => ({ ...pl, placements: [...pl.placements, p] }));
     store.getState().select({ kind: 'placement', id });
@@ -347,9 +534,7 @@ function CabinetsTab({
 
   return (
     <>
-      {selected && (
-        <PlacementForm store={store} plan={plan} placement={selected} cabinet={selCabinet} />
-      )}
+      {selected && <PlacementForm store={store} plan={plan} placement={selected} cabinet={selCabinet} />}
 
       {!selected && cabinets.length > 0 && (
         <p className="rounded-control bg-surface-2 px-3 py-2 text-xs text-muted">
@@ -402,7 +587,6 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
   const update = (patch: Partial<Placement>) => apply((pl) => ({ ...pl, placements: pl.placements.map((x) => (x.id === p.id ? { ...x, ...patch } : x)) }));
   const size = cabinet?.design.size;
 
-  /** Gira el mueble sobre su centro. */
   const rotate = (deg: number) => {
     if (!size) return;
     const { u, f } = placementAxes(p.rotation);
@@ -431,7 +615,7 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
           Girar 90°
         </Button>
         <Button size="sm" variant="ghost" onClick={() => rotate(-90)}>
-          Girar −90°
+          Girar -90°
         </Button>
         {cabinet && (
           <Link href={`/muebles/${cabinet.id}`} className="inline-flex h-8 items-center rounded-control px-3 text-sm hover:bg-surface-2">
@@ -454,10 +638,10 @@ function PlacementForm({ store, plan, placement: p, cabinet }: { store: RoomStor
   );
 }
 
-// ───────────────────────── avisos ─────────────────────────
+// ────────────────────────── avisos ──────────────────────────
 
 function WarningsTab({ store, warnings }: { store: RoomStore; warnings: RoomWarning[] }) {
-  if (warnings.length === 0) return <p className="text-sm text-muted">Sin avisos: los muebles entran, no se pisan y no tapan puertas ni ventanas.</p>;
+  if (warnings.length === 0) return <p className="text-sm text-muted">Sin avisos: los muebles entran, no se pisan y no chocan con la obra.</p>;
   return (
     <ul className="space-y-2">
       {warnings.map((w, i) => (

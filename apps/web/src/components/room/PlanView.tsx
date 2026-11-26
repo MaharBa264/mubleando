@@ -3,6 +3,7 @@
 import { useMemo, useRef } from 'react';
 import {
   alongWall,
+  blockFootprint,
   doorSwing,
   footprint,
   moveCorner,
@@ -31,14 +32,13 @@ const pts = (ps: readonly PlanPoint[]) => ps.map((p) => `${p.x},${p.y}`).join(' 
 
 type Drag =
   | { kind: 'placement'; id: string; from: PlanPoint; x0: number; y0: number; before: RoomPlan; moved: boolean; free: { x: number; y: number; rotation: number } }
+  | { kind: 'block'; id: string; from: PlanPoint; x0: number; y0: number; before: RoomPlan; moved: boolean }
   | { kind: 'corner'; index: number; before: RoomPlan; moved: boolean }
   | { kind: 'opening'; id: string; from: PlanPoint; offset0: number; before: RoomPlan; moved: boolean };
 
 /**
- * Vista cenital (planta) del ambiente: paredes con su espesor, aberturas, medidas de cada pared,
- * ángulo de cada esquina y muebles colocados. Los muebles se arrastran (se pegan a la pared al
- * soltarlos cerca) y las esquinas también, para copiar un ambiente fuera de escuadra. Las puertas y
- * ventanas se deslizan a lo largo de su pared.
+ * Vista cenital (planta) del ambiente: paredes con su espesor, aberturas, geometrías de obra,
+ * medidas de cada pared, ángulo de cada esquina y muebles colocados.
  */
 export function PlanView({
   store,
@@ -54,9 +54,7 @@ export function PlanView({
   selection: RoomSelection;
   sizes: Readonly<Record<string, CabinetSize>>;
   names: Readonly<Record<string, string>>;
-  /** Muebles colocados con algún aviso: se dibujan en rojo. */
   flagged: ReadonlySet<string>;
-  /** No dejar soltar un mueble donde choca: vuelve al último lugar libre. */
   block?: boolean;
 }) {
   const svg = useRef<SVGSVGElement>(null);
@@ -65,7 +63,6 @@ export function PlanView({
   const outer = useMemo(() => outerCorners(plan), [plan]);
   const t = plan.wallThickness;
 
-  // Encuadre: las paredes por fuera más 70 cm para las cotas.
   const box = useMemo(() => {
     const xs = outer.map((p) => p.x);
     const ys = outer.map((p) => p.y);
@@ -74,7 +71,6 @@ export function PlanView({
     const minY = Math.min(...ys) - pad;
     return { minX, minY, w: Math.max(...xs) - minX + pad, h: Math.max(...ys) - minY + pad };
   }, [outer]);
-  // Tamaño de letra y radios en unidades de la planta: proporcionales al encuadre.
   const k = Math.max(box.w, box.h) / 700;
 
   const toPlan = (e: { clientX: number; clientY: number }): PlanPoint => {
@@ -95,15 +91,20 @@ export function PlanView({
       const y = snap(d.y0 + q.y - d.from.y);
       store.getState().preview((p) => {
         const next = { ...p, placements: p.placements.map((pl) => (pl.id === d.id ? { ...pl, x, y } : pl)) };
-        // Último lugar sin choques, para volver ahí si está activado «Bloquear superposiciones».
         if (!placementCollides(next, d.id, sizes)) {
           const pl = next.placements.find((z) => z.id === d.id)!;
           d.free = { x: pl.x, y: pl.y, rotation: pl.rotation };
         }
         return next;
       });
+    } else if (d.kind === 'block') {
+      const x = snap(d.x0 + q.x - d.from.x);
+      const y = snap(d.y0 + q.y - d.from.y);
+      store.getState().preview((p) => ({
+        ...p,
+        blocks: (p.blocks ?? []).map((b) => (b.id === d.id ? { ...b, x, y } : b)),
+      }));
     } else if (d.kind === 'opening') {
-      // Se desliza por su pared: solo cuenta lo que el puntero avanza en la dirección de la pared.
       store.getState().preview((p) => {
         const o = p.openings.find((x) => x.id === d.id);
         const w = o && walls(p).find((x) => x.id === o.wallId);
@@ -120,7 +121,6 @@ export function PlanView({
     drag.current = null;
     if (!d || !d.moved) return;
     if (d.kind === 'placement') {
-      // Imán: si quedó cerca de una pared, se arrima a ella.
       store.getState().preview((p) => {
         const pl = p.placements.find((x) => x.id === d.id);
         const size = pl && sizes[pl.cabinetId];
@@ -131,7 +131,6 @@ export function PlanView({
         const back = { x: (fp[0].x + fp[1].x) / 2, y: (fp[0].y + fp[1].y) / 2 };
         const dist = (back.x - w.a.x) * w.inward.x + (back.y - w.a.y) * w.inward.y;
         let moved = Math.abs(dist) > MAGNET ? pl : snapToWall(p, pl, size, wi);
-        // Imán con el mueble de al lado: costado con costado y espalda con espalda.
         moved = snapToNeighbor(p, moved, sizes, MAGNET);
         let next = { ...p, placements: p.placements.map((x) => (x.id === d.id ? moved : x)) };
         if (block && placementCollides(next, d.id, sizes)) {
@@ -150,6 +149,15 @@ export function PlanView({
     store.getState().select({ kind: 'placement', id });
     (e.target as Element).setPointerCapture?.(e.pointerId);
     drag.current = { kind: 'placement', id, from: toPlan(e), x0: pl.x, y0: pl.y, before: plan, moved: false, free: { x: pl.x, y: pl.y, rotation: pl.rotation } };
+  };
+
+  const startBlock = (e: React.PointerEvent, id: string) => {
+    e.stopPropagation();
+    const b = (plan.blocks ?? []).find((x) => x.id === id);
+    if (!b) return;
+    store.getState().select({ kind: 'block', id });
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+    drag.current = { kind: 'block', id, from: toPlan(e), x0: b.x, y0: b.y, before: plan, moved: false };
   };
 
   const startOpening = (e: React.PointerEvent, id: string) => {
@@ -182,13 +190,9 @@ export function PlanView({
       onPointerCancel={onPointerUp}
       onPointerDown={() => store.getState().select({ kind: 'none' })}
     >
-      {/* piso */}
       <polygon points={pts(plan.corners)} fill="var(--surface)" />
-
-      {/* paredes con espesor (contorno exterior menos interior) */}
       <path d={`M${pts(outer)}Z M${pts(plan.corners)}Z`} fillRule="evenodd" fill="var(--text)" fillOpacity={0.62} />
 
-      {/* zonas para tocar cada pared */}
       {ws.map((w) => {
         const a = { x: w.a.x - (w.inward.x * t) / 2, y: w.a.y - (w.inward.y * t) / 2 };
         const b = { x: w.b.x - (w.inward.x * t) / 2, y: w.b.y - (w.inward.y * t) / 2 };
@@ -214,7 +218,6 @@ export function PlanView({
         );
       })}
 
-      {/* aberturas */}
       {plan.openings.map((o) => {
         const w = ws.find((x) => x.id === o.wallId);
         if (!w) return null;
@@ -222,12 +225,10 @@ export function PlanView({
         const p1 = { x: p0.x + w.dir.x * o.width, y: p0.y + w.dir.y * o.width };
         const out = (p: PlanPoint) => ({ x: p.x - w.inward.x * t, y: p.y - w.inward.y * t });
         const active = sel.kind === 'opening' && sel.id === o.id;
-        // Puerta: hoja abierta 90° hacia dentro, con el arco de giro.
         const leafEnd = { x: p0.x + w.inward.x * o.width, y: p0.y + w.inward.y * o.width };
         return (
           <g key={o.id} className="cursor-move" onPointerDown={(e) => startOpening(e, o.id)}>
             <title>{`${OPENING_NAME[o.kind][0]!.toUpperCase()}${OPENING_NAME[o.kind].slice(1)}: arrastrala por la pared para moverla (o elegila y usá las flechas)`}</title>
-            {/* zona para tocar más ancha que la abertura dibujada: más fácil de agarrar con el dedo */}
             <polygon
               points={pts([
                 { x: p0.x + w.inward.x * t * 0.6, y: p0.y + w.inward.y * t * 0.6 },
@@ -262,7 +263,47 @@ export function PlanView({
         );
       })}
 
-      {/* cotas de cada pared, por fuera */}
+      {/* geometrías de obra (mampostería, mesadas, losa inclinada de bajo escalera) */}
+      {(plan.blocks ?? []).map((b) => {
+        const fp = blockFootprint(b);
+        const active = sel.kind === 'block' && sel.id === b.id;
+        const c = { x: (fp[0].x + fp[2].x) / 2, y: (fp[0].y + fp[2].y) / 2 };
+        const isSlope = b.kind === 'slope';
+        const leftMid = { x: (fp[0].x + fp[3].x) / 2, y: (fp[0].y + fp[3].y) / 2 };
+        const rightMid = { x: (fp[1].x + fp[2].x) / 2, y: (fp[1].y + fp[2].y) / 2 };
+        const asc = (b.heightEnd ?? b.height) >= (b.heightStart ?? 0);
+        return (
+          <g key={b.id} className="cursor-move" onPointerDown={(e) => startBlock(e, b.id)}>
+            <title>{`${b.name} (${fmt(b.width)} × ${fmt(b.depth)} mm)`}</title>
+            <polygon
+              points={pts(fp)}
+              fill={isSlope ? 'var(--surface-2)' : 'var(--border)'}
+              fillOpacity={isSlope ? 0.5 : 0.85}
+              stroke={active ? 'var(--sel)' : 'var(--text-muted)'}
+              strokeWidth={active ? 2.5 : 1.5}
+              strokeDasharray={isSlope ? '6 4' : undefined}
+              vectorEffect="non-scaling-stroke"
+            />
+            {isSlope && (
+              <line
+                x1={asc ? leftMid.x : rightMid.x}
+                y1={asc ? leftMid.y : rightMid.y}
+                x2={asc ? rightMid.x : leftMid.x}
+                y2={asc ? rightMid.y : leftMid.y}
+                stroke={active ? 'var(--sel)' : 'var(--text-muted)'}
+                strokeWidth={1.25}
+                strokeDasharray="3 3"
+                vectorEffect="non-scaling-stroke"
+                pointerEvents="none"
+              />
+            )}
+            <text x={c.x} y={c.y} fontSize={fontSize * 0.78} textAnchor="middle" dominantBaseline="middle" fill="var(--text)" pointerEvents="none">
+              {b.name}
+            </text>
+          </g>
+        );
+      })}
+
       {ws.map((w) => {
         const mid = { x: (w.a.x + w.b.x) / 2 - w.inward.x * (t + 25000), y: (w.a.y + w.b.y) / 2 - w.inward.y * (t + 25000) };
         const closing = w.index === ws.length - 1;
@@ -273,7 +314,6 @@ export function PlanView({
         );
       })}
 
-      {/* ángulo de cada esquina, por dentro */}
       {ws.map((w) => {
         const prev = ws[(w.index - 1 + ws.length) % ws.length]!;
         const bis = { x: w.inward.x + prev.inward.x, y: w.inward.y + prev.inward.y };
@@ -289,7 +329,6 @@ export function PlanView({
         );
       })}
 
-      {/* muebles colocados: primero los de piso, encima los colgados */}
       {[...plan.placements]
         .sort((a, b) => a.elevation - b.elevation)
         .map((pl) => {
@@ -312,7 +351,6 @@ export function PlanView({
                 strokeDasharray={hung ? '6 4' : undefined}
                 vectorEffect="non-scaling-stroke"
               />
-              {/* por dónde abren sus puertas (90°) */}
               {(size.doors ?? []).map((door, i) => (
                 <polygon
                   key={i}
@@ -326,7 +364,6 @@ export function PlanView({
                   pointerEvents="none"
                 />
               ))}
-              {/* frente del mueble: línea más gruesa */}
               <line x1={fp[3].x} y1={fp[3].y} x2={fp[2].x} y2={fp[2].y} stroke={stroke} strokeWidth={active ? 4 : 3} vectorEffect="non-scaling-stroke" />
               <text x={c.x} y={c.y} fontSize={fontSize * 0.8} textAnchor="middle" dominantBaseline="middle" fill="var(--text)" pointerEvents="none">
                 {names[pl.cabinetId] ?? 'Mueble'}
@@ -335,7 +372,6 @@ export function PlanView({
           );
         })}
 
-      {/* abertura elegida: distancia a cada extremo de su pared, por dentro */}
       {sel.kind === 'opening' &&
         (() => {
           const o = plan.openings.find((x) => x.id === sel.id);
@@ -365,7 +401,6 @@ export function PlanView({
           );
         })()}
 
-      {/* esquinas arrastrables */}
       {plan.corners.map((c, i) => (
         <circle
           key={c.id}
@@ -386,7 +421,6 @@ export function PlanView({
   );
 }
 
-/** Sentido de giro del polígono, para dibujar el arco de la puerta hacia dentro. */
 function crossSign(w: { dir: PlanPoint; inward: PlanPoint }) {
   return w.dir.x * w.inward.y - w.dir.y * w.inward.x;
 }

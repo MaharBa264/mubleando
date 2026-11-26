@@ -28,7 +28,7 @@ type SaveState =
 
 type MobileSheetSnap = 'peek' | 'half' | 'full';
 
-/** Editor de un ambiente: planta/3D a pantalla completa + panel flotante colapsable + bottom sheet móvil + estado Supabase. */
+/** Editor de un ambiente: planta/3D a pantalla completa + geometrías de obra + panel colapsable + estado Supabase. */
 export function RoomEditor({
   room,
   cabinets: initialCabinets,
@@ -56,7 +56,6 @@ export function RoomEditor({
   const [cabinets, setCabinets] = useState(initialCabinets);
   const [wallsMode, setWallsMode] = useState<WallsMode>('auto');
 
-  // Panel lateral colapsable en escritorio (Tab) y bottom sheet en móvil.
   const [panelOpen, setPanelOpen] = useState(true);
   const [sheetSnap, setSheetSnap] = useState<MobileSheetSnap>('half');
   const touchStartY = useRef<number | null>(null);
@@ -65,7 +64,6 @@ export function RoomEditor({
   const [savingCopy, setSavingCopy] = useState(false);
   const [copyError, setCopyError] = useState<string | null>(null);
 
-  // Bloquear superposiciones al arrastrar (preferencia de este navegador).
   const [block, setBlock] = useState(false);
   useEffect(() => {
     try {
@@ -85,7 +83,6 @@ export function RoomEditor({
 
   const names = useMemo(() => Object.fromEntries(cabinets.map((c) => [c.id, c.name])), [cabinets]);
 
-  // Piezas de cada mueble (para el 3D): se calculan una vez por mueble, no por cada vez que se coloca.
   const partsByCabinet = useMemo(() => {
     const m = new Map<string, Pick<ReturnType<typeof compute>, 'parts' | 'legs'>>();
     for (const c of cabinets) {
@@ -95,7 +92,6 @@ export function RoomEditor({
     return m;
   }, [cabinets, methods, materials, hardware]);
 
-  // Medidas para el ambiente: alto real, patas que sobresalen y puertas que barren al abrirse.
   const sizes = useMemo(() => {
     const out: Record<string, CabinetSize> = {};
     for (const c of cabinets) {
@@ -116,7 +112,6 @@ export function RoomEditor({
     [plan.placements, partsByCabinet],
   );
 
-  // — guardado automático con control de versión (rev) y detección de conexión —
   const rev = useRef(room.rev);
   const [save, setSave] = useState<SaveState>({ kind: 'saved', at: null });
   const [saveTick, setSaveTick] = useState(0);
@@ -179,7 +174,6 @@ export function RoomEditor({
     return () => clearTimeout(t);
   }, [plan, name, mode, saveTick, persistNow]);
 
-  // Reintento automático al recuperar conexión en Supabase.
   useEffect(() => {
     if (mode !== 'cloud') return;
     const onOnline = () => {
@@ -209,7 +203,6 @@ export function RoomEditor({
     return () => window.removeEventListener('beforeunload', h);
   }, [save.kind]);
 
-  // — atajos: deshacer, rehacer, Supr para quitar el mueble elegido, flechas para aberturas, Esc, Tab para ocultar panel —
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
@@ -226,6 +219,10 @@ export function RoomEditor({
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && s.selection.kind === 'placement') {
         const id = s.selection.id;
         s.apply((p) => ({ ...p, placements: p.placements.filter((x) => x.id !== id) }));
+        s.select({ kind: 'none' });
+      } else if ((e.key === 'Delete' || e.key === 'Backspace') && s.selection.kind === 'block') {
+        const id = s.selection.id;
+        s.apply((p) => ({ ...p, blocks: (p.blocks ?? []).filter((x) => x.id !== id) }));
         s.select({ kind: 'none' });
       } else if (s.selection.kind === 'opening' && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         e.preventDefault();
@@ -250,7 +247,6 @@ export function RoomEditor({
     return () => window.removeEventListener('keydown', h);
   }, [store]);
 
-  /** Cantidad del mueble en el despiece = veces colocado. */
   const setQuantity = async (cabinetId: string, quantity: number) => {
     const c = cabinets.find((x) => x.id === cabinetId);
     if (!c) return;
@@ -289,7 +285,6 @@ export function RoomEditor({
 
   return (
     <div className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col overflow-hidden bg-viewer">
-      {/* Barra superior del editor de ambientes */}
       <div className="z-20 flex flex-wrap items-center gap-1.5 border-b border-border bg-surface px-2 py-1.5 sm:px-3">
         <Link href={`/proyectos/${room.projectId}`} className={buttonClass('ghost', 'icon-sm', 'text-muted hover:text-text')} aria-label="Volver al proyecto" title="Volver al proyecto">
           <Icon name="back" />
@@ -353,7 +348,6 @@ export function RoomEditor({
         </div>
       </div>
 
-      {/* Modal de conflicto de concurrencia optimista (rev) en Supabase */}
       <Dialog
         open={conflictModalOpen}
         onClose={() => setConflictModalOpen(false)}
@@ -414,7 +408,6 @@ export function RoomEditor({
         </div>
       )}
 
-      {/* Cuerpo: lienzo planta/3D a pantalla completa + panel flotante colapsable (escritorio) / bottom sheet (móvil) */}
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <section className="relative h-full w-full bg-viewer" aria-label={view === 'plan' ? 'Planta' : 'Vista 3D'}>
           {view === 'plan' ? (
@@ -430,7 +423,7 @@ export function RoomEditor({
               <p
                 className={`pointer-events-none absolute left-3 hidden max-w-xl rounded-full border border-border bg-surface/90 px-3 py-1 text-[11px] text-muted shadow-float backdrop-blur transition-all duration-200 sm:block ${mobileBottomOverlayClass}`}
               >
-                Medidas en mm (cara interior). Naranja: fuera de escuadra · Rojo: colisión · Punteado: barrido de puertas.
+                Medidas en mm (cara interior). Naranja: fuera de escuadra · Rojo: colisión · Punteado: barrido de puertas o pendiente.
               </p>
             </>
           ) : (
@@ -440,8 +433,10 @@ export function RoomEditor({
                 placed={placed}
                 materials={materials}
                 selectedId={selection.kind === 'placement' ? selection.id : null}
+                selectedBlockId={selection.kind === 'block' ? selection.id : null}
                 wallsMode={wallsMode}
                 onSelect={(id) => store.getState().select(id ? { kind: 'placement', id } : { kind: 'none' })}
+                onSelectBlock={(id) => store.getState().select(id ? { kind: 'block', id } : { kind: 'none' })}
               />
               <div
                 role="radiogroup"
@@ -465,7 +460,6 @@ export function RoomEditor({
             </>
           )}
 
-          {/* Botón flotante para reabrir el panel en escritorio cuando está colapsado */}
           {!panelOpen && (
             <button
               type="button"
@@ -483,14 +477,12 @@ export function RoomEditor({
           )}
         </section>
 
-        {/* Panel flotante colapsable (escritorio) / Bottom sheet deslizable (móvil) */}
         <aside
           aria-label="Panel del ambiente"
           className={`absolute inset-x-0 bottom-0 z-10 flex flex-col rounded-t-sheet border-t border-border bg-surface/95 shadow-2 backdrop-blur-md transition-[height,transform] duration-200 ${mobileSheetHeightClass} lg:inset-x-auto lg:top-3 lg:right-3 lg:bottom-3 lg:h-auto lg:w-[380px] lg:rounded-card lg:border lg:shadow-float ${
             panelOpen ? 'lg:translate-x-0' : 'lg:pointer-events-none lg:translate-x-[400px]'
           }`}
         >
-          {/* Manija táctil en móvil */}
           <div
             className="flex shrink-0 touch-none items-center justify-between gap-2 px-3 py-2 lg:hidden"
             onTouchStart={(e) => {
@@ -604,4 +596,4 @@ function RoomSaveBadge({
       <span className="hidden sm:inline">{text}</span>
     </span>
   );
-  }
+}
