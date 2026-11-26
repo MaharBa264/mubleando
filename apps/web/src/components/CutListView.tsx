@@ -85,6 +85,7 @@ export function CutListView({
   const showSources = items.some((i) => i.source) && new Set(items.map((i) => i.source)).size > 1;
   const pieces = items.reduce((s, i) => s + (i.qty ?? 1), 0);
   const totalBoardM2 = sum.panels.reduce((s, p) => s + p.areaM2, 0);
+  const diagonalItems = useMemo(() => items.filter((i) => i.part.diagonalCut), [items]);
 
   // Materiales de tablero presentes para el filtro rápido.
   const boardMaterials = useMemo(() => {
@@ -411,6 +412,38 @@ export function CutListView({
       <p className="text-xs text-muted">
         Medidas de corte en mm, ya descontado el espesor del canto. L1 es el canto delantero; A1 y A2 son los cantos de los extremos.
       </p>
+      {diagonalItems.length > 0 && (
+        <section aria-labelledby="diagonal-cuts" className="rounded-card border border-warning/40 bg-surface p-4 shadow-1">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <h3 id="diagonal-cuts" className="text-sm font-semibold text-text">
+              Cortes en ángulo en taller (bajo escalera / techo inclinado)
+            </h3>
+            <span className="rounded-full bg-warning-soft px-2.5 py-0.5 text-xs font-medium text-warning">
+              {diagonalItems.length} {diagonalItems.length === 1 ? 'pieza' : 'piezas'}
+            </span>
+          </div>
+          <p className="mb-3 text-xs text-muted">
+            La lista de corte y el CSV piden a la maderera el <strong>rectángulo completo (con el triángulo de más)</strong>. En el taller, apoyá cada pieza vista de frente, marcá estas alturas desde el borde inferior y cortá la diagonal:
+          </p>
+          <ul className="space-y-2 text-sm">
+            {diagonalItems.map(({ part, qty, source }, idx) => {
+              const d = part.diagonalCut!;
+              return (
+                <li key={`${part.key}-${idx}`} className="tabular flex flex-wrap items-baseline justify-between gap-2 rounded-control bg-surface-2 px-3 py-2">
+                  <span className="font-medium text-text">
+                    {part.name}
+                    {source && showSources ? ` (${source})` : ''}
+                    {(qty ?? 1) > 1 ? ` ×${qty}` : ''}
+                  </span>
+                  <span className="text-xs text-muted">
+                    Placa maderera: <strong className="text-text">{fmtMm(part.cutLength)} × {fmtMm(part.cutWidth)} mm</strong> · Corte: <strong className="text-text">{fmtMm(d.heightLeft)} → {fmtMm(d.heightRight)} mm</strong> · Diagonal {fmtMm(d.diagonalLength)} mm ({d.angleDeg}°)
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section aria-labelledby="totals" className="grid gap-4 md:grid-cols-2">
         <h2 id="totals" className="sr-only">
