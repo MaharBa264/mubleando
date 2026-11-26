@@ -13,7 +13,7 @@ import { data, type ProjectSummary } from '@/data';
 import { fmtDate } from '@/lib/format';
 import { useAsync } from '@/lib/useAsync';
 
-/** S01 · Proyectos: resumen de taller, búsqueda, orden y tarjetas con accesos directos. */
+/** S01 · Proyectos: resumen de taller, guía rápida de novedades, búsqueda, orden y tarjetas con accesos directos. */
 export default function ProjectsPage() {
   const router = useRouter();
   const projects = useAsync(() => data.listProjects(), []);
@@ -21,6 +21,7 @@ export default function ProjectsPage() {
   const [toDelete, setToDelete] = useState<ProjectSummary | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'name'>('recent');
+  const [tipsOpen, setTipsOpen] = useState(false);
 
   const list = projects.status === 'ready' ? projects.data : [];
   const totalCabinets = useMemo(() => list.reduce((acc, p) => acc + p.cabinetCount, 0), [list]);
@@ -40,14 +41,51 @@ export default function ProjectsPage() {
       title="Proyectos"
       actions={
         <>
-          <ButtonLink href="/bibliotecas">Bibliotecas</ButtonLink>
-          <Button variant="primary" onClick={() => setCreating(true)}>
+          <ButtonLink href="/bibliotecas" title="Administrar tableros, cantos, herrajes y métodos de fabricación">
+            Bibliotecas
+          </ButtonLink>
+          <Button variant="primary" onClick={() => setCreating(true)} title="Crear un nuevo proyecto de carpintería">
             + Nuevo proyecto
           </Button>
         </>
       }
     >
       <HelpIntro />
+
+      {/* Ayuda contextual desplegable con las funciones recientes del taller */}
+      <div className="mb-5 rounded-card border border-border bg-surface px-4 py-3 shadow-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="h-2 w-2 rounded-full bg-accent" aria-hidden />
+            <span className="font-medium text-text">Guía rápida de herramientas nuevas</span>
+            <span className="hidden text-xs text-muted sm:inline">· Obra 3D, Alzado por pared, Bajo escalera y Modo taller</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTipsOpen((v) => !v)}
+            aria-expanded={tipsOpen}
+            className="text-xs font-medium text-accent hover:underline"
+          >
+            {tipsOpen ? 'Ocultar' : 'Ver cómo usarlas'}
+          </button>
+        </div>
+        {tipsOpen && (
+          <ul className="mt-3 grid gap-2.5 border-t border-border pt-3 text-xs text-muted sm:grid-cols-2">
+            <li>
+              <strong className="text-text">Obra 3D y Bajo escalera (Ambientes → Obra):</strong> agregá pies de mampostería, mesadas o una losa inclinada, y usá <em>Generar módulos bajo escalera</em> para crear los muebles escalonados automáticamente.
+            </li>
+            <li>
+              <strong className="text-text">Vista Alzado por pared (Ambientes → Alzado):</strong> elegí cualquier pared para ver muebles y pendientes de frente, y arrastrá con bloqueo de eje (solo horizontal o solo vertical).
+            </li>
+            <li>
+              <strong className="text-text">Modo foco en 3D (tecla Tab):</strong> en el editor de muebles y de ambientes podés ocultar los paneles laterales para aprovechar el 100% de la pantalla.
+            </li>
+            <li>
+              <strong className="text-text">Modo taller en Despiece:</strong> filtrá por tablero y tildá las piezas cortadas con barra de avance guardada en tu dispositivo.
+            </li>
+          </ul>
+        )}
+      </div>
 
       {projects.status === 'loading' && <LoadingBlock label="Cargando proyectos…" />}
       {projects.status === 'error' && <ErrorState error={projects.error} onRetry={projects.reload} />}
@@ -61,13 +99,12 @@ export default function ProjectsPage() {
             </Button>
           }
         >
-          Un proyecto agrupa los muebles y ambientes de un trabajo: una cocina, un placard o un local completo. Empezá creando uno para diseñar en 3D y generar el despiece.
+          Un proyecto agrupa los muebles y ambientes de un trabajo: una cocina, un placard o un bajo escalera completo. Empezá creando uno para diseñar en 3D y generar el despiece.
         </EmptyState>
       )}
 
       {projects.status === 'ready' && list.length > 0 && (
         <div className="space-y-6">
-          {/* Franja de resumen + buscador y orden */}
           <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-3.5 shadow-1 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-baseline gap-1.5">
@@ -175,6 +212,7 @@ export default function ProjectsPage() {
                     {p.cabinetCount > 0 && (
                       <Link
                         href={`/proyectos/${p.id}/despiece`}
+                        title="Abrir lista de corte y plano de cortes del proyecto"
                         className="relative z-10 rounded-full bg-surface-2 px-2.5 py-1 font-medium text-text transition-colors hover:bg-accent-soft hover:text-accent"
                       >
                         Despiece →
