@@ -5,42 +5,41 @@
  * Los componentes SOLO usan estas variables (via las clases de Tailwind de @theme o var(--x)).
  * Nunca escribir un color, una sombra o un radio a mano en un componente: si falta uno, se agrega acá.
  *
- * Dirección: "taller luminoso". Fondo hueso cálido como un estudio fotográfico, superficies blancas
- * que flotan sobre la escena, y un único color de acción (azul cobalto) que también marca lo
- * seleccionado en 3D. El mueble es el protagonista: la interfaz es neutra para no competir con él.
+ * Dirección: "Estudio Nórdico". Fondo gris técnico limpio que deja respirar la madera en 3D,
+ * superficies nítidas y un acento cálido terracota/cobre para acciones y selección.
  */
 :root {
   /* superficies */
-  --bg: #f3f0eb;
+  --bg: #f6f7f9;
   --surface: #ffffff;
-  --surface-2: #ece8e1;
-  --border: #e1dcd3;
-  --border-strong: #c3bcb0;
+  --surface-2: #eceff3;
+  --border: #dde2ea;
+  --border-strong: #bcc4d0;
 
   /* texto */
-  --text: #1a1917;
-  --text-muted: #665f55;
+  --text: #12151c;
+  --text-muted: #555f70;
 
-  /* acción y selección: un solo azul para todo lo que es "activo" */
-  --accent: #1a5fd6;
-  --accent-hover: #134cb3;
-  --accent-soft: #e4edfc;
+  /* acción y selección: acento terracota/cobre para todo lo activo */
+  --accent: #c25e1a;
+  --accent-hover: #a14b12;
+  --accent-soft: #faeae0;
   --accent-contrast: #ffffff;
 
   /* estados */
-  --success: #1f7a4c;
-  --success-soft: #e3f4ea;
-  --danger: #b42a20;
-  --danger-soft: #fbe8e6;
-  --warning: #865300;
-  --warning-soft: #fbf0d9;
-  --focus: #1a5fd6;
+  --success: #1b7a4c;
+  --success-soft: #e2f5eb;
+  --danger: #be2922;
+  --danger-soft: #fce8e7;
+  --warning: #9a5b00;
+  --warning-soft: #fdf1d6;
+  --focus: #c25e1a;
 
   /* escena 3D y planos */
-  --sel: #2f7bf5;
-  --zone: #2f7bf5;
-  --viewer-bg: #e9e5de;
-  --viewer-line: #6b655b;
+  --sel: #d96b21;
+  --zone: #d96b21;
+  --viewer-bg: #ebeff4;
+  --viewer-line: #5b6575;
 
   /* colores de material para el 3D */
   --mat-white: #f1f0ec;
@@ -58,42 +57,42 @@
   --radius-m: 14px;
   --radius-l: 20px;
 
-  /* profundidad: sombras cálidas y difusas, nunca negras duras */
-  --shadow-1: 0 1px 2px rgb(40 32 20 / 0.05), 0 2px 6px rgb(40 32 20 / 0.05);
-  --shadow-float: 0 1px 2px rgb(40 32 20 / 0.06), 0 8px 24px rgb(40 32 20 / 0.1);
-  --shadow-2: 0 2px 6px rgb(40 32 20 / 0.08), 0 24px 56px rgb(40 32 20 / 0.2);
+  /* profundidad: sombras limpias y difusas */
+  --shadow-1: 0 1px 2px rgb(15 23 42 / 0.05), 0 2px 6px rgb(15 23 42 / 0.04);
+  --shadow-float: 0 2px 6px rgb(15 23 42 / 0.06), 0 10px 26px rgb(15 23 42 / 0.1);
+  --shadow-2: 0 4px 12px rgb(15 23 42 / 0.08), 0 24px 56px rgb(15 23 42 / 0.18);
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131312;
-    --surface: #1c1b1a;
-    --surface-2: #272624;
-    --border: #33312e;
-    --border-strong: #4d4a45;
-    --text: #f2f0ec;
-    --text-muted: #a49e94;
-    --accent: #6aa5ff;
-    --accent-hover: #8cb9ff;
-    --accent-soft: #172a4c;
-    --accent-contrast: #08142b;
-    --success: #5cc98f;
-    --success-soft: #163324;
+    --bg: #0f1116;
+    --surface: #171a21;
+    --surface-2: #21252f;
+    --border: #2c3240;
+    --border-strong: #434b5e;
+    --text: #f1f3f7;
+    --text-muted: #9aa3b2;
+    --accent: #e88442;
+    --accent-hover: #f29a5e;
+    --accent-soft: #362014;
+    --accent-contrast: #140c06;
+    --success: #52c98e;
+    --success-soft: #133123;
     --danger: #f2867e;
     --danger-soft: #3b1d1b;
-    --warning: #eec06a;
-    --warning-soft: #3a2f16;
-    --focus: #6aa5ff;
-    --sel: #4c94ff;
-    --zone: #4c94ff;
-    --viewer-bg: #201f1d;
-    --viewer-line: #8d877b;
+    --warning: #f0c265;
+    --warning-soft: #392c12;
+    --focus: #e88442;
+    --sel: #f08e4c;
+    --zone: #f08e4c;
+    --viewer-bg: #14171f;
+    --viewer-line: #7e8799;
     --mat-white: #d9d7d1;
-    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
-    --shadow-2: 0 24px 56px rgb(0 0 0 / 0.55);
+    --shadow-1: 0 1px 2px rgb(0 0 0 / 0.45);
+    --shadow-float: 0 2px 6px rgb(0 0 0 / 0.45), 0 10px 26px rgb(0 0 0 / 0.4);
+    --shadow-2: 0 24px 56px rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
 }
@@ -151,7 +150,7 @@ h1,
 }
 
 dialog::backdrop {
-  background: rgb(20 16 10 / 0.42);
+  background: rgb(15 23 42 / 0.45);
   backdrop-filter: blur(2px);
 }
 
