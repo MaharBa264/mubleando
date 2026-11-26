@@ -41,7 +41,7 @@ export default function ProjectsPage() {
       title="Proyectos"
       actions={
         <>
-          <ButtonLink href="/bibliotecas" title="Administrar tableros, cantos, herrajes y métodos de fabricación">
+          <ButtonLink href="/bibliotecas">
             Bibliotecas
           </ButtonLink>
           <Button variant="primary" onClick={() => setCreating(true)} title="Crear un nuevo proyecto de carpintería">
