@@ -773,7 +773,7 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
   return out;
 }
 /** Rectángulo en planta de un bloque de obra (mismo criterio que footprint). */
-export function blockFootprint(b: Pick<RoomBlock, 'x' | 'y' | 'rotation' | 'width' | 'depth'>): [PlanPoint, PlanPoint, PlanPoint, PlanPoint] {
+export function blockFootprint(b: Pick<RoomBlock, 'x' | 'y' | 'rotation' | 'width' | 'depth'>): [{ x: number; y: number }, { x: number; y: number }, { x: number; y: number }, { x: number; y: number }] {
   const { u, f } = placementAxes(b.rotation);
   const p0 = { x: b.x, y: b.y };
   const p1 = { x: b.x + u.x * b.width, y: b.y + u.y * b.width };
@@ -783,7 +783,7 @@ export function blockFootprint(b: Pick<RoomBlock, 'x' | 'y' | 'rotation' | 'widt
 }
 
 /** Altura libre bajo una losa inclinada ('slope') en un punto de planta, o null si está fuera. */
-export function slopeHeightAt(b: RoomBlock, pt: PlanPoint): number | null {
+export function slopeHeightAt(b: RoomBlock, pt: { x: number; y: number }): number | null {
   if (b.kind !== 'slope') return null;
   const { u, f } = placementAxes(b.rotation);
   const dx = pt.x - b.x;
