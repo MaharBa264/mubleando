@@ -130,6 +130,8 @@ export interface Design {
    * las patas van ocultas detrás (las regulables de cocina) y el alto lo da el zócalo.
    */
   legs?: Legs;
+/** Techo inclinado (p. ej. bajo escalera): altura exterior en el costado izquierdo y derecho. */
+  topSlope?: { heightLeft: Len; heightRight: Len };
 }
 
 export interface Legs {
@@ -209,6 +211,12 @@ export const designSchema: z.ZodType<Design> = z.object({
     })
     .optional(),
   hardware: hardwareChoiceSchema.optional(),
+  topSlope: z
+    .object({
+      heightLeft: lenSchema.positive(),
+      heightRight: lenSchema.positive(),
+  })
+    .optional(),
 });
 
 // ───────────────────────── bibliotecas ─────────────────────────
@@ -382,6 +390,18 @@ export interface Part {
    * y desde el borde de abajo, hasta el centro; d = diámetro.
    */
   holes?: { x: Len; y: Len; d: Len }[];
+  /**
+   * Corte diagonal a realizar en taller (la maderera corta el rectángulo envolvente cutLength × cutWidth).
+   * `heightLeft` y `heightRight` son las alturas desde el borde inferior de la pieza vista de frente.
+   */
+  diagonalCut?: {
+    heightLeft: Len;
+    heightRight: Len;
+    diagonalLength: Len;
+    angleDeg: number;
+  };
+  /** Solo techo inclinado ('top'): ángulo respecto a la horizontal en grados. */
+  slopeDeg?: number;
 }
 
 export interface PartAssembly {
