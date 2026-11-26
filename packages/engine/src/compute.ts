@@ -913,6 +913,9 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
     if (p) p.name = doorCount === 1 ? (name === 'Puerta de vidrio' ? name : `${name} de la puerta`) : `${name} ${name === 'Puerta de vidrio' ? '' : 'puerta '}${num}${side}`.replace('  ', ' ');
   }
 
+  if (design.topSlope && design.topSlope.heightLeft !== design.topSlope.heightRight) {
+    applyTopSlope(parts, design, warnings);
+  }
   // El mismo aviso (por ejemplo un material que falta) puede salir una vez por cajón: solo se muestra una.
   const seen = new Set<string>();
   const unique = warnings.filter((w) => {
@@ -958,4 +961,87 @@ export function resolveSizes(requested: readonly (Len | null)[], avail: Len, zon
     warnings.push({ code: 'zone_too_small', message: 'Hay huecos sin espacio: quita divisiones o reduce las medidas fijas.', zoneId });
   }
   return sizes;
+}
+
+/**
+ * Ajusta las piezas del mueble cuando tiene techo inclinado (`design.topSlope`, p. ej. bajo escalera).
+ * - Costados y divisores se recortan a su altura exacta (rectangulares, listos de maderera).
+ * - El techo usa su largo real por hipotenusa y guarda `slopeDeg`.
+ * - Fondo y puertas conservan su rectángulo envolvente (`cutLength × cutWidth`, con el triángulo de más
+ *   para pedir a la maderera) y adjuntan `diagonalCut` con las cotas exactas para cortar en taller.
+ */
+function applyTopSlope(parts: Part[], design: Design, warnings: Warning[]) {
+  const slope = design.topSlope;
+  if (!slope) return;
+  const W = design.size.w;
+  const hL = slope.heightLeft;
+  const hR = slope.heightRight;
+  const topAt = (x: number) => hL + ((hR - hL) * Math.min(Math.max(x, 0), W)) / (W || 1);
+  const topPart = parts.find((p) => p.role === 'top');
+  const topThick = topPart ? topPart.thickness : 0;
+  const isTopOver = design.construction?.top === 'over';
+
+  let conflictWarned = false;
+
+  for (const p of parts) {
+    if (p.role === 'side') {
+      const targetTop = Math.round(topAt(p.box.x + p.box.dx / 2)) - (isTopOver ? topThick : 0);
+      const newDy = Math.max(1000, targetTop - p.box.y);
+      const delta = newDy - p.box.dy;
+      if (delta !== 0) {
+        p.box = { ...p.box, dy: newDy };
+        p.length = Math.max(1000, p.length + delta);
+        p.cutLength = Math.max(1000, p.cutLength + delta);
+      }
+    } else if (p.role === 'divider') {
+      const targetTop = Math.round(topAt(p.box.x + p.box.dx / 2)) - topThick;
+      const newDy = Math.max(1000, targetTop - p.box.y);
+      const delta = newDy - p.box.dy;
+      if (delta !== 0) {
+        p.box = { ...p.box, dy: newDy };
+        p.length = Math.max(1000, p.length + delta);
+        p.cutLength = Math.max(1000, p.cutLength + delta);
+      }
+    } else if (p.role === 'top') {
+      const yL = topAt(p.box.x);
+      const yR = topAt(p.box.x + p.box.dx);
+      const hyp = Math.round(Math.hypot(p.box.dx, yR - yL));
+      const delta = hyp - p.length;
+      p.length = hyp;
+      p.cutLength = Math.max(1000, p.cutLength + delta);
+      p.slopeDeg = Math.round(((Math.atan2(yR - yL, p.box.dx) * 180) / Math.PI) * 10) / 10;
+      p.box = { ...p.box, y: Math.round((yL + yR) / 2 - p.box.dy / 2) };
+    } else if (p.role === 'back' || p.role === 'door') {
+      const margin = p.role === 'back' ? topThick : 0;
+      const cL = Math.max(1000, Math.round(topAt(p.box.x) - margin - p.box.y));
+      const cR = Math.max(1000, Math.round(topAt(p.box.x + p.box.dx) - margin - p.box.y));
+      const maxH = Math.min(p.box.dy, Math.max(cL, cR));
+      const hLeft = Math.min(maxH, cL);
+      const hRight = Math.min(maxH, cR);
+      // Si la pieza queda completamente más baja que la caja original, ajustar el rectángulo envolvente.
+      const delta = maxH - p.box.dy;
+      if (delta < 0) {
+        p.box = { ...p.box, dy: maxH };
+        p.length = Math.max(1000, p.length + delta);
+        p.cutLength = Math.max(1000, p.cutLength + delta);
+      }
+      if (Math.abs(hLeft - hRight) >= 100) {
+        p.diagonalCut = {
+          heightLeft: hLeft,
+          heightRight: hRight,
+          diagonalLength: Math.round(Math.hypot(p.box.dx, hRight - hLeft)),
+          angleDeg: Math.round(((Math.atan2(Math.abs(hRight - hLeft), p.box.dx) * 180) / Math.PI) * 10) / 10,
+        };
+      }
+    } else if ((p.role === 'shelf' || p.role === 'drawer-front') && !conflictWarned) {
+      const limitY = Math.min(topAt(p.box.x), topAt(p.box.x + p.box.dx)) - topThick;
+      if (p.box.y + p.box.dy > limitY + 50) {
+        conflictWarned = true;
+        warnings.push({
+          code: 'zone_too_small',
+          message: 'Algún estante o cajón queda por encima de la pendiente del techo inclinado.',
+        });
+      }
+    }
+  }
 }
