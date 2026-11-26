@@ -11,7 +11,7 @@ import { data } from '@/data';
 import { fmtDims } from '@/lib/format';
 import { useAsync } from '@/lib/useAsync';
 
-const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'mueble';
+const slug = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '').toLowerCase() || 'mueble';
 
 /** S24 · Despiece de un mueble */
 export default function CabinetCutListPage() {
@@ -24,7 +24,7 @@ export default function CabinetCutListPage() {
   if (state.status === 'loading')
     return (
       <Page title="Despiece">
-        <LoadingBlock label="Calculando despiece…" />
+        <LoadingBlock label="Calculando despiece..." />
       </Page>
     );
   if (state.status === 'error')
@@ -50,9 +50,22 @@ export default function CabinetCutListPage() {
     <Page
       title={`Despiece · ${cabinet.name}`}
       back={
-        <Link href={`/muebles/${cabinet.id}`} className="text-muted hover:text-text">
-          ← Volver al mueble
+        <Link href={`/proyectos/${cabinet.projectId}`} className="text-muted hover:text-text">
+          ← Volver al proyecto
         </Link>
+      }
+      actions={
+        <nav aria-label="Vistas del mueble" className="inline-flex items-center gap-0.5 rounded-full bg-surface-2 p-0.5">
+          <Link href={`/muebles/${cabinet.id}`} className="rounded-full px-3 py-1 text-xs text-muted transition-colors hover:text-text">
+            Mueble 3D
+          </Link>
+          <span aria-current="page" className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-text shadow-1">
+            Despiece
+          </span>
+          <Link href={`/proyectos/${cabinet.projectId}/despiece`} className="rounded-full px-3 py-1 text-xs text-muted transition-colors hover:text-text">
+            Cortes proyecto
+          </Link>
+        </nav>
       }
     >
       <p className="tabular -mt-4 mb-6 text-sm text-muted">
