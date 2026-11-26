@@ -743,6 +743,7 @@ export function analyzeRoom(plan: RoomPlan, sizes: Readonly<Record<string, Cabin
         const vertical = A.p.elevation < b.elevation + b.height && b.elevation < A.p.elevation + A.size.h;
         if (vertical) {
           out.push({ code: 'overlap', message: `${A.name} choca con ${b.name}.`, placementId: A.p.id });
+        }
         } else {
         const samples = [
           ...afp,
