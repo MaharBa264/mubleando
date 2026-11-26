@@ -16,6 +16,7 @@ import { PlanView } from './PlanView';
 import { RoomPanel } from './RoomPanel';
 import { createRoomStore } from './roomStore';
 import type { WallsMode } from './RoomViewer3D';
+import { WallElevationView } from './WallElevationView';
 
 const RoomViewer3D = dynamic(() => import('./RoomViewer3D'), { ssr: false, loading: () => <Skeleton className="h-full w-full rounded-none" /> });
 
@@ -28,7 +29,7 @@ type SaveState =
 
 type MobileSheetSnap = 'peek' | 'half' | 'full';
 
-/** Editor de un ambiente: planta/3D a pantalla completa + geometrías de obra + panel colapsable + estado Supabase. */
+/** Editor de un ambiente: planta, alzado por pared y 3D + geometrías de obra + panel colapsable + estado Supabase. */
 export function RoomEditor({
   room,
   cabinets: initialCabinets,
@@ -51,6 +52,7 @@ export function RoomEditor({
   const name = useStore(store, (s) => s.name);
   const selection = useStore(store, (s) => s.selection);
   const view = useStore(store, (s) => s.view);
+  const elevationWall = useStore(store, (s) => s.elevationWall);
   const canUndo = useStore(store, (s) => s.past.length > 0);
   const canRedo = useStore(store, (s) => s.future.length > 0);
   const [cabinets, setCabinets] = useState(initialCabinets);
@@ -318,6 +320,9 @@ export function RoomEditor({
             <button type="button" role="radio" aria-checked={view === 'plan'} className={toggle(view === 'plan')} onClick={() => store.getState().setView('plan')}>
               Planta
             </button>
+            <button type="button" role="radio" aria-checked={view === 'elevation'} className={toggle(view === 'elevation')} onClick={() => store.getState().setView('elevation')}>
+              Alzado
+            </button>
             <button type="button" role="radio" aria-checked={view === '3d'} className={toggle(view === '3d')} onClick={() => store.getState().setView('3d')}>
               3D
             </button>
@@ -409,7 +414,7 @@ export function RoomEditor({
       )}
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        <section className="relative h-full w-full bg-viewer" aria-label={view === 'plan' ? 'Planta' : 'Vista 3D'}>
+        <section className="relative h-full w-full bg-viewer" aria-label={view === 'plan' ? 'Planta' : view === 'elevation' ? 'Alzado de pared' : 'Vista 3D'}>
           {view === 'plan' ? (
             <>
               <PlanView store={store} plan={plan} selection={selection} sizes={sizes} names={names} flagged={flagged} block={block} />
@@ -426,6 +431,16 @@ export function RoomEditor({
                 Medidas en mm (cara interior). Naranja: fuera de escuadra · Rojo: colisión · Punteado: barrido de puertas o pendiente.
               </p>
             </>
+          ) : view === 'elevation' ? (
+            <WallElevationView
+              store={store}
+              plan={plan}
+              wallIndex={elevationWall}
+              selection={selection}
+              sizes={sizes}
+              names={names}
+              flagged={flagged}
+            />
           ) : (
             <>
               <RoomViewer3D

@@ -16,7 +16,9 @@ export interface RoomState {
   past: RoomPlan[];
   future: RoomPlan[];
   selection: RoomSelection;
-  view: 'plan' | '3d';
+  view: 'plan' | 'elevation' | '3d';
+  /** Índice de la pared activa en la vista de alzado. */
+  elevationWall: number;
   /** Cambia la planta y lo apunta en el historial (deshacer / rehacer). */
   apply: (fn: (p: RoomPlan) => RoomPlan) => void;
   /** Cambia la planta sin apuntar en el historial (mientras se arrastra algo). */
@@ -28,6 +30,7 @@ export interface RoomState {
   redo: () => void;
   select: (s: RoomSelection) => void;
   setView: (v: RoomState['view']) => void;
+  setElevationWall: (index: number) => void;
 }
 
 const HISTORY = 100;
@@ -39,6 +42,7 @@ export function createRoomStore(init: { name: string; plan: RoomPlan }) {
     future: [],
     selection: { kind: 'none' },
     view: 'plan',
+    elevationWall: 0,
     apply: (fn) => {
       const prev = get().plan;
       const next = fn(prev);
@@ -61,8 +65,13 @@ export function createRoomStore(init: { name: string; plan: RoomPlan }) {
         if (!next) return s;
         return { plan: next, future: s.future.slice(1), past: [...s.past, s.plan] };
       }),
-    select: (selection) => set({ selection }),
+    select: (selection) =>
+      set((s) => ({
+        selection,
+        elevationWall: selection.kind === 'wall' ? selection.index : s.elevationWall,
+      })),
     setView: (view) => set({ view }),
+    setElevationWall: (elevationWall) => set({ elevationWall }),
   }));
 }
 
