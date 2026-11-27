@@ -71,18 +71,10 @@ function Shell({ children }: { children: ReactNode }) {
       {/* Barra principal: baja (3rem) para dejarle el alto al espacio de trabajo. Los editores restan 3rem. */}
       <header className="no-print sticky top-0 z-30 border-b border-border bg-bg/90 backdrop-blur-md">
         <div className="mx-auto flex h-12 max-w-[1600px] items-center gap-3 px-3 sm:gap-5 sm:px-4">
-          <Link href="/" className="flex items-center gap-2 rounded-control pr-1">
-            <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden>
-              <rect width="64" height="64" rx="14" fill="#f6f7f9" stroke="var(--border-strong)" strokeWidth="1.5" />
-              <path d="M32 26H43V34L32 44V36.4L35.4 37.2V30.8L32 31.6V26Z" fill="var(--accent)" />
-              <g stroke="#1a1d24" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none">
-                <rect x="12" y="14" width="9" height="36" />
-                <path d="M12 26H21M12 38H21M18.2 18.2V21.8M18.2 42.2V45.8" />
-                <rect x="43" y="14" width="9" height="36" />
-                <path d="M43 26H52M45.8 35.2V39.8" />
-                <path d="M21 14L32 26L43 14M21 26H43M21 34L32 44L43 34" />
-                <path d="M32 26V31.6L35.4 30.8V37.2L32 36.4V44" />
-              </g>
+          <Link href="/" aria-label="Mubleando" className="flex items-center gap-2 rounded-control pr-1">
+            <svg width="26" height="26" viewBox="0 0 100 90" aria-hidden className="shrink-0">
+              <path d="M13 78V13H27L50 44 73 13H87V78H73V36L50 66 27 36V78H23V65H13Z" fill="currentColor" />
+              <path d="M50 44L73 13H87L50 66Z" fill="var(--brand-brass)" />
             </svg>
             <span className="font-display hidden text-[17px] font-semibold tracking-tight min-[400px]:inline">Mubleando</span>
           </Link>
