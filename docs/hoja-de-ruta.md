@@ -105,7 +105,7 @@ Siguiente:
 
 ## Consolidación de marca, Obra 3D y Bajo escalera (26–27-11-2026)
 
-- **Marca oficial**: unificación de la identidad de la app como **Mueblando** (con dirección visual *Estudio Nórdico*).
+- **Marca oficial**: unificación de la identidad de la app como **Mubleando** (con dirección visual *Estudio Nórdico*).
 - **Obra 3D y Alzado por pared**: muretes, mesadas base y losas inclinadas en ambientes, vista lateral ortogonal por pared con bloqueo de eje (horizontal o vertical) y asistente **Generar módulos bajo escalera**.
 - **Techo inclinado y corte diagonal real**: el motor calcula costados a medida, tapa por hipotenusa y `diagonalCut` en puertas y fondo; los visores 3D y las vistas vectoriales del PDF muestran el corte diagonal real, mientras que la maderera recibe el rectángulo completo y el PDF suma croquis acotados para cortar en taller.
 

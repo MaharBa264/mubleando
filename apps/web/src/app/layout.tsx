@@ -17,10 +17,10 @@ const titles = Bricolage_Grotesque({ subsets: ['latin', 'latin-ext'], variable: 
 const num = JetBrains_Mono({ subsets: ['latin'], variable: '--font-num', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: { default: 'Mueblando', template: '%s · Mueblando' },
+  title: { default: 'Mubleando', template: '%s · Mubleando' },
   description: 'Diseño de muebles por paneles, listas de corte y producción, en el navegador y en el móvil.',
-  applicationName: 'Mueblando',
-  appleWebApp: { capable: true, title: 'Mueblando', statusBarStyle: 'default' },
+  applicationName: 'Mubleando',
+  appleWebApp: { capable: true, title: 'Mubleando', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {

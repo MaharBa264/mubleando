@@ -179,7 +179,7 @@ function trisBox(tris: readonly Tri3[]): PBox | null {
  * STL binario: cabecera de 80 bytes, número de triángulos (uint32) y 50 bytes por triángulo
  * (normal + 3 vértices en float32, y 2 bytes de atributo a cero). Todo en little endian.
  */
-export function binaryStl(boxes: PBox[], header = 'Mueblando', extra: readonly Tri3[] = []): Uint8Array<ArrayBuffer> {
+export function binaryStl(boxes: PBox[], header = 'Mubleando', extra: readonly Tri3[] = []): Uint8Array<ArrayBuffer> {
   const tris: Tri[] = [...boxes.flatMap(boxTriangles), ...extra.map(withNormal)];
   const buf = new ArrayBuffer(84 + tris.length * 50);
   const view = new DataView(buf);
@@ -364,6 +364,6 @@ export function exportStl(
   if (opts.mode === 'assembled' && o.scale >= 0.5) {
     warnings.push('A esta escala el mueble completo no cabe en una impresora doméstica. Prueba 1:10 o 1:20, o exporta pieza a pieza.');
   }
-  readme.push('', 'Generado por Mueblando.');
+  readme.push('', 'Generado por Mubleando.');
   return { files, readme: readme.join('\n'), warnings, printedSize };
 }
