@@ -5,25 +5,25 @@
  * Los componentes SOLO usan estas variables (via las clases de Tailwind de @theme o var(--x)).
  * Nunca escribir un color, una sombra o un radio a mano en un componente: si falta uno, se agrega acá.
  *
- * Dirección: "Estudio Nórdico". Fondo gris técnico limpio que deja respirar la madera en 3D,
- * superficies nítidas y un acento cálido terracota/cobre para acciones y selección.
+ * Dirección: "Taller Constructivo" (candidata en rama de diseño). Piedra, grafito y latón mate;
+ * mantener materiales, geometría y estados semánticos independientes.
  */
 :root {
   /* superficies */
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-2: #eceff3;
-  --border: #dde2ea;
-  --border-strong: #bcc4d0;
+  --bg: #efeeeb;
+  --surface: #faf9f6;
+  --surface-2: #e7e3dc;
+  --border: #dad7d1;
+  --border-strong: #837d73;
 
   /* texto */
-  --text: #12151c;
-  --text-muted: #555f70;
+  --text: #262624;
+  --text-muted: #656159;
 
-  /* acción y selección: acento terracota/cobre para todo lo activo */
-  --accent: #c25e1a;
-  --accent-hover: #a14b12;
-  --accent-soft: #faeae0;
+  /* acción y selección: latón mate para acciones y selección */
+  --accent: #805a28;
+  --accent-hover: #704d20;
+  --accent-soft: #eae0cd;
   --accent-contrast: #ffffff;
 
   /* estados */
@@ -33,13 +33,13 @@
   --danger-soft: #fce8e7;
   --warning: #9a5b00;
   --warning-soft: #fdf1d6;
-  --focus: #c25e1a;
+  --focus: #805a28;
 
   /* escena 3D y planos */
-  --sel: #d96b21;
-  --zone: #d96b21;
-  --viewer-bg: #ebeff4;
-  --viewer-line: #5b6575;
+  --sel: #805a28;
+  --zone: #805a28;
+  --viewer-bg: #e9e5de;
+  --viewer-line: #656159;
 
   /* colores de material para el 3D */
   --mat-white: #f1f0ec;
@@ -58,37 +58,37 @@
   --radius-l: 20px;
 
   /* profundidad: sombras limpias y difusas */
-  --shadow-1: 0 1px 2px rgb(15 23 42 / 0.05), 0 2px 6px rgb(15 23 42 / 0.04);
-  --shadow-float: 0 2px 6px rgb(15 23 42 / 0.06), 0 10px 26px rgb(15 23 42 / 0.1);
-  --shadow-2: 0 4px 12px rgb(15 23 42 / 0.08), 0 24px 56px rgb(15 23 42 / 0.18);
+  --shadow-1: 0 1px 2px rgb(38 38 36 / 0.05), 0 2px 6px rgb(38 38 36 / 0.04);
+  --shadow-float: 0 2px 6px rgb(38 38 36 / 0.06), 0 10px 26px rgb(38 38 36 / 0.1);
+  --shadow-2: 0 4px 12px rgb(38 38 36 / 0.08), 0 24px 56px rgb(38 38 36 / 0.18);
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1116;
-    --surface: #171a21;
-    --surface-2: #21252f;
-    --border: #2c3240;
-    --border-strong: #434b5e;
-    --text: #f1f3f7;
-    --text-muted: #9aa3b2;
-    --accent: #e88442;
-    --accent-hover: #f29a5e;
-    --accent-soft: #362014;
-    --accent-contrast: #140c06;
+    --bg: #242422;
+    --surface: #2d2c29;
+    --surface-2: #383631;
+    --border: #4c4942;
+    --border-strong: #8b8579;
+    --text: #f3f0e9;
+    --text-muted: #b9b2a6;
+    --accent: #cba66c;
+    --accent-hover: #dec08b;
+    --accent-soft: #443727;
+    --accent-contrast: #262624;
     --success: #52c98e;
     --success-soft: #133123;
     --danger: #f2867e;
     --danger-soft: #3b1d1b;
     --warning: #f0c265;
     --warning-soft: #392c12;
-    --focus: #e88442;
-    --sel: #f08e4c;
-    --zone: #f08e4c;
-    --viewer-bg: #14171f;
-    --viewer-line: #7e8799;
+    --focus: #cba66c;
+    --sel: #cba66c;
+    --zone: #cba66c;
+    --viewer-bg: #242422;
+    --viewer-line: #a49d90;
     --mat-white: #d9d7d1;
     --shadow-1: 0 1px 2px rgb(0 0 0 / 0.45);
     --shadow-float: 0 2px 6px rgb(0 0 0 / 0.45), 0 10px 26px rgb(0 0 0 / 0.4);
@@ -150,7 +150,7 @@ h1,
 }
 
 dialog::backdrop {
-  background: rgb(15 23 42 / 0.45);
+  background: rgb(38 38 36 / 0.45);
   backdrop-filter: blur(2px);
 }
 
