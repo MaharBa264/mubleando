@@ -94,3 +94,44 @@ npm test, npm run typecheck, npm run build; pruebas manuales desktop/móvil 375 
 Aprobado: Taller Constructivo, Grafito y latón como dirección, escala irregular + constructivismo, retícula discreta, referencia AURUM/Bauhaus, tipografía e isotipo animables, libertad de rediseñar logo, respeto a navegación y funciones.
 Pendiente: hex definitivos, tratamiento exacto de selección, composición tipográfica y eslogan, logo final, técnica de morph 3D, duración y ubicación de portada, preferencia de entrada para usuarios frecuentes. No confundir muestras con aprobación de cada detalle.
 Primer cambio recomendado: laboratorio visual aislado y revisable, sin cambiar la experiencia actual. No empezar por la animación ni por migrar rutas. 
+
+
+## 11. Decisiones aprobadas tras las iteraciones 2 y 3 (27/11/2026)
+
+- **Tipografía:** el propietario aprobó expresamente la escala irregular por carácter de la v3 («Lo de las letras, hermoso!! Es por ahí»). La v2, centrada en iniciales grandes, era demasiado tímida. Conservar diferencias visibles de escala; explorar ancho y peso sin perder legibilidad. Aplicar a portada y títulos de páginas principales, no a controles, cotas o formularios. Mantener composición determinista y animable.
+- **Isotipo:** se eligió la familia B, con B1 como referencia de contundencia. El propietario detectó parecido con Gmail; entre las nuevas variantes B7–B11 eligió B11 «Muesca». Se conserva su geometría de referencia: M13 78V13H27L50 44 73 13H87V78H73V36L50 66 27 36V78H21V70H13Z; acento M50 44L73 13H87L50 66Z; viewBox 0 0 100 90. El recorte inferior izquierdo es el gesto distintivo. No afirmar que elimina por completo la asociación ni que se ha realizado una búsqueda de marcas. B11 es la dirección preferida, no un activo definitivo.
+- Grafito y latón, retícula discreta, referencia editorial AURUM/Bauhaus, animación de tipografía e isotipo siguen aprobados. El nombre Taller Constructivo es interno. No cambiar la navegación existente por motivos estéticos.
+
+## 12. Checklist de ejecución acordado
+
+### A — Logo (en paralelo con B)
+- [x] Elegir familia B y muesca B11 como referencia.
+- [ ] Comparar cuatro refinamientos de profundidad, ancho y posición de muesca.
+- [ ] Comprobar a 16, 32 y 64 px, en claro/oscuro y monocromo, junto al nombre.
+- [ ] Evaluar semejanza con Gmail y aprobar isotipo definitivo.
+
+### B — Tipografía
+- [x] Aprobar irregularidad visible por letra.
+- [ ] Probar Bricolage Grotesque, Onest y JetBrains Mono reales.
+- [ ] Explorar ancho, peso y logotipo tipográfico Mubleando.
+- [ ] Definir títulos Proyectos, Bibliotecas, Ambientes y Ayuda; validar móvil, zoom y teclado.
+
+### C — Sistema visual
+- [ ] Validar tokens grafito/latón y contraste de texto, foco, estados y selección 3D.
+- [ ] Ajustar retícula, tarjetas, bordes, sombras e iconos sin cambiar navegación.
+- [ ] Aprobar sistema visual.
+
+### D — Integración
+- [ ] Aplicar tokens, logo y cabeceras aprobadas en rama de desarrollo.
+- [ ] Revisar editores, datos, rutas, PWA y documentación vigente.
+
+### E — Inicio y animación
+- [ ] Portada estática funcional, accesos y ayuda.
+- [ ] Isotipo volumétrico, letras independientes y transición hacia mueble/despiece con scroll reversible.
+- [ ] Fallback estático, reduced-motion, rendimiento y móvil.
+
+### F — Validación y publicación
+- [ ] Pruebas funcionales, visuales y de regresión; revisión conjunta.
+- [ ] Merge y despliegue solo tras aprobar.
+
+Rama de laboratorio: [design/taller-constructivo](https://github.com/MaharBa264/mubleando/tree/design/taller-constructivo). Este registro prevalece sobre las exploraciones de logo A/B/C de las secciones anteriores.
