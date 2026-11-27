@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { AuthGate, AuthProvider, useAuth } from '@/components/auth/AuthProvider';
 import { Icon } from '@/components/ui/Icon';
+import { ExpressiveText } from '@/components/ui/ExpressiveText';
 import { TooltipLayer } from '@/components/ui/TooltipLayer';
 import { isAdmin } from '@/lib/admin';
 import { useAsync } from '@/lib/useAsync';
@@ -131,12 +132,12 @@ function Shell({ children }: { children: ReactNode }) {
     </div>
   );
 }
-export function Page({ title, actions, back, children }: { title: ReactNode; actions?: ReactNode; back?: ReactNode; children: ReactNode }) {
+export function Page({ title, actions, back, children, expressive = false }: { title: ReactNode; actions?: ReactNode; back?: ReactNode; children: ReactNode; expressive?: boolean }) {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
       {back && <div className="no-print mb-3 text-sm text-muted">{back}</div>}
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
-        <h1 className="min-w-0 break-words text-[28px] font-semibold leading-tight sm:text-[32px]">{title}</h1>
+      <div className={`mb-7 flex flex-wrap items-end justify-between gap-3${expressive ? ' constructive-heading' : ''}`}>
+        <h1 className={expressive ? "min-w-0 max-w-full break-words text-[30px] font-semibold leading-tight sm:text-[38px]" : "min-w-0 break-words text-[28px] font-semibold leading-tight sm:text-[32px]"}>{expressive && typeof title === 'string' ? <ExpressiveText text={title} /> : title}</h1>
         {actions && <div className="no-print flex flex-wrap gap-2">{actions}</div>}
       </div>
       {children}
