@@ -20,3 +20,6 @@ La escala tipográfica ahora es por carácter (0,58–1,48 em según letra, adem
 
 ## Iteración 4
 B11 (muesca inferior izquierda) es la referencia preferida por el propietario; B12–B15 son refinamientos no aprobados. Comparación a 16/32/64 px, monocromo, temas y composición tipográfica irregular del nombre. El laboratorio intenta fuentes locales Bricolage Grotesque, Onest y JetBrains Mono con fallback; no garantiza que estén instaladas. Falta probar fuentes reales y navegador. Decisiones y checklist guardados en main, docs/taller-constructivo.md secciones 11–12. No se modifica producción.
+
+## Iteración 5 — decisión cerrada
+El propietario eligió B12 (Encastre profundo) como isotipo definitivo. El laboratorio lo usa por defecto en cabecera y logotipo; B11/B13–B15 se mantienen como comparativas históricas. No seguir explorando familias. La geometría y el orden de integración están en docs/taller-constructivo.md, sección 13 de main. Los SVG de referencia se guardan en docs/prototipos/marca/. Aún falta QA en navegador, integración de fuentes y aplicación real; no se modifica producción.
