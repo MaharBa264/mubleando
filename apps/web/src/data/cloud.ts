@@ -12,6 +12,7 @@ import {
   hardwareSchema,
   PRESET_GLASS,
   PRESET_GLASS_HINGE_IDS,
+  PRESET_CORNER_IDS,
   PRESET_LIFT_IDS,
   PRESET_HARDWARE,
   roomPlanSchema,
@@ -192,8 +193,9 @@ async function ensureHardware() {
   if (!count) {
     let r = await sb.from('hardware').upsert(PRESET_HARDWARE.map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     // Sin la migración de los herrajes de apertura (o de las patas), la base no acepta esos tipos: se crean los demás.
-    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'lift').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
-    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'leg' && h.kind !== 'lift').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'corner').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'lift' && h.kind !== 'corner').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+    if (r.error?.code === '23514') r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => h.kind !== 'leg' && h.kind !== 'lift' && h.kind !== 'corner').map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
     if (r.error) fail(r.error, 'crear los herrajes de partida');
   } else {
     // Cuentas que ya tenían herrajes: las patas de partida, una vez (si no tienen ninguna).
@@ -214,6 +216,12 @@ async function ensureHardware() {
     if (!lifts.error && !lifts.count) {
       const r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => PRESET_LIFT_IDS.includes(h.id)).map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
       if (r.error && r.error.code !== '23514') fail(r.error, 'crear los herrajes de apertura');
+    }
+    // Y los mecanismos de esquina ciego, si no tienen ninguno (sin la migración, se sigue sin ellos).
+    const corners = await sb.from('hardware').select('id', { count: 'exact', head: true }).eq('kind', 'corner');
+    if (!corners.error && !corners.count) {
+      const r = await sb.from('hardware').upsert(PRESET_HARDWARE.filter((h) => PRESET_CORNER_IDS.includes(h.id)).map((h) => fromHardware(h, uid)), { onConflict: 'user_id,id', ignoreDuplicates: true });
+      if (r.error && r.error.code !== '23514') fail(r.error, 'crear los mecanismos de esquina');
     }
   }
   hardwareChecked = uid;

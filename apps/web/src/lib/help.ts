@@ -28,7 +28,7 @@ export const HELP_STEPS: HelpStep[] = [
     how: [
       'Las medidas de lo elegido se cambian en Propiedades (a la derecha, o abajo en el celular).',
       'Tocá una pieza para cambiarle el material, los cantos o el retranqueo.',
-      'En Propiedades del mueble podés activar Techo inclinado (bajo escalera) para dar corte diagonal real a puertas, fondo y tapa.',
+      'En Propiedades del mueble podés activar Techo inclinado (bajo escalera) o Esquinero ciego con mecanismo (rinconero extraíble o media luna).',
       'Ctrl+Z deshace y Ctrl+Y rehace; Tab oculta los paneles laterales para ver en pantalla completa.',
     ],
     art: 'cabinet',

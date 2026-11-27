@@ -79,6 +79,24 @@ export const TEMPLATES: CabinetTemplate[] = [
     },
   },
   {
+    id: 'bajo-esquinero-ciego',
+    name: 'Esquinero ciego',
+    description: 'Bajo mesada de esquina con panel ciego, puerta y rinconero extraíble.',
+    group: 'bajo',
+    size: { w: mm(1000), h: mm(860), d: mm(560) },
+    build: (size, idGen = defaultIdGen) => {
+      const d = setPlinth(newDesign(size, idGen), ZOCALO);
+      return {
+        ...d,
+        blindCorner: {
+          blindSide: 'left',
+          doorWidth: Math.min(mm(450), Math.round(size.w * 0.45)),
+          hardwareId: 'hw-rinconero-extraible-450',
+        },
+      };
+    },
+  },
+  {
     id: 'alacena',
     name: 'Alacena',
     description: 'Mueble alto de pared con un estante y puerta(s).',

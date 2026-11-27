@@ -410,6 +410,7 @@ export function Editor({ cabinet, materials, methods, hardware }: { cabinet: Cab
               parts={result.parts}
               zones={result.zones}
               legs={result.legs}
+              cornerMechanism={result.cornerMechanism}
               materials={materials}
               selection={selection}
               hover={hover}

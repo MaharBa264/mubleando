@@ -4,7 +4,8 @@ import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber';
 import { Edges, Html, Line, OrbitControls, OrthographicCamera, PerspectiveCamera } from '@react-three/drei';
 import { useEffect, useMemo } from 'react';
 import { ExtrudeGeometry, Shape } from 'three';
-import type { Box, LegOut, Material, Part, ZoneOut } from '@mw/engine';
+import type { Box, CornerMechanismOut, LegOut, Material, Part, ZoneOut } from '@mw/engine';
+import { CornerMechanismMesh } from './CornerMechanismMesh';
 import { LegMesh } from './LegMesh';
 import type { FrontsView, Selection } from '@/components/editor/store';
 
@@ -135,6 +136,8 @@ export interface ViewerProps {
   onHover: (id: string | null) => void;
   /** Patas del mueble. */
   legs?: LegOut[];
+  /** Mecanismo de esquina ciego (si lleva). */
+  cornerMechanism?: CornerMechanismOut;
 }
 
 export default function CabinetViewer(props: ViewerProps) {
@@ -152,7 +155,7 @@ export default function CabinetViewer(props: ViewerProps) {
   );
 }
 
-function Scene({ size: dims, parts, zones, materials, selection, hover, view, onSelect, onHover, legs = [] }: ViewerProps) {
+function Scene({ size: dims, parts, zones, materials, selection, hover, view, onSelect, onHover, legs = [], cornerMechanism }: ViewerProps) {
   const colors = useMemo(() => {
     const m = new Map(materials.map((x) => [x.id, resolveColor(x.color)]));
     return {
@@ -231,6 +234,8 @@ function Scene({ size: dims, parts, zones, materials, selection, hover, view, on
             </group>
           );
         })}
+
+        {cornerMechanism && <CornerMechanismMesh mechanism={cornerMechanism} open={view.fronts === 'open'} line={colors.line} wire={view.wire} />}
 
         {legs.map((l, i) => (
           <LegMesh key={i} leg={l} color={resolveColor('var(--mat-walnut)', '#7a5a3a')} line={colors.line} wire={view.wire} />

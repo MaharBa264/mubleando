@@ -1,4 +1,4 @@
-import type { Box, ComputeResult, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
+import type { Box, ComputeResult, CornerMechanismOut, Design, Edges, Front, FrontMount, Material, Method, Part, PartAssembly, PartRole, Warning, Zone, ZoneOut } from './types';
 import { placeLegs } from './legs';
 import { hingeCount, hingePositions, liftFits, pickLength, PRESET_HARDWARE, type Hardware, type HardwareItem, type HardwareKind, type SlidingSpec } from './hardware';
 import { weightPerM2 } from './types';
@@ -6,6 +6,7 @@ import { normalizeMethod } from './presets';
 import { distribute, mm, toM2, toMm, type Len } from './units';
 
 type Lift = Extract<Hardware, { kind: 'lift' }>;
+type CornerHw = Extract<Hardware, { kind: 'corner' }>;
 /** Kilos con una decimal y coma: 4,5. */
 const kg = (w: number) => String(Math.round(w * 10) / 10).replace('.', ',');
 
@@ -104,6 +105,7 @@ export function compute(design: Design, methodIn: Method, materials: readonly Ma
     // La caja sube el alto de la pata: todas las piezas y huecos.
     for (const p of r.parts) p.box = { ...p.box, y: p.box.y + legH };
     for (const z of r.zones) z.box = { ...z.box, y: z.box.y + legH };
+    if (r.cornerMechanism) r.cornerMechanism = { ...r.cornerMechanism, box: { ...r.cornerMechanism.box, y: r.cornerMechanism.box.y + legH } };
   }
   // La huella de la caja (sin las puertas, que sobresalen): las patas van debajo de la caja.
   const carcass = r.parts.filter((p) => p.role === 'side' || p.role === 'bottom');
@@ -126,7 +128,7 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
   const overrides = design.overrides ?? {};
 
   // ── herrajes: el que elige el mueble, o el del método ──
-  const pickHw = <K extends Exclude<HardwareKind, 'leg' | 'lift'>>(kind: K) => {
+  const pickHw = <K extends Exclude<HardwareKind, 'leg' | 'lift' | 'corner'>>(kind: K) => {
     const id = design.hardware?.[kind] ?? method.hardware?.[kind];
     return id ? (hardwareLib.find((h) => h.id === id && h.kind === kind) as Extract<Hardware, { kind: K }> | undefined) : undefined;
   };
@@ -445,7 +447,19 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
       }
     });
   };
-  layout(design.root, inner, null, 0, 0, null);
+  if (design.blindCorner?.hardwareId) {
+    // El mecanismo de esquina ocupa el interior libre: no se generan estantes ni divisores.
+    zones.push({ id: design.root.id, parentId: null, depth: 0, box: inner, isLeaf: true, index: 0 });
+    if (design.root.split) {
+      warnings.push({
+        code: 'hardware_mismatch',
+        message: 'El mecanismo de esquina ocupa el interior libre: se omitieron los estantes y divisores.',
+        zoneId: design.root.id,
+      });
+    }
+  } else {
+    layout(design.root, inner, null, 0, 0, null);
+  }
 
   // ── zócalo ──
   if (plinthH > 0) {
@@ -524,6 +538,93 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
   /** Piezas de puertas de varias partes (marco, vidrio): clave, nombre, número de puerta y lado, para nombrarlas al final. */
   const doorNames: [string, string, number, string][] = [];
   let drawerCount = 0;
+
+  let cornerMechanism: CornerMechanismOut | undefined;
+  if (design.blindCorner) {
+    // El esquinero ciego reemplaza los frentes de huecos con un panel ciego fijo + una puerta.
+    fronted.length = 0;
+    const bc = design.blindCorner;
+    const r = frontRect(inner, 'overlay');
+    const z = frontZ('overlay');
+    const doorW = Math.min(Math.max(bc.doorWidth, mm(150)), Math.max(mm(150), W - mm(50)));
+    const blindW = Math.max(mm(50), W - doorW);
+    const actualDoorW = Math.max(mm(100), doorW - gap);
+    const blindX = bc.blindSide === 'left' ? 0 : doorW;
+    const doorX = bc.blindSide === 'left' ? blindW + gap : 0;
+    const hingeSide: 'left' | 'right' = bc.blindSide === 'left' ? 'right' : 'left';
+
+    addPart({
+      key: 'front.blind-panel',
+      role: 'blind-panel',
+      name: 'Panel ciego',
+      materialId: fm.materialId,
+      thickness: tf,
+      length: r.h,
+      width: blindW,
+      box: { x: blindX, y: r.y, z, dx: blindW, dy: r.h, dz: tf },
+      edges: { ...frontEdges },
+    });
+
+    doorCount++;
+    addPart({
+      key: 'front.corner-door',
+      role: 'door',
+      name: 'Puerta',
+      materialId: fm.materialId,
+      thickness: tf,
+      length: r.h,
+      width: actualDoorW,
+      box: { x: doorX, y: r.y, z, dx: actualDoorW, dy: r.h, dz: tf },
+      edges: { ...frontEdges },
+      hinge: hingeSide,
+    });
+    if (hinge) addItem(hinge, hingeCount(hinge.spec, r.h), 'unidad');
+
+    if (bc.hardwareId) {
+      const cornerHw = (hardwareLib.find((h) => h.id === bc.hardwareId && h.kind === 'corner') ??
+        PRESET_HARDWARE.find((h) => h.id === bc.hardwareId && h.kind === 'corner')) as CornerHw | undefined;
+      if (cornerHw) {
+        const sp = cornerHw.spec;
+        addItem(cornerHw, 1, 'juego', sp.type === 'half-moon' ? 'media luna' : 'extraíble');
+        if (W < sp.minCabinetWidth) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `El mueble mide ${toMm(W)} mm de ancho y «${cornerHw.name}» necesita al menos ${toMm(sp.minCabinetWidth)} mm.`,
+          });
+        } else if (W > sp.maxCabinetWidth) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `El mueble mide ${toMm(W)} mm de ancho y «${cornerHw.name}» admite hasta ${toMm(sp.maxCabinetWidth)} mm.`,
+          });
+        }
+        if (doorW < sp.minDoorWidth) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `La puerta mide ${toMm(doorW)} mm y «${cornerHw.name}» pide una puerta de al menos ${toMm(sp.minDoorWidth)} mm.`,
+          });
+        }
+        if (inner.dz < sp.minDepth) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `El fondo interior mide ${toMm(inner.dz)} mm y «${cornerHw.name}» necesita al menos ${toMm(sp.minDepth)} mm.`,
+          });
+        }
+        if (inner.dy < sp.minHeight) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `El alto interior mide ${toMm(inner.dy)} mm y «${cornerHw.name}» necesita al menos ${toMm(sp.minHeight)} mm.`,
+          });
+        }
+        if (sp.side !== 'both' && sp.side !== bc.blindSide) {
+          warnings.push({
+            code: 'hardware_mismatch',
+            message: `«${cornerHw.name}» es para panel ciego a la ${sp.side === 'left' ? 'izquierda' : 'derecha'} y este mueble lo tiene a la ${bc.blindSide === 'left' ? 'izquierda' : 'derecha'}.`,
+          });
+        }
+        cornerMechanism = { type: sp.type, blindSide: bc.blindSide, box: inner, doorWidth: doorW };
+      }
+    }
+  }
 
   for (const { zone, front, box } of fronted) {
     // ── puertas corredizas: dentro del hueco, en dos rieles ──
@@ -925,7 +1026,7 @@ function computeBox(design: Design, methodIn: Method, materials: readonly Materi
     return true;
   });
 
-  return { parts, zones, warnings: unique, hardware: [...items.values()], legs: [] };
+  return { parts, zones, warnings: unique, hardware: [...items.values()], legs: [], ...(cornerMechanism ? { cornerMechanism } : {}) };
 }
 
 /**

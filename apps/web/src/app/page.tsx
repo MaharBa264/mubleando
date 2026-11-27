@@ -58,7 +58,7 @@ export default function ProjectsPage() {
           <div className="flex items-center gap-2 text-sm">
             <span className="h-2 w-2 rounded-full bg-accent" aria-hidden />
             <span className="font-medium text-text">Guía rápida de herramientas nuevas</span>
-            <span className="hidden text-xs text-muted sm:inline">· Obra 3D, Alzado por pared, Bajo escalera y Modo taller</span>
+            <span className="hidden text-xs text-muted sm:inline">· Esquinero ciego, Obra 3D, Alzado, Bajo escalera y Modo taller</span>
           </div>
           <button
             type="button"
@@ -78,7 +78,7 @@ export default function ProjectsPage() {
               <strong className="text-text">Vista Alzado por pared (Ambientes → Alzado):</strong> elegí cualquier pared para ver muebles y pendientes de frente, y arrastrá con bloqueo de eje (solo horizontal o solo vertical).
             </li>
             <li>
-              <strong className="text-text">Modo foco en 3D (tecla Tab):</strong> en el editor de muebles y de ambientes podés ocultar los paneles laterales para aprovechar el 100% de la pantalla.
+              <strong className="text-text">Esquinero ciego con mecanismo (Plantillas y Propiedades):</strong> creá un bajo de esquina con panel ciego, puerta y rinconero extraíble o media luna; al abrir frentes en 3D las bandejas salen hacia afuera.
             </li>
             <li>
               <strong className="text-text">Cortes en ángulo y Modo taller (Despiece y PDF):</strong> la maderera recibe el rectángulo completo y el PDF incluye croquis acotados para hacer el corte diagonal en taller; además podés tildar piezas cortadas.

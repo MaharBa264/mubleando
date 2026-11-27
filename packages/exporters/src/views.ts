@@ -134,6 +134,7 @@ const rotN = (n: Vec3, t: Xf): Vec3 => {
 
 const COLORS: Partial<Record<Part['role'], string>> = {
   door: '#d9c8a9',
+  'blind-panel': '#cfc0a3',
   'drawer-front': '#d9c8a9',
   back: '#c8c0b2',
   glass: '#cfe2ea',
@@ -170,6 +171,7 @@ function explodeMove(p: Part, size: { w: number; h: number; d: number }): Vec3 {
     case 'divider':
       return [0, 0, gap * 0.9];
     case 'door':
+    case 'blind-panel':
     case 'drawer-front':
       return [0, 0, gap * 2.2];
     case 'glass':

@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { mm, type Hardware, type HingeSpec, type Len, type LegSpec, type LiftSpec, type SlideSpec, type SlidingSpec } from '@mw/engine';
+import { mm, type CornerSpec, type Hardware, type HingeSpec, type Len, type LegSpec, type LiftSpec, type SlideSpec, type SlidingSpec } from '@mw/engine';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Alert } from '@/components/ui/feedback';
 import { MmField, SelectField, TextField } from '@/components/ui/fields';
 import { fmtMm, parseCents } from '@/lib/format';
 
-export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo', leg: 'Pata', lift: 'Pistón, brazo o compás' };
-const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego', leg: 'por unidad', lift: 'por unidad' };
+export const HW_KIND_LABEL: Record<Hardware['kind'], string> = { hinge: 'Bisagra', slide: 'Corredera de cajón', sliding: 'Sistema corredizo', leg: 'Pata', lift: 'Pistón, brazo o compás', corner: 'Mecanismo de esquina' };
+const UNIT: Record<Hardware['kind'], string> = { hinge: 'por unidad', slide: 'por par', sliding: 'por juego', leg: 'por unidad', lift: 'por unidad', corner: 'por juego' };
 
 /** Número con coma decimal, o null si no es un número de 0 a `max`. */
 const parseNum = (text: string, max: number) => {
@@ -75,6 +75,9 @@ export function HardwareDialog({ open, initial, isNew, onClose, onSave }: { open
     let next: Hardware = { ...h, name: h.name.trim(), priceCents: cents };
     if (next.kind === 'lift' && (next.spec.minWeight > next.spec.maxWeight || next.spec.minHeight > next.spec.maxHeight)) {
       return setError('El peso y el alto mínimos no pueden ser mayores que los máximos.');
+    }
+    if (next.kind === 'corner' && next.spec.minCabinetWidth > next.spec.maxCabinetWidth) {
+      return setError('El ancho mínimo del mueble no puede ser mayor que el máximo.');
     }
     if (next.kind === 'slide') {
       const lengths = parseLengths(lengthsText);
@@ -285,6 +288,26 @@ export function HardwareDialog({ open, initial, isNew, onClose, onSave }: { open
                 <option value="1">Uno</option>
               </SelectField>
               <NumField label="Ángulo de apertura (grados)" value={h.spec.angle} max={180} hint="90 = horizontal. Más de 90 sube por encima del mueble." onChange={(v) => v >= 45 && spec<LiftSpec>({ angle: v })} />
+            </div>
+          </Group>
+        )}
+        {h.kind === 'corner' && (
+          <Group title="Mecanismo de esquina ciego" hint="El motor valida estas medidas contra el mueble y la puerta, y deja el interior libre para las bandejas.">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelectField label="Tipo" value={h.spec.type} onChange={(e) => spec<CornerSpec>({ type: e.target.value as CornerSpec['type'] })}>
+                <option value="pull-out">Rinconero extraíble (canastos que salen con la puerta)</option>
+                <option value="half-moon">Media luna (bandejas giratorias)</option>
+              </SelectField>
+              <SelectField label="Lado del panel ciego" value={h.spec.side} onChange={(e) => spec<CornerSpec>({ side: e.target.value as CornerSpec['side'] })}>
+                <option value="both">Reversible (izquierda o derecha)</option>
+                <option value="left">Solo izquierda</option>
+                <option value="right">Solo derecha</option>
+              </SelectField>
+              <MmField compact label="Ancho mínimo del mueble" value={h.spec.minCabinetWidth} min={mm(500)} max={mm(2000)} onCommit={(v) => v !== null && spec<CornerSpec>({ minCabinetWidth: v })} />
+              <MmField compact label="Ancho máximo del mueble" value={h.spec.maxCabinetWidth} min={mm(600)} max={mm(2500)} onCommit={(v) => v !== null && spec<CornerSpec>({ maxCabinetWidth: v })} />
+              <MmField compact label="Ancho mínimo de puerta" value={h.spec.minDoorWidth} min={mm(250)} max={mm(1000)} onCommit={(v) => v !== null && spec<CornerSpec>({ minDoorWidth: v })} />
+              <MmField compact label="Fondo interior mínimo" value={h.spec.minDepth} min={mm(300)} max={mm(1000)} onCommit={(v) => v !== null && spec<CornerSpec>({ minDepth: v })} />
+              <MmField compact label="Alto interior mínimo" value={h.spec.minHeight} min={mm(300)} max={mm(1500)} onCommit={(v) => v !== null && spec<CornerSpec>({ minHeight: v })} />
             </div>
           </Group>
         )}

@@ -149,7 +149,7 @@ export default function LibrariesPage() {
                 Herrajes
               </h2>
               <div className="flex flex-wrap gap-1">
-                {(['hinge', 'slide', 'sliding', 'leg', 'lift'] as const).map((kind) => (
+                {(['hinge', 'slide', 'sliding', 'leg', 'lift', 'corner'] as const).map((kind) => (
                   <Button
                     key={kind}
                     size="sm"

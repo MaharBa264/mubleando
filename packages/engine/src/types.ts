@@ -132,6 +132,29 @@ export interface Design {
   legs?: Legs;
 /** Techo inclinado (p. ej. bajo escalera): altura exterior en el costado izquierdo y derecho. */
   topSlope?: { heightLeft: Len; heightRight: Len };
+  /** Esquinero ciego: panel ciego fijo + puerta + mecanismo de esquina opcional. */
+  blindCorner?: BlindCorner;
+}
+
+
+/** Esquinero ciego: caja rectangular con un panel ciego fijo (metido detrás del mueble vecino) y una puerta con mecanismo opcional. */
+export interface BlindCorner {
+  /** Lado donde queda el panel ciego fijo. */
+  blindSide: 'left' | 'right';
+  /** Ancho de la puerta (el panel ciego cubre el resto: ancho del mueble − doorWidth). */
+  doorWidth: Len;
+  /** Mecanismo de esquina de la biblioteca (media luna o rinconero extraíble). Ausente = solo panel ciego + puerta. */
+  hardwareId?: string;
+}
+
+/** Volumen del mecanismo de esquina calculado para dibujar en el visor 3D (cerrado o extraído al abrir la puerta). */
+export interface CornerMechanismOut {
+  type: 'half-moon' | 'pull-out';
+  blindSide: 'left' | 'right';
+  /** Espacio interior libre que ocupa el mecanismo. */
+  box: Box;
+  /** Ancho de la puerta por donde salen las bandejas. */
+  doorWidth: Len;
 }
 
 export interface Legs {
@@ -215,7 +238,14 @@ export const designSchema: z.ZodType<Design> = z.object({
     .object({
       heightLeft: lenSchema.positive(),
       heightRight: lenSchema.positive(),
-  })
+    })
+    .optional(),
+  blindCorner: z
+    .object({
+      blindSide: z.enum(['left', 'right']),
+      doorWidth: lenSchema.positive(),
+      hardwareId: z.string().min(1).optional(),
+    })
     .optional(),
 });
 
@@ -326,6 +356,7 @@ export type PartRole =
   | 'divider'
   | 'plinth'
   | 'door'
+  | 'blind-panel'
   | 'drawer-front'
   | 'drawer-side'
   | 'drawer-back'
@@ -445,6 +476,8 @@ export interface ComputeResult {
   hardware: HardwareItem[];
   /** Patas del mueble (vacío si no lleva). */
   legs: LegOut[];
+  /** Mecanismo de esquina ciego (si el mueble lleva uno). */
+  cornerMechanism?: CornerMechanismOut;
 }
 
 // ───────────────────────── validación de bibliotecas guardadas ─────────────────────────

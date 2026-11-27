@@ -128,12 +128,33 @@ export interface LiftSpec {
   angle: number;
 }
 
+
+export interface CornerSpec {
+  /**
+   * - 'half-moon': bandejas media luna que giran hacia afuera con la puerta.
+   * - 'pull-out': rinconero extraíble (los canastos de adelante salen con la puerta y los de atrás se corren hacia adelante).
+   */
+  type: 'half-moon' | 'pull-out';
+  /** Ancho exterior mínimo y máximo del mueble. */
+  minCabinetWidth: Len;
+  maxCabinetWidth: Len;
+  /** Ancho mínimo de puerta que pide el mecanismo. */
+  minDoorWidth: Len;
+  /** Fondo interior mínimo del mueble. */
+  minDepth: Len;
+  /** Alto interior mínimo libre del mueble. */
+  minHeight: Len;
+  /** Lado del panel ciego admitido: 'both' (reversible), 'left' o 'right'. */
+  side: 'both' | 'left' | 'right';
+}
+
 export type Hardware =
   | { id: string; name: string; kind: 'hinge'; priceCents: number; spec: HingeSpec }
   | { id: string; name: string; kind: 'slide'; priceCents: number; spec: SlideSpec }
   | { id: string; name: string; kind: 'sliding'; priceCents: number; spec: SlidingSpec }
   | { id: string; name: string; kind: 'leg'; priceCents: number; spec: LegSpec }
-  | { id: string; name: string; kind: 'lift'; priceCents: number; spec: LiftSpec };
+  | { id: string; name: string; kind: 'lift'; priceCents: number; spec: LiftSpec }
+  | { id: string; name: string; kind: 'corner'; priceCents: number; spec: CornerSpec };
 
 export type HardwareKind = Hardware['kind'];
 
@@ -244,6 +265,7 @@ export const PRESET_HARDWARE: Hardware[] = [
   },
   ...PRESET_LEGS(),
   ...PRESET_LIFTS(),
+  ...PRESET_CORNERS(),
 ];
 
 /**
@@ -281,6 +303,35 @@ function PRESET_LIFTS(): Hardware[] {
   ];
 }
 export const PRESET_LIFT_IDS = PRESET_LIFTS().map((h) => h.id);
+
+/** Mecanismos de esquina ciego de partida (también se agregan solos a las bibliotecas que no tienen ninguno). */
+function PRESET_CORNERS(): Hardware[] {
+  return [
+    {
+      id: 'hw-rinconero-extraible-450',
+      name: 'Rinconero extraíble (puerta 450 · mueble 900–1200)',
+      kind: 'corner',
+      priceCents: 0,
+      spec: { type: 'pull-out', minCabinetWidth: mm(900), maxCabinetWidth: mm(1200), minDoorWidth: mm(450), minDepth: mm(500), minHeight: mm(550), side: 'both' },
+    },
+    {
+      id: 'hw-rinconero-extraible-400',
+      name: 'Rinconero extraíble compacto (puerta 400 · mueble 800–1000)',
+      kind: 'corner',
+      priceCents: 0,
+      spec: { type: 'pull-out', minCabinetWidth: mm(800), maxCabinetWidth: mm(1000), minDoorWidth: mm(400), minDepth: mm(500), minHeight: mm(550), side: 'both' },
+    },
+    {
+      id: 'hw-media-luna-450',
+      name: 'Bandejas media luna giratorias (puerta 450 · mueble 850–1200)',
+      kind: 'corner',
+      priceCents: 0,
+      spec: { type: 'half-moon', minCabinetWidth: mm(850), maxCabinetWidth: mm(1200), minDoorWidth: mm(450), minDepth: mm(480), minHeight: mm(520), side: 'both' },
+    },
+  ];
+}
+export const PRESET_CORNER_IDS = PRESET_CORNERS().map((h) => h.id);
+
 
 /** ¿El herraje de apertura aguanta una puerta de este peso (kg) y alto? Se redondea el peso a 0,1 kg. */
 export function liftFits(spec: LiftSpec, weight: number, height: Len): boolean {
@@ -409,6 +460,21 @@ export const hardwareSchema: z.ZodType<Hardware> = z.discriminatedUnion('kind', 
         perDoor: z.union([z.literal(1), z.literal(2)]),
         angle: z.number().min(45).max(180),
       }),
+  }),
+  z.object({
+    id: z.string().min(1),
+    name: z.string().min(1).max(120),
+    kind: z.literal('corner'),
+    priceCents: z.number().int().nonnegative(),
+    spec: z.object({
+      type: z.enum(['half-moon', 'pull-out']),
+      minCabinetWidth: len.positive(),
+      maxCabinetWidth: len.positive(),
+      minDoorWidth: len.positive(),
+      minDepth: nonNeg,
+      minHeight: nonNeg,
+      side: z.enum(['both', 'left', 'right']),
+    }),
   }),
 ]);
 

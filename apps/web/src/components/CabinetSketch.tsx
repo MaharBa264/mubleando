@@ -45,6 +45,7 @@ const FILL: Partial<Record<Part['role'], string>> = {
   back: 'var(--surface-2)',
   door: 'var(--surface)',
   'drawer-front': 'var(--surface)',
+  'blind-panel': 'var(--surface-2)',
   plinth: 'var(--border)',
 };
 
@@ -53,7 +54,7 @@ function PartRect({ p, h }: { p: Part; h: number }) {
   if (p.role === 'drawer-side' || p.role === 'drawer-back' || p.role === 'drawer-bottom') return null;
   const x = p.box.x;
   const y = h - (p.box.y + p.box.dy);
-  const isFront = p.role === 'door' || p.role === 'drawer-front';
+  const isFront = p.role === 'door' || p.role === 'drawer-front' || p.role === 'blind-panel';
   return (
     <g>
       <rect

@@ -15,7 +15,7 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 6 | [Puertas con vidrio y puertas de vidrio](#6-puertas-con-vidrio-y-puertas-de-vidrio) | [#6](https://github.com/MaharBa264/mubleando/issues/6) | grande | **Hecho** (22-11-2026), salvo perfil de aluminio y corredizas de vidrio. |
 | 7 | [Muebles que no se atraviesan en el ambiente](#7-muebles-que-no-se-atraviesan-en-el-ambiente) | [#7](https://github.com/MaharBa264/mubleando/issues/7) | mediano | **Hecho** (22-11-2026). |
 | 11 | [Puertas que abren hacia arriba o hacia abajo](#11-puertas-que-abren-hacia-arriba-o-hacia-abajo) | [#11](https://github.com/MaharBa264/mubleando/issues/11) | mediano | **Hecho** (23-11-2026), salvo elevables paralelas y plegables. |
-| 12 | [Esquinero ciego con mecanismo que sale con la puerta](#12-esquinero-ciego-con-mecanismo-que-sale-con-la-puerta) | [#12](https://github.com/MaharBa264/mubleando/issues/12) | mediano | Es el esquinero de cocina más común y no necesita piezas con otra forma. |
+| 12 | [Esquinero ciego con mecanismo que sale con la puerta](#12-esquinero-ciego-con-mecanismo-que-sale-con-la-puerta) | [#12](https://github.com/MaharBa264/mubleando/issues/12) | mediano | **Hecho** (27-11-2026). |
 | 13 | [Piezas con cualquier contorno](#13-piezas-con-cualquier-contorno) | [#13](https://github.com/MaharBa264/mubleando/issues/13) | grande | Es la base de los techos inclinados, los esquineros en L y ochava y los rellenos cónicos. |
 | 14 | [Techo irregular en el ambiente y muebles que se adaptan](#14-techo-irregular-en-el-ambiente-y-muebles-que-se-adaptan) | [#14](https://github.com/MaharBa264/mubleando/issues/14) | mediano | El techo se puede hacer sin la #13; adaptar el mueble la necesita. |
 | 15 | [Esquineros en L y en ochava, y rellenos cónicos](#15-esquineros-en-l-y-en-ochava-y-rellenos-cónicos) | [#15](https://github.com/MaharBa264/mubleando/issues/15) | grande | Usan la #13. |
@@ -332,6 +332,8 @@ Dos cosas distintas, con herrajes distintos.
 ---
 
 ## 12. Esquinero ciego con mecanismo que sale con la puerta
+
+> **Hecho** el 27-11-2026.
 
 **Qué pasa hoy.** Un esquinero se puede armar como una caja común, pero no hay mecanismos de esquina ni forma de marcar el panel ciego que queda tapado por el mueble vecino.
 

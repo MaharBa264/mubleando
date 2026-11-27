@@ -61,6 +61,7 @@ export const ROLE_LABEL: Record<PartRole, string> = {
   divider: 'Divisor',
   plinth: 'Zócalo',
   door: 'Puerta',
+  'blind-panel': 'Panel ciego',
   'drawer-front': 'Frente de cajón',
   'drawer-side': 'Lateral de cajón',
   'drawer-back': 'Trasera o contrafrente de cajón',
@@ -222,6 +223,7 @@ function CabinetProps() {
           </div>
         )}
       </Section>
+      <BlindCornerSection />
       <BaseSection />
 
 
@@ -259,6 +261,106 @@ function CabinetProps() {
 const HW_LABEL: Record<keyof HardwareChoice, string> = { hinge: 'Bisagras', slide: 'Correderas de cajón', sliding: 'Sistema corredizo' };
 
 /** Base del mueble: en el piso, con zócalo (y patas regulables detrás, si se quiere) o con patas. */
+
+function BlindCornerSection() {
+  const { hardware } = useEnv();
+  const design = useEditor((s) => s.design);
+  const apply = useEditor((s) => s.apply);
+  const corners = hardware.filter((h): h is Extract<Hardware, { kind: 'corner' }> => h.kind === 'corner');
+  const bc = design.blindCorner;
+  const blindW = bc ? Math.max(mm(50), design.size.w - bc.doorWidth) : 0;
+
+  return (
+    <Section title="Esquinero ciego">
+      <label
+        className="flex cursor-pointer items-center gap-2 text-sm text-text"
+        title="Convierte el mueble en un esquinero ciego de cocina con panel ciego fijo, puerta abatible y mecanismo extraíble o media luna."
+      >
+        <input
+          type="checkbox"
+          checked={Boolean(bc)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              const doorW = Math.min(mm(450), Math.max(mm(300), Math.round((design.size.w * 0.45) / 100) * 100));
+              apply((x) => ({
+                ...x,
+                blindCorner: { blindSide: 'left', doorWidth: doorW, hardwareId: corners[0]?.id ?? 'hw-rinconero-extraible-450' },
+              }));
+            } else {
+              apply((x) => {
+                const next = { ...x };
+                delete next.blindCorner;
+                return next;
+              });
+            }
+          }}
+          className="h-4 w-4 rounded accent-[var(--accent)]"
+        />
+        Activar esquinero ciego con mecanismo
+      </label>
+      {bc && (
+        <div className="space-y-2.5 rounded-card border border-border bg-surface-2/60 p-3">
+          <div className="space-y-1">
+            <span className="block text-xs font-medium text-muted">Lado del panel ciego (metido en la esquina)</span>
+            <div className="grid grid-cols-2 gap-1.5">
+              {(
+                [
+                  ['left', 'Izquierda'],
+                  ['right', 'Derecha'],
+                ] as const
+              ).map(([side, label]) => (
+                <Button
+                  key={side}
+                  size="sm"
+                  variant={bc.blindSide === side ? 'primary' : 'secondary'}
+                  title={`Coloca el panel ciego fijo a la ${label.toLowerCase()} y la puerta del lado opuesto`}
+                  onClick={() => apply((x) => (x.blindCorner ? { ...x, blindCorner: { ...x.blindCorner, blindSide: side } } : x))}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 items-end gap-2">
+            <MmField
+              compact
+              label="Ancho de puerta"
+              value={bc.doorWidth}
+              min={mm(250)}
+              max={Math.max(mm(300), design.size.w - mm(100))}
+              onCommit={(v) => v !== null && apply((x) => (x.blindCorner ? { ...x, blindCorner: { ...x.blindCorner, doorWidth: v } } : x))}
+            />
+            <div className="rounded-control border border-border bg-surface px-2.5 py-1.5 text-xs">
+              <span className="block text-[11px] text-muted">Panel ciego</span>
+              <span className="tabular font-semibold text-text">{fmtMm(blindW)} mm</span>
+            </div>
+          </div>
+
+          <SelectField
+            label="Mecanismo de esquina"
+            value={bc.hardwareId ?? ''}
+            onChange={(e) => {
+              const id = e.target.value || undefined;
+              apply((x) => (x.blindCorner ? { ...x, blindCorner: { ...x.blindCorner, hardwareId: id } } : x));
+            }}
+          >
+            <option value="">Sin mecanismo (solo panel ciego + puerta)</option>
+            {corners.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </SelectField>
+          <p className="text-[11px] text-muted">
+            Con mecanismo elegido, el interior queda libre de estantes y las bandejas salen en 3D al abrir los frentes.
+          </p>
+        </div>
+      )}
+    </Section>
+  );
+}
+
 function BaseSection() {
   const { hardware, result } = useEnv();
   const design = useEditor((s) => s.design);
@@ -844,7 +946,7 @@ function PartProps({ partKey }: { partKey: string }) {
     ['W1', 'A1 · extremo'],
     ['W2', 'A2 · extremo'],
   ];
-  const isFront = part.role === 'door' || part.role === 'drawer-front';
+  const isFront = part.role === 'door' || part.role === 'drawer-front' || part.role === 'blind-panel';
   const isDrawerBox = part.assembly?.kind === 'drawer' && !isFront;
   const isDivision = part.role === 'shelf' || part.role === 'divider';
   const sameRole = result.parts.filter((p) => p.role === part.role);
