@@ -92,23 +92,24 @@ npm test, npm run typecheck, npm run build; pruebas manuales desktop/móvil 375 
 
 ## 10. Qué queda decidido y qué no
 Aprobado: Taller Constructivo, Grafito y latón como dirección, escala irregular + constructivismo, retícula discreta, referencia AURUM/Bauhaus, tipografía e isotipo animables, libertad de rediseñar logo, respeto a navegación y funciones.
-Pendiente: hex definitivos, tratamiento exacto de selección, composición tipográfica y eslogan, logo final, técnica de morph 3D, duración y ubicación de portada, preferencia de entrada para usuarios frecuentes. No confundir muestras con aprobación de cada detalle.
+Pendiente: hex definitivos, tratamiento exacto de selección, composición tipográfica y eslogan, normalización técnica del logo, técnica de morph 3D, duración y ubicación de portada, preferencia de entrada para usuarios frecuentes. No confundir muestras con aprobación de cada detalle.
 Primer cambio recomendado: laboratorio visual aislado y revisable, sin cambiar la experiencia actual. No empezar por la animación ni por migrar rutas. 
 
 
 ## 11. Decisiones aprobadas tras las iteraciones 2 y 3 (27/11/2026)
 
 - **Tipografía:** el propietario aprobó expresamente la escala irregular por carácter de la v3 («Lo de las letras, hermoso!! Es por ahí»). La v2, centrada en iniciales grandes, era demasiado tímida. Conservar diferencias visibles de escala; explorar ancho y peso sin perder legibilidad. Aplicar a portada y títulos de páginas principales, no a controles, cotas o formularios. Mantener composición determinista y animable.
-- **Isotipo:** se eligió la familia B, con B1 como referencia de contundencia. El propietario detectó parecido con Gmail; entre las nuevas variantes B7–B11 eligió B11 «Muesca». Se conserva su geometría de referencia: M13 78V13H27L50 44 73 13H87V78H73V36L50 66 27 36V78H21V70H13Z; acento M50 44L73 13H87L50 66Z; viewBox 0 0 100 90. El recorte inferior izquierdo es el gesto distintivo. No afirmar que elimina por completo la asociación ni que se ha realizado una búsqueda de marcas. B11 es la dirección preferida, no un activo definitivo.
+- **Isotipo:** se eligió la familia B, con B1 como referencia de contundencia. El propietario detectó parecido con Gmail; entre las nuevas variantes B7–B11 eligió B11 «Muesca». Se conserva su geometría de referencia: M13 78V13H27L50 44 73 13H87V78H73V36L50 66 27 36V78H21V70H13Z; acento M50 44L73 13H87L50 66Z; viewBox 0 0 100 90. El recorte inferior izquierdo es el gesto distintivo. No afirmar que elimina por completo la asociación ni que se ha realizado una búsqueda de marcas. B11 fue la dirección preferida en esa iteración; sustituida después por B12 (sección 13).
 - Grafito y latón, retícula discreta, referencia editorial AURUM/Bauhaus, animación de tipografía e isotipo siguen aprobados. El nombre Taller Constructivo es interno. No cambiar la navegación existente por motivos estéticos.
 
 ## 12. Checklist de ejecución acordado
 
 ### A — Logo (en paralelo con B)
 - [x] Elegir familia B y muesca B11 como referencia.
-- [ ] Comparar cuatro refinamientos de profundidad, ancho y posición de muesca.
+- [x] Comparar cuatro refinamientos de profundidad, ancho y posición de muesca.
 - [ ] Comprobar a 16, 32 y 64 px, en claro/oscuro y monocromo, junto al nombre.
-- [ ] Evaluar semejanza con Gmail y aprobar isotipo definitivo.
+- [x] Elegir B12 como isotipo definitivo por preferencia del propietario.
+- [ ] Validar legibilidad y diferenciación en aplicaciones reales; no se ha realizado búsqueda marcaria.
 
 ### B — Tipografía
 - [x] Aprobar irregularidad visible por letra.
@@ -135,3 +136,23 @@ Primer cambio recomendado: laboratorio visual aislado y revisable, sin cambiar l
 - [ ] Merge y despliegue solo tras aprobar.
 
 Rama de laboratorio: [design/taller-constructivo](https://github.com/MaharBa264/mubleando/tree/design/taller-constructivo). Este registro prevalece sobre las exploraciones de logo A/B/C de las secciones anteriores.
+
+## 13. Decisión final del isotipo — B12 · Encastre profundo
+
+Fecha: 27/11/2026. El propietario seleccionó B12 como definitiva tras comparar B11–B15. Se cierra la exploración de familias y se conserva la geometría exacta de B12 salvo correcciones técnicas justificadas y aprobadas. B11 es antecedente; B13–B15 quedan archivadas. La muesca inferior izquierda más profunda es el gesto distintivo. La mejora de lectura a tamaños pequeños y la diferenciación frente a Gmail son hipótesis de diseño pendientes de validación, no resultados de pruebas ni de una búsqueda de marcas.
+
+Geometría canónica SVG: viewBox 0 0 100 90; contorno `M13 78V13H27L50 44 73 13H87V78H73V36L50 66 27 36V78H23V65H13Z`; plano de acento `M50 44L73 13H87L50 66Z`. Mantener ambas capas separadas para futura animación. Paleta candidata: grafito #262624 y latón #87612D en claro; marfil #F3F0E9 y latón #CBA66C en oscuro; monocromo con ambas capas del mismo color. No modificar proporciones ni recolocar la muesca para iconos sin revisión.
+
+### Siguiente bloque: implementación real en rama de desarrollo
+
+1. Congelar activos SVG B12 claro, oscuro y monocromo; comprobar 16/32/64 px y márgenes del icono. Conservar originales de producción hasta aprobar integración.
+2. Actualizar el laboratorio: B12 por defecto en cabecera y composición tipográfica. Preservar variantes previas como historial; no reabrir el diseño del símbolo.
+3. Auditar la rama y sincronizar con main antes de editar la app; no sobrescribir cambios ajenos. Registrar baseline y revisar colores hardcodeados y pruebas.
+4. `apps/web/src/app/globals.css`: aplicar únicamente tokens grafito/latón validados, contraste de foco, selección y estados; conservar colores de materiales y API de tokens. Retícula decorativa opt-in, no global.
+5. `apps/web/src/app/layout.tsx`: conservar Onest, Bricolage Grotesque y JetBrains Mono; sincronizar themeColor tras aprobar tokens; probar fuentes reales y variantes de peso/ancho.
+6. `apps/web/src/components/AppShell.tsx`: integrar B12 mediante componente de marca reutilizable; preservar destinos, auth y navegación. Crear título expresivo accesible opt-in para cabeceras principales, con composición determinista por letra, sin alterar títulos técnicos. Revisar tamaños móviles y textos largos.
+7. Auditar `app/icon.svg`, `app/apple-icon.png`, `app/manifest.ts`, `scripts/make-icons.mjs` y activos de public antes de regenerar iconos PWA. Usar la misma geometría canónica y mantener compatibilidad.
+8. Verificar Proyectos, Bibliotecas, Ayuda, Ambientes, editores, cuenta, administración, impresión y exportaciones. Ejecutar npm test, npm run typecheck, npm run build y pruebas visuales claro/oscuro, 375 px y zoom 200%. Actualizar docs/diseno.md con valores realmente aplicados. No desplegar hasta revisión.
+9. Solo después: portada funcional, separación de rutas y animación reversible de logo y tipografía según issue #16. No mezclar migración de rutas con esta fase visual.
+
+Estado: identidad del isotipo aprobada, integración y QA pendientes. La rama de diseño es el espacio de trabajo; main conserva por ahora la aplicación vigente.
