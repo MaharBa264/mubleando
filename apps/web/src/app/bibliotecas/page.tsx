@@ -54,7 +54,7 @@ export default function LibrariesPage() {
   });
 
   return (
-    <Page title="Bibliotecas">
+    <Page title="Bibliotecas" expressive>
       <p className="-mt-3 mb-6 text-sm text-muted">
         Tus tableros, cantos, vidrios, herrajes y métodos de fabricación. Los precios, en pesos, sirven para calcular el costo del material en el despiece.
       </p>
