@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mubleando · Laboratorio Taller Constructivo</title>
+<style>
+*{box-sizing:border-box}
+:root{font-family:system-ui,sans-serif;color-scheme:light;--bg:#efeeeb;--surface:#faf9f6;--ink:#262624;--muted:#6d6962;--accent:#87612d;--on:#fff;--soft:#eae0cd;--line:#dad7d1;--grid:rgba(38,38,36,.05)}
+[data-theme=dark]{color-scheme:dark;--bg:#242422;--surface:#2d2c29;--ink:#f3f0e9;--muted:#b9b2a6;--accent:#cba66c;--on:#262624;--soft:#443727;--line:#4c4942;--grid:rgba(203,166,108,.075)}
+[data-palette=copper][data-theme=light]{--bg:#f6f7f9;--surface:#fff;--ink:#12151c;--muted:#555f70;--accent:#c25e1a;--on:#fff;--soft:#faeae0;--line:#dde2ea}
+[data-palette=copper][data-theme=dark]{--bg:#0f1116;--surface:#171a21;--ink:#f1f3f7;--muted:#9aa3b2;--accent:#e88442;--on:#140c06;--soft:#362014;--line:#2c3240}
+body{margin:0;background:var(--bg);color:var(--ink)}
+button,select,input{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:12px 24px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:-.045em;display:flex;gap:9px;align-items:center}
+.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:end}.controls label{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+main{max-width:1120px;margin:auto;padding:24px}
+.note{color:var(--muted);font-size:13px;line-height:1.6}
+.grid{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+[data-grid=off] .grid{background-image:none}
+.hero{border:1px solid var(--line);padding:clamp(18px,5vw,56px);display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:16px;min-height:320px}
+.kicker{font-family:monospace;letter-spacing:.16em;color:var(--accent);font-size:12px}
+h1{font-size:clamp(42px,7vw,94px);line-height:.9;margin:20px 0;letter-spacing:-.07em;font-weight:800}
+h1 span{display:block}h1 b{font-size:1.35em;font-weight:900}h1 .accent{color:var(--accent)}
+[data-type=moderate] h1 b{font-size:1em}
+[data-type=constructive] h1 .accent{background:var(--accent);color:var(--on);width:fit-content;padding:0 .08em .1em}
+.cta{background:var(--accent);color:var(--on);border:0;font-weight:650}
+.heading{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:34px 0 16px}
+h2{font-size:clamp(28px,4vw,48px);letter-spacing:-.06em;margin:0}h2 b{font-size:1.2em} 
+[data-type=moderate] h2 b{font-size:1em}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{background:var(--surface);border:1px solid var(--line);padding:18px;border-radius:14px;box-shadow:0 2px 6px #0000000a}.card h3{margin:18px 0 5px}.icon{display:inline-grid;place-items:center;background:var(--soft);color:var(--accent);width:38px;height:38px;border-radius:8px}.card footer{border-top:1px solid var(--line);margin-top:20px;padding-top:12px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.swatch{display:flex;gap:10px;flex-wrap:wrap}.swatch span{padding:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.swatch i{display:inline-block;width:16px;height:16px;border:1px solid var(--line);vertical-align:middle;margin-right:6px}
+svg{max-width:100%;height:auto}.technical{font:11px monospace;fill:var(--accent)}
+@media(max-width:650px){main{padding:12px}.hero{grid-template-columns:1fr}.cards{grid-template-columns:1fr}header{padding:12px}.controls{gap:8px}h1{font-size:clamp(36px,12vw,64px)}}
+</style>
+</head>
+<body data-theme="light" data-palette="brass" data-type="irregular" data-grid="on">
+<header><div class="brand"><svg width="28" height="28" viewBox="0 0 48 48" aria-hidden="true"><path d="M5 42V6h9l10 13L34 6h9v36H34V18L24 31 14 18v24Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M24 19h10v12l-10 6Z" fill="var(--accent)"/></svg>Mubleando / Laboratorio</div>
+<div class="controls"><label>Paleta<select id="palette"><option value="brass">Grafito y latón</option><option value="copper">Cobre actual</option></select></label><label>Tema<select id="theme"><option value="light">Claro</option><option value="dark">Oscuro</option></select></label><label>Tipografía<select id="type"><option value="irregular">Escala irregular</option><option value="constructive">Constructivista</option><option value="moderate">Moderada</option></select></label><label>Retícula<select id="grid"><option value="on">Visible</option><option value="off">Oculta</option></select></label></div></header>
+<main>
+<p class="note">Exploración aislada · no usa datos reales ni modifica la aplicación. Tipografías de sistema provisionales; las pruebas finales usarán las fuentes de Mubleando. El isotipo y el eslogan son muestras, no activos aprobados.</p>
+<section class="hero grid"><div><div class="kicker">ESTUDIO DE MOBILIARIO / 01</div><h1 aria-label="Diseñá. Creá. Construí."><span aria-hidden="true"><b>D</b>ISEÑÁ.</span><span aria-hidden="true"><b>C</b>REÁ.</span><span class="accent" aria-hidden="true"><b>C</b>ONSTRUÍ.</span></h1><p class="note">Tus ideas, convertidas en piezas.</p><button class="cta" type="button" id="goto">Mis proyectos ↓</button></div>
+<svg viewBox="0 0 320 250" role="img" aria-label="Mueble isométrico de muestra con puerta de grafito, madera y tirador de latón"><ellipse cx="170" cy="210" rx="110" ry="15" fill="#000" opacity=".08"/><g stroke="#89775d" stroke-width=".8" stroke-linejoin="round"><path d="M54 62 130 22 264 68 188 108Z" fill="#d6bc94"/><path d="M54 62 188 108v112L54 174Z" fill="#d7c6aa"/><path d="M188 108 264 68v112l-76 40Z" fill="#aa8a64"/><path d="M59 69 122 91v102l-63-22Z" fill="#393936"/><path d="M128 93 183 112v101l-55-19Z" fill="#dfccaa"/><path d="M112 131v22M139 141v22" stroke="#b28b52" stroke-width="3"/></g><g stroke="var(--accent)" stroke-width=".8" fill="none"><path d="M38 62V174M32 62h12M32 174h12M54 190l134 46M52 185l4 10M186 231l4 10"/></g><text x="28" y="120" transform="rotate(-90 28 120)" class="technical">860 mm</text><text x="94" y="221" transform="rotate(19 94 221)" class="technical">800 mm</text></svg></section>
+<section id="projects"><div class="heading"><h2><b>P</b>royectos</h2><div><button type="button" disabled>Bibliotecas</button> <button class="cta" type="button" disabled>+ Nuevo proyecto</button></div></div><div class="card" style="margin-bottom:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span><strong>3</strong> proyectos · <strong style="color:var(--accent)">16</strong> muebles diseñados</span><input placeholder="Buscar proyecto…" aria-label="Buscar proyecto de muestra" id="search"></div><div class="cards" id="cards"></div></section>
+<section><div class="heading"><h2>Muestra de controles</h2></div><div class="card"><div class="swatch"><span><i style="background:var(--bg)"></i>Fondo</span><span><i style="background:var(--ink)"></i>Grafito / texto</span><span><i style="background:var(--accent)"></i>Acento</span><span><i style="background:var(--soft)"></i>Selección</span></div><p class="note">Los controles de navegación y creación deshabilitados son muestras visuales, no acciones del producto.</p><label>Medida de prueba <input type="number" value="800" min="1"> mm</label> <button class="cta" id="sample" type="button" aria-pressed="false">Seleccionar pieza</button><p id="state" role="status" class="note">Sin selección.</p></div></section>
+</main>
+<script>
+for(const id of ['palette','theme','type','grid'])document.getElementById(id).addEventListener('change',e=>document.body.dataset[id]=e.target.value);
+document.getElementById('goto').addEventListener('click',()=>document.getElementById('projects').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}));
+const projects=[['Cocina de ejemplo',14],['Estantería',1],['Mueble TV',1]];
+function render(){const q=document.getElementById('search').value.toLowerCase();document.getElementById('cards').innerHTML=projects.filter(p=>p[0].toLowerCase().includes(q)).map(p=>'<article class="card"><span class="icon" aria-hidden="true">▤</span><h3>'+p[0]+'</h3><span class="note">'+p[1]+' '+(p[1]===1?'mueble':'muebles')+'</span><footer><span>Proyecto de muestra</span><span>Despiece</span></footer></article>').join('')}
+document.getElementById('search').addEventListener('input',render);render();
+document.getElementById('sample').addEventListener('click',e=>{const next=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',String(next));document.getElementById('state').textContent=next?'Pieza seleccionada (muestra).':'Sin selección.'});
+</script>
+</body></html>
