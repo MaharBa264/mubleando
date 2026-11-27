@@ -39,6 +39,7 @@ export default function ProjectsPage() {
   return (
     <Page
       title="Proyectos"
+      expressive
       actions={
         <>
           <ButtonLink href="/bibliotecas">
