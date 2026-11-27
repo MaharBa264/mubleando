@@ -156,3 +156,30 @@ Geometría canónica SVG: viewBox 0 0 100 90; contorno `M13 78V13H27L50 44 73 13
 9. Solo después: portada funcional, separación de rutas y animación reversible de logo y tipografía según issue #16. No mezclar migración de rutas con esta fase visual.
 
 Estado: identidad del isotipo aprobada, integración y QA pendientes. La rama de diseño es el espacio de trabajo; main conserva por ahora la aplicación vigente.
+
+
+## 14. Primera implementación visual en la rama de diseño
+
+Cambios guardados en `design/taller-constructivo`, sin merge ni despliegue. Comparación inicial main/rama: divergencia limitada a documentación y prototipos; se copió la versión actual del documento maestro desde main (no se realizó merge de historial).
+
+- globals.css: paleta candidata en claro y oscuro aplicada a tokens existentes. Materiales, radios y colores semánticos conservados; sombras claras neutralizadas. Acento funcional claro #805A28, texto secundario #656159, borde fuerte #837D73; borde fuerte oscuro #8B8579. Se separó --brand-brass (#87612D claro, #CBA66C oscuro) para conservar el logo.
+- layout.tsx: themeColor #EFEEEB / #242422. Fuentes existentes sin cambios.
+- AppShell.tsx: isotipo B12 inline SVG con geometría aprobada y nombre accesible en el enlace incluso en móvil. Rutas, navegación, autenticación y altura de barra intactas.
+- Contraste calculado por luminancia relativa sRGB: acento inicial #87612D sobre #EAE0CD = 4,25:1, corregido a #805A28 = 4,70:1; texto secundario inicial #6D6962 sobre #E7E3DC = 4,27:1, corregido a #656159 = 4,82:1. Estos cálculos no constituyen auditoría WCAG completa. Selección de piezas sobre cada material, bordes de controles, estados y colores hardcodeados requieren pruebas visuales.
+- Pendiente: títulos expresivos opt-in, retícula, activos PWA, contraste completo, compilación, typecheck y pruebas en navegador. No se ejecutaron tests ni build en esta sesión. No se han cambiado rutas ni motor de muebles.
+
+
+## 15. Cabeceras expresivas y retícula — implementación inicial
+
+Se incorporó `apps/web/src/components/ui/ExpressiveText.tsx`: patrones deterministas de escala por carácter, peso dependiente de escala, texto completo accesible mediante sr-only y representación decorativa aria-hidden. Usa las fuentes existentes de Next.js. Page (AppShell.tsx) agrega prop opcional expressive, desactivada por defecto. Activada únicamente en Proyectos, Bibliotecas y Cómo se usa (Ayuda). Los títulos dinámicos, técnicos, cotas y editores permanecen intactos. No se cambia la barra de navegación ni el nombre de marca en esta iteración.
+
+En globals.css se agrega retícula decorativa de 24 px al 5% del texto, limitada al encabezado opt-in, con ajuste de tamaño en móvil estrecho y desactivación de retícula/irregularidad en impresión. El componente permite saltos entre palabras, no requiere JavaScript de animación ni nuevas dependencias. Los valores de escala y peso son candidatos visuales; comprobar Bricolage Grotesque real, acentos, zoom 200%, ancho de 375 px, impresión y nombres accesibles. No se ha ejecutado build, typecheck ni pruebas de navegador.
+
+La rama sigue separada de main. No se verificó el estado de Cloudflare; un despliegue observado puede corresponder a preview de rama o a main sin estos cambios. No se realizó merge ni despliegue manual. Próximo bloque: pruebas visuales y compilación, revisión de activos PWA, luego Inicio estático.
+
+## 16. Identidad PWA y preparación de revisión
+
+- Favicon app/icon.svg, manifest.ts (fondo #EFEEEB, tema #805A28) y PNG instalables 192/512 y Apple 180 actualizados con B12. Geometría canónica, fondo piedra y escala 0,7 sobre cuadrado de 100; el símbolo queda dentro del círculo seguro maskable de radio 40. El favicon usa fondo redondeado; PNG opaco para instalación.
+- scripts/make-icons.mjs: generador sin dependencias externas, raster indexado con muestreo 2×2. Desde raíz: node scripts/make-icons.mjs. Los PNG comprometidos se generaron con el mismo muestreo y paleta, pero compresión zlib sin comprimir; el script Node usa compresión normal, por lo que no se exige igualdad binaria. Se verificaron los SHA de los tres archivos en GitHub, no se ejecutó el script localmente.
+- sw.js: caché mw-v3 para invalidar imágenes antiguas, sin cambiar estrategias de navegación o datos. La renovación de caché puede requerir reabrir la PWA en el dispositivo; comprobar offline e iconos de instalación en navegador real.
+- Pendiente: npm test, npm run typecheck, npm run build, revisión visual de cabeceras, contraste y selección en 3D. No se comprobó Cloudflare ni se hizo merge. Preparar PR borrador para revisar cambios y observar CI si existe. No confundir PR/preview con producción.

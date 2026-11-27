@@ -7,7 +7,7 @@ import { GUIDE_URL, HELP_INTRO } from '@/lib/help';
 /** Ayuda: los pasos para usar la app, con dónde se toca cada cosa. */
 export default function HelpPage() {
   return (
-    <Page title="Cómo se usa">
+    <Page title="Cómo se usa" expressive>
       <p className="mb-6 max-w-2xl text-muted">{HELP_INTRO}</p>
       <HelpSteps expanded />
       <div className="mt-8 max-w-2xl space-y-2 text-sm">
