@@ -156,3 +156,14 @@ Geometría canónica SVG: viewBox 0 0 100 90; contorno `M13 78V13H27L50 44 73 13
 9. Solo después: portada funcional, separación de rutas y animación reversible de logo y tipografía según issue #16. No mezclar migración de rutas con esta fase visual.
 
 Estado: identidad del isotipo aprobada, integración y QA pendientes. La rama de diseño es el espacio de trabajo; main conserva por ahora la aplicación vigente.
+
+
+## 14. Primera implementación visual en la rama de diseño
+
+Cambios guardados en `design/taller-constructivo`, sin merge ni despliegue. Comparación inicial main/rama: divergencia limitada a documentación y prototipos; se copió la versión actual del documento maestro desde main (no se realizó merge de historial).
+
+- globals.css: paleta candidata en claro y oscuro aplicada a tokens existentes. Materiales, radios y colores semánticos conservados; sombras claras neutralizadas. Acento funcional claro #805A28, texto secundario #656159, borde fuerte #837D73; borde fuerte oscuro #8B8579. Se separó --brand-brass (#87612D claro, #CBA66C oscuro) para conservar el logo.
+- layout.tsx: themeColor #EFEEEB / #242422. Fuentes existentes sin cambios.
+- AppShell.tsx: isotipo B12 inline SVG con geometría aprobada y nombre accesible en el enlace incluso en móvil. Rutas, navegación, autenticación y altura de barra intactas.
+- Contraste calculado por luminancia relativa sRGB: acento inicial #87612D sobre #EAE0CD = 4,25:1, corregido a #805A28 = 4,70:1; texto secundario inicial #6D6962 sobre #E7E3DC = 4,27:1, corregido a #656159 = 4,82:1. Estos cálculos no constituyen auditoría WCAG completa. Selección de piezas sobre cada material, bordes de controles, estados y colores hardcodeados requieren pruebas visuales.
+- Pendiente: títulos expresivos opt-in, retícula, activos PWA, contraste completo, compilación, typecheck y pruebas en navegador. No se ejecutaron tests ni build en esta sesión. No se han cambiado rutas ni motor de muebles.
