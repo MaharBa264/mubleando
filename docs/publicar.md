@@ -106,3 +106,21 @@ Si tienes un dominio gestionado en Cloudflare: **Workers & Pages → mubleando �
 ## Publicación automática (Cloudflare Workers Builds)
 Cada cambio en la rama `main` dispara automáticamente la compilación y el despliegue mediante **Cloudflare Workers Builds**.
 Las variables de build `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` deben estar configuradas en Cloudflare.
+
+
+### Separación de producción y previews (27/11/2026)
+
+Configuración de Workers Builds para el monorepo, con raíz `/` en ambos perfiles:
+
+| Perfil | Build command | Deploy / Preview command |
+| --- | --- | --- |
+| Production (main) | `npm run cf:build -w @mw/web` | `cd apps/web && npx opennextjs-cloudflare deploy` |
+| Previews Base | `npm run cf:build -w @mw/web` | `cd apps/web && npx wrangler preview` |
+
+Habilitar Builds for Preview branches. No usar cf:deploy como build command: ejecuta build y deploy y podría publicar una rama de prueba en producción antes del paso de preview. El log del 27/11 mostró una compilación Next.js y TypeScript exitosa, un primer deploy exitoso y un segundo deploy fallido por ejecutarse Wrangler en la raíz del workspace. No se identificó el SHA compilado en ese log.
+
+NEXT_PUBLIC_SUPABASE_URL debe ser la URL base del proyecto, sin /rest/v1/. Para validar interfaz sin tocar datos reales, preferir una preview sin las dos variables públicas de Supabase (modo local) o una base de prueba independiente. No copiar secretos de producción a previews; si se usa una base de prueba, revisar redirects y restringir acceso cuando corresponda.
+
+El propietario informó haber aplicado la configuración. Pendiente verificar el nuevo build de design/taller-constructivo y obtener su URL efectiva del PR #17 o del panel Cloudflare. No inferir URL ni afirmar éxito hasta ver el resultado. No fusionar a main hasta QA.
+
+Referencia: https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/
