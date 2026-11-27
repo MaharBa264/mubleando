@@ -167,3 +167,12 @@ Cambios guardados en `design/taller-constructivo`, sin merge ni despliegue. Comp
 - AppShell.tsx: isotipo B12 inline SVG con geometría aprobada y nombre accesible en el enlace incluso en móvil. Rutas, navegación, autenticación y altura de barra intactas.
 - Contraste calculado por luminancia relativa sRGB: acento inicial #87612D sobre #EAE0CD = 4,25:1, corregido a #805A28 = 4,70:1; texto secundario inicial #6D6962 sobre #E7E3DC = 4,27:1, corregido a #656159 = 4,82:1. Estos cálculos no constituyen auditoría WCAG completa. Selección de piezas sobre cada material, bordes de controles, estados y colores hardcodeados requieren pruebas visuales.
 - Pendiente: títulos expresivos opt-in, retícula, activos PWA, contraste completo, compilación, typecheck y pruebas en navegador. No se ejecutaron tests ni build en esta sesión. No se han cambiado rutas ni motor de muebles.
+
+
+## 15. Cabeceras expresivas y retícula — implementación inicial
+
+Se incorporó `apps/web/src/components/ui/ExpressiveText.tsx`: patrones deterministas de escala por carácter, peso dependiente de escala, texto completo accesible mediante sr-only y representación decorativa aria-hidden. Usa las fuentes existentes de Next.js. Page (AppShell.tsx) agrega prop opcional expressive, desactivada por defecto. Activada únicamente en Proyectos, Bibliotecas y Cómo se usa (Ayuda). Los títulos dinámicos, técnicos, cotas y editores permanecen intactos. No se cambia la barra de navegación ni el nombre de marca en esta iteración.
+
+En globals.css se agrega retícula decorativa de 24 px al 5% del texto, limitada al encabezado opt-in, con ajuste de tamaño en móvil estrecho y desactivación de retícula/irregularidad en impresión. El componente permite saltos entre palabras, no requiere JavaScript de animación ni nuevas dependencias. Los valores de escala y peso son candidatos visuales; comprobar Bricolage Grotesque real, acentos, zoom 200%, ancho de 375 px, impresión y nombres accesibles. No se ha ejecutado build, typecheck ni pruebas de navegador.
+
+La rama sigue separada de main. No se verificó el estado de Cloudflare; un despliegue observado puede corresponder a preview de rama o a main sin estos cambios. No se realizó merge ni despliegue manual. Próximo bloque: pruebas visuales y compilación, revisión de activos PWA, luego Inicio estático.
