@@ -77,7 +77,7 @@ function Shell({ children }: { children: ReactNode }) {
               <rect x="16" y="16" width="32" height="32" rx="3" fill="none" stroke="var(--accent-contrast)" strokeWidth="4.5" />
               <path d="M16 32h32M32 32v16" stroke="var(--accent-contrast)" strokeWidth="4.5" />
             </svg>
-            <span className="font-display hidden text-[17px] font-semibold tracking-tight min-[400px]:inline">mueblesweb</span>
+            <span className="font-display hidden text-[17px] font-semibold tracking-tight min-[400px]:inline">Mueblando</span>
           </Link>
           {/* Navegación como control segmentado: mismo lenguaje que los selectores del panel. */}
           <nav aria-label="Principal" className="flex gap-0.5 rounded-full bg-surface-2 p-0.5">

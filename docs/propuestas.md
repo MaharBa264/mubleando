@@ -19,6 +19,10 @@ Funciones propuestas. La tabla está en el orden en que conviene hacerlas; el n�
 | 13 | [Piezas con cualquier contorno](#13-piezas-con-cualquier-contorno) | [#13](https://github.com/MaharBa264/mubleando/issues/13) | grande | Es la base de los techos inclinados, los esquineros en L y ochava y los rellenos cónicos. |
 | 14 | [Techo irregular en el ambiente y muebles que se adaptan](#14-techo-irregular-en-el-ambiente-y-muebles-que-se-adaptan) | [#14](https://github.com/MaharBa264/mubleando/issues/14) | mediano | El techo se puede hacer sin la #13; adaptar el mueble la necesita. |
 | 15 | [Esquineros en L y en ochava, y rellenos cónicos](#15-esquineros-en-l-y-en-ochava-y-rellenos-cónicos) | [#15](https://github.com/MaharBa264/mubleando/issues/15) | grande | Usan la #13. |
+| 16 | [Constructor de mesadas y bachas](#16-constructor-de-mesadas-y-bachas) | pendiente | grande | Completa el diseño integral de cocinas, baños y lavaderos sobre los bajos existentes. |
+| 17 | [Sillas y mesas (constructor independiente)](#17-sillas-y-mesas-constructor-independiente) | pendiente | grande | Carpintería de estructura/bastidor distinta a la de placa; reutilizable en ambientes. |
+| 18 | [Exportación 3D para renderizado externo (SketchUp y formatos estándar)](#18-exportación-3d-para-renderizado-externo-sketchup-y-formatos-estándar) | pendiente | mediano | Permite llevar muebles y ambientes con materiales y grupos a SketchUp, Blender o Twinmotion. |
+| 19 | [Sillones (estructura y tapicería)](#19-sillones-estructura-y-tapicería) | pendiente | grande | Extiende el enfoque de mobiliario independiente hacia tapicería, almohadones y cálculo de tela/espuma. |
 
 ---
 
@@ -406,3 +410,80 @@ Dos cosas distintas, con herrajes distintos.
 - Un bajo junto a una pared a 91°: el relleno de 0 a 9,8 mm aparece en el despiece.
 
 ---
+
+---
+
+## 16. Constructor de mesadas y bachas
+
+**Qué pasa hoy.** En Ambientes se puede colocar un bloque fijo con aspecto de mesada, pero no se diseña ni se despieza como elemento técnico propio (sin calados de bacha/anafe, sin perfiles de borde, sin bacha 3D ni especificaciones para marmolería).
+
+**Propuesta.**
+
+- **Geometría y formas**: mesada recta, en L, en U o isla; largo, ancho/fondo, espesor real y voladizo delantero/lateral configurable.
+- **Bordes y terminaciones**: redondeo de esquinas en planta (radio en mm) y perfil de canto frontal/lateral (recto, biselado, medio punto, pecho de paloma, ingleteado con faldón/regrueso).
+- **Zócalo / alzada trasera y lateral**: altura y espesor configurables por lado apoyado contra pared.
+- **Calados y bachas**:
+  - Hueco paramétrico para **bacha** (posición X/Y, ancho, largo, radio de esquinas) y opcionalmente para **anafe/cocina**.
+  - **Incorporación de bacha 3D**: simple, doble o con escurridor tallado/integrado; montaje bajo mesada, de apoyo (*top-mount*), a ras (*flush*) o **monolítica en una sola pieza** (mismo material continuo, p. ej. piedra sinterizada, cuarzo o acero inoxidable).
+  - **Materiales independientes o unificados**: permitir elegir un material para la mesada (granito, cuarzo, mármol, madera maciza, melamina postformada, hormigón) y otro distinto para la bacha (acero inoxidable, loza, granito compuesto), o vincular ambos como pieza única.
+  - **Perforaciones de grifería y accesorios**: uno o varios orificios (monocomando, dosificador, filtro) acotados desde el borde.
+- **Salidas de producción**: plano acotado en PDF para marmolería/carpintería (con calados, radios, faldones y perforaciones) e integración directa en Ambientes sobre muebles bajo mesada.
+
+**Hecho cuando.**
+
+- Se puede crear una mesada recta o en L con bacha integrada o separada, definir radios de borde y perforación de grifería, verla en 3D (sola y dentro del ambiente) y exportar su plano acotado en PDF.
+
+---
+
+## 17. Sillas y mesas (constructor independiente)
+
+**Qué pasa hoy.** El motor actual está especializado en muebles de caja/placa (bajos, alacenas, placards). Mesas, escritorios con patas estructurales, bancos y sillas tienen otra lógica constructiva (patas, bastidor, travesaños, ángulos y ergonomía).
+
+**Propuesta.**
+
+- **Constructor independiente** dentro del proyecto (junto a Muebles y Ambientes), con plantillas base: mesa de comedor, mesa ratona, escritorio, banco/banqueta y silla.
+- **Mesas**: forma de tapa (rectangular, cuadrada, redonda, ovalada, esquinas redondeadas), espesor y tipo de borde; patas (rectas, cónicas, inclinadas, caballete, base central o metálica en U/X); bastidor/pollera y travesaños.
+- **Sillas y banquetas**: altura y profundidad de asiento, ángulo de inclinación del respaldo, patas delanteras y traseras (rectas o con ángulo), travesaños/champas, asiento rígido o tapizado.
+- **Despiece y presupuesto**: lista de cortes adaptada a listones/macizo, tableros y perfiles metálicos (largo en metros lineales + superficie en m²), más herrajes de unión.
+- **Integración con Ambientes**: cualquier mesa o silla creada en el proyecto se puede colocar, duplicar y alinear en Planta, Alzado y 3D del ambiente (con verificación de espacio de circulación).
+
+**Hecho cuando.**
+
+- Un usuario puede crear una mesa y una silla paramétricas, obtener su despiece y costo, y colocar un juego completo en un ambiente 3D.
+
+---
+
+## 18. Exportación 3D para renderizado externo (SketchUp y formatos estándar)
+
+**Qué pasa hoy.** La app exporta **STL** (ideal para impresión 3D, pero sin materiales, sin colores y como una malla única sin jerarquía cómoda para renderizar). Para presentar un proyecto al cliente con iluminación realista en SketchUp, Blender, Twinmotion o Lumion hace falta un formato con materiales y componentes separados.
+
+**Propuesta.**
+
+- **COLLADA (`.dae`)**: formato abierto que **SketchUp importa de forma nativa** preservando escala real en milímetros, jerarquía de grupos/componentes por pieza (puertas, cajones, estructura, herrajes) y materiales asignados.
+- **glTF 2.0 / GLB (`.glb`)**: estándar moderno universal, de un solo archivo binario liviano, compatible con **SketchUp 2024+**, **Blender**, **Twinmotion**, **Lumion** y visores web, con materiales PBR (color, rugosidad, transparencia de vidrios) y nodos nombrados por pieza.
+- **OBJ + MTL (`.obj` + `.mtl` en ZIP)**: respaldo clásico de máxima compatibilidad con motores de render y software CAD veterano.
+- **Alcance**: disponible tanto para un **mueble individual** (con opción frentes cerrados o abiertos) como para un **ambiente completo** (paredes, aberturas, obra 3D, mesadas y todos los muebles colocados).
+
+**Hecho cuando.**
+
+- Un archivo `.glb` y un `.dae` exportados desde un mueble y desde un ambiente se abren en SketchUp y Blender a escala real (mm), con cada pieza agrupada y sus materiales diferenciados.
+
+---
+
+## 19. Sillones (estructura y tapicería)
+
+**Qué pasa hoy.** No existe un módulo para diseñar sillones o sofás a medida, que combinan carpintería de esqueleto interno con volúmenes blandos de espuma y tapicería.
+
+**Propuesta.**
+
+- **Constructor paramétrico de sillones** (en línea con el constructor de sillas y mesas, pero enfocado a tapicería):
+  - **Configuraciones**: sillón individual, 2/3/4 cuerpos, modular con *chaise longue* (izquierda o derecha), esquinero en L y puff/camastro.
+  - **Geometría ergonómica**: ancho total o por cuerpo, profundidad total y útil de asiento, altura de asiento, altura de respaldo, inclinación y perfil de apoyabrazos (recto, fino, ancho, inclinado).
+  - **Almohadones y terminaciones**: cantidad de almohadones de asiento y respaldo, espesor/bombeado visual, costuras/vivo, patas vistas (madera/metal) o base oculta con regatones.
+  - **Materiales por componente**: género/cuero principal, contraste en almohadones o vivos, y material de patas.
+- **Cálculo de materiales de taller**: despiece del esqueleto interno (listones y placas estructurales), volúmenes de goma espuma por densidad (asiento, respaldo, brazos) y estimación de **metros lineales de tela** según ancho de rollo (p. ej. 1,40 m) con margen de costura.
+- **Integración con Ambientes y exportación**: colocable en Planta/Alzado/3D y exportable en `.glb` / `.dae` para renderizado.
+
+**Hecho cuando.**
+
+- Se puede configurar un sillón de 3 cuerpos o con *chaise longue*, verlo en 3D en el ambiente y obtener el despiece del esqueleto más la estimación de espuma y tela.

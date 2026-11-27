@@ -251,7 +251,7 @@ export function labelsPdf(labels: readonly LabelData[], format: LabelFormat, opt
   const problem = formatProblem(format);
   if (problem) throw new Error(problem);
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
-  doc.setProperties({ title: opts.title ? `Etiquetas · ${opts.title}` : 'Etiquetas', creator: 'mubleando' });
+  doc.setProperties({ title: opts.title ? `Etiquetas · ${opts.title}` : 'Etiquetas', creator: 'Mueblando' });
   addLabelPages(doc, labels, format, opts);
   return { bytes: doc.output('arraybuffer'), pages: doc.getNumberOfPages() };
 }

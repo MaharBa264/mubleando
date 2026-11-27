@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'mueblesweb · diseño de muebles',
-    short_name: 'mueblesweb',
+    name: 'Mueblando · diseño de muebles',
+    short_name: 'Mueblando',
     description: 'Diseño de muebles por paneles y listas de corte.',
     start_url: '/',
     display: 'standalone',

@@ -1,6 +1,6 @@
 # Hoja de ruta
 
-Actualizada el 15 de noviembre de 2026.
+Actualizada el 27 de noviembre de 2026.
 
 ## Decisiones que marcan el plan
 
@@ -101,6 +101,22 @@ Siguiente:
 - **Herrajes** (bisagras, correderas) con sus reglas de colocación y su lista de compra.
 - **Planos** con cotas.
 - DXF por pieza (útil si algún día se usa un servicio de corte por control numérico).
+
+
+## Consolidación de marca, Obra 3D y Bajo escalera (26–27-11-2026)
+
+- **Marca oficial**: unificación de la identidad de la app como **Mueblando** (con dirección visual *Estudio Nórdico*).
+- **Obra 3D y Alzado por pared**: muretes, mesadas base y losas inclinadas en ambientes, vista lateral ortogonal por pared con bloqueo de eje (horizontal o vertical) y asistente **Generar módulos bajo escalera**.
+- **Techo inclinado y corte diagonal real**: el motor calcula costados a medida, tapa por hipotenusa y `diagonalCut` en puertas y fondo; los visores 3D y las vistas vectoriales del PDF muestran el corte diagonal real, mientras que la maderera recibe el rectángulo completo y el PDF suma croquis acotados para cortar en taller.
+
+## Próximos módulos de producto (en planificación)
+
+Detalles técnicos y criterios de cierre en [Propuestas](propuestas.md):
+
+- **Constructor de mesadas y bachas** ([propuesta #16](propuestas.md#16-constructor-de-mesadas-y-bachas)): formas (recta, L, U, isla), redondeo de bordes y perfiles, calados para bacha y anafe, bacha integrada o independiente (material único monolítico o materiales distintos), alzada/zócalo, faldón/regrueso, escurridor y perforaciones de grifería.
+- **Constructor independiente de sillas y mesas** ([propuesta #17](propuestas.md#17-sillas-y-mesas-constructor-independiente)): diseño paramétrico de carpintería de bastidor y patas (tapas, patas rectas o inclinadas, travesaños, respaldos, ergonomía), despiece de listones/tableros e inserción en ambientes.
+- **Exportación 3D para renderizado externo** ([propuesta #18](propuestas.md#18-exportación-3d-para-renderizado-externo-sketchup-y-formatos-estándar)): exportación con materiales, escala real en mm y jerarquía de piezas/grupos hacia **COLLADA (`.dae`)** (importación directa en SketchUp), **glTF/GLB** (estándar moderno para Blender, Twinmotion, Lumion y SketchUp 2024+) y **OBJ + MTL**.
+- **Constructor de sillones** ([propuesta #19](propuestas.md#19-sillones-estructura-y-tapicería)): constructor especializado en estructura interna de madera + tapicería (módulos rectos, esquineros, *chaise longue*, apoyabrazos, almohadones, patas vistas/ocultas y cálculo de madera, espuma y metraje de tela).
 
 ## Al final
 

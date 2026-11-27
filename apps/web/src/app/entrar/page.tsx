@@ -119,7 +119,7 @@ function SignIn() {
                 <rect x="16" y="16" width="32" height="32" rx="3" fill="none" stroke="var(--accent-contrast)" strokeWidth="4.5" />
                 <path d="M16 32h32M32 32v16" stroke="var(--accent-contrast)" strokeWidth="4.5" />
               </svg>
-              <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Mubleando</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Mueblando</h1>
             </div>
             <p className="max-w-lg text-base text-muted">
               Diseñá muebles de tablero en 3D, ubicalos en cada ambiente y sacá al instante el despiece, los costos y el plano de cortes listo para el taller.

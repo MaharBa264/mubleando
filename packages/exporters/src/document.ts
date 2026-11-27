@@ -498,7 +498,7 @@ function viewPages(doc: jsPDF, o: DocOptions) {
 /** Arma el documento. Devuelve los bytes y la cantidad de páginas. */
 export function cabinetPdf(o: DocOptions): { bytes: ArrayBuffer; pages: number } {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
-  doc.setProperties({ title: o.title, creator: 'mubleando' });
+  doc.setProperties({ title: o.title, creator: 'Mueblando' });
   coverPage(doc, o);
   if (o.include.cutList) {
     cutListPages(doc, o);

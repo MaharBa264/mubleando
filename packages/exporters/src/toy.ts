@@ -119,7 +119,7 @@ export function tubeTris(x: number, z: number, y0: number, y1: number, ro: numbe
 }
 
 /** STL binario a partir de triángulos, apoyado en Z = 0 y con la esquina mínima en el origen. */
-export function trisToStl(tris: Tri[], header = 'mueblesweb juguete'): Uint8Array<ArrayBuffer> {
+export function trisToStl(tris: Tri[], header = 'Mueblando juguete'): Uint8Array<ArrayBuffer> {
   let mx = Infinity;
   let my = Infinity;
   let mz = Infinity;
@@ -351,6 +351,6 @@ export function exportToy(partsIn: Part[], zones: ZoneOut[], size: { w: number; 
     0,
     `${mainName}\n    El mueble${hingeCount ? ` con ${hingeCount} ${hingeCount === 1 ? 'puerta' : 'puertas'} unidas por bisagras impresas en su lugar` : ''}. Imprimilo de pie, con la base sobre la cama.${hingeCount ? ' Al terminar, movés las puertas con suavidad para soltar la bisagra.' : ''}`,
   );
-  readme.push('', 'Consejos: capa de 0,2 mm, sin soportes dentro de las bisagras. Si una bisagra queda pegada, subí la holgura a 0,5 mm.', '', 'Generado por mueblesweb.');
+  readme.push('', 'Consejos: capa de 0,2 mm, sin soportes dentro de las bisagras. Si una bisagra queda pegada, subí la holgura a 0,5 mm.', '', 'Generado por Mueblando.');
   return { files, readme: readme.join('\n'), warnings };
 }
