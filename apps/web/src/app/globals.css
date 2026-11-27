@@ -21,6 +21,7 @@
   --text-muted: #656159;
 
   /* acción y selección: latón mate para acciones y selección */
+  --brand-brass: #87612d;
   --accent: #805a28;
   --accent-hover: #704d20;
   --accent-soft: #eae0cd;
@@ -74,6 +75,7 @@
     --border-strong: #8b8579;
     --text: #f3f0e9;
     --text-muted: #b9b2a6;
+    --brand-brass: #cba66c;
     --accent: #cba66c;
     --accent-hover: #dec08b;
     --accent-soft: #443727;
