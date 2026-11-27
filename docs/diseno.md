@@ -27,43 +27,42 @@ Antes de hacer una pantalla o herramienta: revisar esta página y los componente
 
 Después: probarla en un navegador real a ancho de escritorio y de móvil (unos 375 px), en modo claro y oscuro; verificar selección, edición, errores, estados vacíos y respuesta visual; correr `npm test`, `npm run typecheck` y `npm run build`. **La calidad visual y la usabilidad forman parte de "terminado".**
 
-## Dirección visual: "taller luminoso"
+## Dirección visual: transición a Taller Constructivo
 
-- **Fondo hueso cálido** (`--bg`, `--viewer-bg`), como un estudio fotográfico de muebles. La escena 3D usa el mismo tono, así el mueble se ve "en su lugar" y no dentro de una caja gris.
-- **Superficies blancas que flotan** sobre la escena (paneles del editor, barras de herramientas), con radios generosos y sombras cálidas y difusas.
-- **Un solo color de acción: azul cobalto** (`--accent`). Marca lo que se puede pulsar como acción principal, lo activo y lo seleccionado, también en el 3D (`--sel`). Se dejó atrás el verde agua anterior.
-- **Interfaz neutra**: grises cálidos para todo lo demás, para que el color lo pongan los materiales del mueble.
+La dirección creativa aprobada el 27-11-2026 es [**Taller Constructivo**](taller-constructivo.md): grafito y latón, tipografía expresiva constructivista, retícula discreta e identidad animable. El documento enlazado contiene las decisiones, criterios y fases. La nueva paleta aún no está aplicada.
 
-## Color
+### Estado implementado: Estudio Nórdico
 
-Todos los pares de texto/fondo cumplen WCAG AA (4,5:1 o más) en claro y oscuro. Se comprobó con un script de contraste al definir la paleta; si cambiás un valor, volvé a medirlo.
+El CSS actual usa fondo gris técnico, superficies nítidas y cobre/terracota para acciones y selección. La anterior dirección «taller luminoso» con azul cobalto queda como antecedente histórico (ver registro de decisiones). La tabla siguiente se obtuvo de globals.css; no es la paleta candidata Taller Constructivo.
 
-| Token | Claro | Oscuro | Uso |
-| --- | --- | --- | --- |
-| `--bg` | `#f3f0eb` | `#131312` | Fondo de página. |
-| `--surface` | `#ffffff` | `#1c1b1a` | Tarjetas, paneles, diálogos, campos. |
-| `--surface-2` | `#ece8e1` | `#272624` | Hover, fondo de controles segmentados, miniaturas. |
-| `--border` | `#e1dcd3` | `#33312e` | Bordes y separadores. |
-| `--border-strong` | `#c3bcb0` | `#4d4a45` | Hover de bordes, bordes punteados de estados vacíos. |
-| `--text` | `#1a1917` | `#f2f0ec` | Texto principal. |
-| `--text-muted` | `#665f55` | `#a49e94` | Texto secundario, etiquetas, unidades. Contraste 5,2:1 o más. |
-| `--accent` | `#1a5fd6` | `#6aa5ff` | Acción principal, foco, activo. |
-| `--accent-hover` | `#134cb3` | `#8cb9ff` | Hover del botón principal. |
-| `--accent-soft` | `#e4edfc` | `#172a4c` | Fondo de lo seleccionado en listas y barras. |
-| `--accent-contrast` | `#ffffff` | `#08142b` | Texto sobre `--accent`. |
-| `--danger` / `--danger-soft` | `#b42a20` / `#fbe8e6` | `#f2867e` / `#3b1d1b` | Errores y acciones destructivas. |
-| `--warning` / `--warning-soft` | `#865300` / `#fbf0d9` | `#eec06a` / `#3a2f16` | Avisos del motor, ángulos fuera de escuadra. |
-| `--sel` | `#2f7bf5` | `#4c94ff` | Pieza u objeto seleccionado en el 3D y en la planta. |
-| `--zone` | `#2f7bf5` | `#4c94ff` | Resaltado de huecos al pasar el puntero. |
-| `--viewer-bg` | `#e9e5de` | `#201f1d` | Fondo de la escena 3D y de todo el editor. |
-| `--viewer-line` | `#6b655b` | `#8d877b` | Aristas y cotas del 3D. |
-| `--mat-*` | — | — | Colores de muestra de materiales. **No** son de interfaz. |
+## Color vigente en el código
 
-Reglas:
+| Token | Claro | Oscuro |
+| --- | --- | --- |
+| `--bg` | `#f6f7f9` | `#0f1116` |
+| `--surface` | `#ffffff` | `#171a21` |
+| `--surface-2` | `#eceff3` | `#21252f` |
+| `--border` | `#dde2ea` | `#2c3240` |
+| `--border-strong` | `#bcc4d0` | `#434b5e` |
+| `--text` | `#12151c` | `#f1f3f7` |
+| `--text-muted` | `#555f70` | `#9aa3b2` |
+| `--accent` | `#c25e1a` | `#e88442` |
+| `--accent-hover` | `#a14b12` | `#f29a5e` |
+| `--accent-soft` | `#faeae0` | `#362014` |
+| `--accent-contrast` | `#ffffff` | `#140c06` |
+| `--success` | `#1b7a4c` | `#52c98e` |
+| `--success-soft` | `#e2f5eb` | `#133123` |
+| `--danger` | `#be2922` | `#f2867e` |
+| `--danger-soft` | `#fce8e7` | `#3b1d1b` |
+| `--warning` | `#9a5b00` | `#f0c265` |
+| `--warning-soft` | `#fdf1d6` | `#392c12` |
+| `--focus` | `#c25e1a` | `#e88442` |
+| `--sel` | `#d96b21` | `#f08e4c` |
+| `--zone` | `#d96b21` | `#f08e4c` |
+| `--viewer-bg` | `#ebeff4` | `#14171f` |
+| `--viewer-line` | `#5b6575` | `#7e8799` |
 
-- En los componentes se usan las clases de Tailwind (`bg-surface`, `text-muted`, `border-border`…) o `var(--x)` en SVG y three.js. **Nunca** un hexadecimal suelto.
-- El azul es escaso a propósito: por pantalla, **un solo** botón `primary`. El resto es `secondary` o `ghost`.
-- Lo seleccionado siempre se marca con la familia azul: `bg-accent-soft text-accent` en listas, `--sel` en el 3D.
+Usar clases semánticas Tailwind o variables CSS; no hexadecimales dispersos. Una acción primaria por contexto. La selección usa `--sel` y `--zone`. Los tokens `--mat-*` describen materiales, no identidad UI. No se ha repetido la medición de contraste en esta auditoría; verificar WCAG AA al migrar. layout.tsx conserva themeColor de la etapa anterior: sincronizar al aprobar los nuevos tokens.
 
 ## Tipografía
 
@@ -175,3 +174,5 @@ Esta línea de trabajo fue **solo visual**: no se agregó ni quitó ninguna func
 | 2026-11-21 | Paneles del editor flotando sobre la escena. | Principio 1: el mueble es protagonista; referencia del configurador con panel blanco sobre fondo de estudio. |
 | 2026-11-21 | Radios con nombres semánticos (`rounded-control/card/sheet`). | Los nombres `rounded-s/m` chocaban con utilidades de Tailwind v4 y dejaban esquinas desparejas. |
 | 2026-11-21 | Alto del editor fijo en escritorio (`lg:flex-none`). | El lienzo 3D crecía más que la ventana y el mueble aparecía cortado y demasiado cerca. |
+
+| 2026-11-27 | Dirección Taller Constructivo aprobada; grafito y latón, tipografía expresiva, retícula e identidad animable. | Ver [documento de dirección y plan](taller-constructivo.md). CSS vigente cobre/terracota; migración pendiente. |
